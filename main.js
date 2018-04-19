@@ -1,5 +1,5 @@
 var root = document.getElementById('root')
-var firebase = 'https://footy-8a5f7.firebaseio.com'
+var firebase = 'https://ping-pong-a66be.firebaseio.com'
 
 // state var
 var state = {players: [], playerBeingAdded: '', games: [], gameBeingAdded: null}
@@ -122,12 +122,7 @@ var someNum = 4
 
 // view derived from state
 var View = ()=>m('.container', 
-    // m('svg[width=400][height=200][xmlns=http://www.w3.org/2000/svg]',
-    //     m('style', 'line, rect{stroke:#000;fill:#fff;}'),
-    //     m('line', {x1:20, x2:120, y1:parseFloat(someNum) * 10, y2: 130}),
-    //     m('line', {x1:- parseFloat(someNum) * 5, x2:120, y1:0, y2: parseFloat(someNum) * 2})),
-    // m('input[type=number]', {value: someNum, oninput: m.withAttr('value', v=>someNum=v)}))
-    m('.row', m('h1', 'Fußball')),
+    m('.row', m('h1', 'Lowther ping-pong league')),
     !state.gameBeingAdded?
         m('.row', m('.button', {onclick: setEmptyGame}, 'Add game'))
         :[m('.row',
