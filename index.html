@@ -87,13 +87,13 @@ function setGrid(emptyI, emptyJ){
 // UI
 var View = ()=>m('', 
     m('h1', `clicks: ${numberOfClicks}`),
-    grid.every(row=>row.every(cell=>cell.isEmpty))?  // game over?
-    m('marquee', m('h1', 'congrats!'))
-    : grid.map((row, i)=>m('.row', row.map((cell, j)=>
-        m('.block', {
-            style: {'background-color': colourMap[cell.colour]},
-            onclick: cell.isEmpty? _=>_ : _=>setGrid(i, j),
-        })))))
+    grid.every(row=>row.every(cell=>cell.isEmpty))  // game over?
+        ? m('marquee', m('h1', 'congrats!'))
+        : grid.map((row, i)=>m('.row', row.map((cell, j)=>
+            m('.block', {
+                style: {'background-color': colourMap[cell.colour]},
+                onclick: cell.isEmpty? _=>_ : _=>setGrid(i, j)
+            })))))
 m.mount(document.body, {view: View})
     </script>
 </footer>
