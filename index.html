@@ -1,47 +1,99 @@
 <head>
-    <title>Lowther ping-pong league</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300italic,700,700italic">
-    <link rel="stylesheet" href="https://cdn.rawgit.com/necolas/normalize.css/master/normalize.css">
-    <link rel="stylesheet" href="https://cdn.rawgit.com/milligram/milligram/master/dist/milligram.min.css">
     <style>
-.button {
-  margin-left: 1px;
-}
-.button-small {
-  font-size: 0.8rem;
-  height: 2.8rem;
-  line-height: 2.8rem;
-  padding: 0 1.5rem;
-}
-.bold {
-  font-weight: bold;
-}
-.center {
-  text-align: center;
-}
-.row .column.column-30 {
-  flex: 0 0 30%;
-  max-width: 30%;
-}
-.row .column.column-15 {
-  flex: 0 0 15%;
-  max-width: 15%;
-}
-.red {
-  color: red;
-}
-.green {
-  color: green;
-}
+        .row{display: flex;}
+        .block{width:100px;height:50px;float:left;background-color:red;}
     </style>
 </head>
-<body>
-    <div id="root"></div>
-    <a href="https://github.com/leontrolski/fussball"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/38ef81f8aca64bb9a64448d0d70f1308ef5341ab/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png"></a>
-</body>
+<body></body>
 <footer>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ramda/0.25.0/ramda.min.js"></script>
     <script src="https://unpkg.com/mithril@1.1.5/mithril.js"></script>
-    <script src="trueskill.js"></script>
-    <script src="main.js" charset="UTF-8"></script>
+    <script>
+var width = 8
+var height = 8
+var possibleColours = ['b', 'y', 'r', 'g']
+var colourMap = {
+    b: 'blue',
+    y: 'yellow',
+    r: 'red',
+    g: 'green',
+    e: 'gray',  // empty
+}
+var emptyCell = {colour: 'e', isEmpty: true}
+function randomCell(){
+    return {
+        colour: possibleColours[Math.floor(Math.random() * possibleColours.length)],
+        isEmpty: false,
+    }
+}
+// state
+var grid = [...Array(height)].map(_=>[...Array(width)].map(randomCell))
+var numberOfClicks = 0
+// grid->grid functions
+function doUntilIdempotent(grid, f){
+    var repeat = 0
+    while (repeat < 1000){  // arbitrarily large
+        var newGrid = f(grid)
+        if(JSON.stringify(newGrid) === JSON.stringify(grid)) return grid
+        grid = newGrid
+        repeat += 1
+    }
+    throw 'grid never converges'
+}
+function forCells(grid, f){
+    return grid.map((row, i)=>row.map(
+        (cell, j)=>Object.assign({}, cell, f(cell, i, j))))
+}
+function removeCell(grid, emptyI, emptyJ){
+    return forCells(grid, (cell, i, j)=>(
+        i === emptyI && j === emptyJ? {isEmpty: true} : {}))
+}
+function adjacentCells(grid, i, j){
+    var adjacents = []
+    if(i < grid.length - 1)    adjacents.push(grid[i+1][j])
+    if(i > 0)                  adjacents.push(grid[i-1][j])
+    if(j < grid[0].length - 1) adjacents.push(grid[i][j+1])
+    if(j > 0)                  adjacents.push(grid[i][j-1])
+    return adjacents
+}
+function emptyAdjacentCells(grid){
+    return forCells(grid, (cell, i, j)=>({
+        isEmpty: cell.isEmpty || adjacentCells(grid, i, j).some(
+            adjacent=>adjacent.isEmpty && adjacent.colour === cell.colour)
+    }))
+}
+function belowCell(grid, i, j){
+    return i === grid.length - 1? {isEmpty: false} : grid[i+1][j]
+}
+function aboveCell(grid, i, j){
+    return i === 0? emptyCell : grid[i-1][j]
+}
+function shiftIntoEmpty(grid){
+    return forCells(grid, (cell, i, j)=>{
+        if(cell.isEmpty) return aboveCell(grid, i, j)
+        if(belowCell(grid, i, j).isEmpty) return emptyCell
+        return cell
+    })
+}
+var chain = (...fs)=>fs.reduce((a,b)=>x=>b(a(x)))
+// mutates state
+function setGrid(emptyI, emptyJ){  
+    numberOfClicks += 1
+    grid = chain(
+        grid=>removeCell(grid, emptyI, emptyJ),
+        grid=>doUntilIdempotent(grid, emptyAdjacentCells),
+        grid=>doUntilIdempotent(grid, shiftIntoEmpty),
+    )(grid)
+}
+// UI
+var View = ()=>m('', 
+    m('h1', `clicks: ${numberOfClicks}`),
+    grid.every(row=>row.every(cell=>cell.isEmpty))?  // game over?
+    m('marquee', m('h1', 'congrats!'))
+    : grid.map((row, i)=>m('.row', row.map((cell, j)=>
+        m('.block', {
+            style: {'background-color': colourMap[cell.colour]},
+            onclick: cell.isEmpty? _=>_ : _=>setGrid(i, j),
+        })))))
+m.mount(document.body, {view: View})
+    </script>
 </footer>
