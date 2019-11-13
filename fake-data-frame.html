@@ -1,0 +1,182 @@
+<head>
+    <title>leontrolski - FakeDataFrame</title>
+    <style>
+        body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; text-shadow: 0 1px 0 #ffffff; max-width: 63%;}
+        code {background: #f0f0f0;}
+        pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
+        a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none;}
+        a:hover {border-bottom: 0;}
+    </style>
+    <link rel="stylesheet" href="https://unpkg.com/highlightjs@9.16.2/styles/default.css"></style>
+    <script src="https://unpkg.com/highlightjs@9.16.2/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</head>
+<body>
+    <h1>How do pandas DataFrames work? (kinda)</h1>
+    <p>
+        When you're used to plain ol' <code>dict</code>s, <code>int</code>s, <code>list</code>s etc, <code>pandas.DataFrame</code>s exhibit some weirdo behaviour, particulary concerning assignment and operators. This page is a short walk-through of how some of these things happen (and a quick intro to Python's magic methods), you can see the outcome <a href="https://github.com/leontrolski/fake-data-frame">here</a>.
+    </p>
+    <p>
+        <em>Disclaimer:</em> the things presented here are not <em>entirely</em> as the <code>pandas</code> <code>DataFrame</code>s work, they are more intended as a guide to how they do.
+    </p>
+
+    <p>
+        The below examples use python type hints to help keep things a bit clearer, at the <a href="https://github.com/leontrolski/fake-data-frame/blob/master/fake_data_frame.py">top</a>, we have:
+    </p>
+
+    <pre><code>from typing import Any, Dict, List</code></pre>
+
+    <p>
+        <code>DataFrame</code>s are a collection of <code>Series</code> (AKA columns), let's start with a really dumb <code>FakeSeries</code>.
+    </p>
+
+    <pre><code>class FakeSeries:
+    def __init__(self, name: str, data: Dict[int, Any]):
+        self.name = name
+        self.data = data
+
+    def __repr__(self) -> str:
+        return f'&lt;FakeSeries: {self.name} {self.data}>'</code></pre>
+
+    <pre><code>>>> my_series = FakeSeries("some_column_name", {0: 5, 1: 7, 2: 9})
+&lt;FakeSeries: some_column_name {0: 5, 1: 7, 2: 9}></code></pre>
+
+    <ul>
+        <li>Note how the <code>__repr__</code> method is used by <code>print()</code></li>
+        <li>There a list of all the magic methods you can override on a class <a href="https://docs.python.org/3/reference/datamodel.html#basic-customization">here</a></li>
+        <li>Note how we are storing the series as a map of indices (0, 1, 2) to values (5, 7, 9)</li>
+    </ul>
+
+    <p>
+        Now we will define our <code>FakeDataFrame</code>, it similarly has a useful <code>__init__</code> and <code>__repr__</code> (although this is only fully fleshed out in the <a href="https://github.com/leontrolski/fake-data-frame/blob/master/fake_data_frame.py">original</a>). On initialisation, it sets <code>self.series_map</code> which is a map of series names to series.
+    </p>
+
+    <pre><code>class FakeDataFrame:
+    def __init__(self, d: Dict[str, List[Any]]):
+        self.series_map = {
+            k: FakeSeries(k, {i: v for i, v in enumerate(l)})
+            for k, l in d.items()
+        }
+        self.length = len(list(d.values())[0])
+
+    def __repr__(self):
+        width = 5
+        ...
+        return '\n'.join((headers, divider) + rows) + '\n'</code></pre>
+
+    <p>
+        Already, we can see the beginnings of a <code>pandas</code>-like <code>DataFrame</code> interface.
+    </p>
+
+    <pre><code>>>> df = FakeDataFrame({
+    'a': [4, 5, 6],
+    'b': [7, 8, 9],
+})
+
+    a |     b
+-------------
+    4 |     7
+    5 |     8
+    6 |     9</code></pre>
+
+    <p>
+        Now the clever stuff begins, lets add two methods to <code>FakeDataFrame</code> so that we can retreive and set its <code>Series</code>.
+    </p>
+
+    <pre><code>    # handle []
+    def __getitem__(self, key: str) -> FakeSeries:
+        return self.series_map[key]
+
+    # handle [] =
+    def __setitem__(self, key: str, value: FakeSeries) -> None:
+        if key not in self.series_map:
+            self.series_map[key] = FakeSeries(key, {})
+        for i, v in value.data.items():
+            self[key].data[i] = v</code></pre>
+
+    <p>
+        Let's retreive a series.
+    </p>
+
+    <pre><code>>>> df['b']
+&lt;FakeSeries: b {0: 7, 1: 8, 2: 9}></code></pre>
+
+    <p>
+        And let's set one.
+    </p>
+
+    <pre><code>>>> df['b'] = FakeSeries("not_b", {1: 'foo', 2: 'bar'})
+>>> df
+    a |     b
+-------------
+    4 |     7
+    5 |   foo
+    6 |   bar</code></pre>
+
+    <p>
+        Note how that the name of the series didn't need to align with "b", and that we were able to assign to series <code>b</code> at only indices 1 and 2.
+    </p>
+
+    <p>
+        Now to add some more smarts to our <code>FakeSeries</code>.
+    </p>
+
+    <pre><code>    # handle *
+    def __mul__(self, other: int) -> 'FakeSeries':
+        return FakeSeries(
+            self.name,
+            {i: v * other for i, v in self.data.items()},
+        )
+
+    # handle >;
+    def __gt__(self, other: int) -> 'FakeSeries':
+        return FakeSeries(
+            self.name,
+            {i: v for i, v in self.data.items() if v > other},
+        )
+
+    # handle []
+    def __getitem__(self, key: 'FakeSeries') -> 'FakeSeries':
+        return FakeSeries(
+            self.name,
+            {i: v for i, v in self.data.items() if i in key.data},
+        )</code></pre>
+
+    <ul>
+        <li><code>__mul__</code> takes an integer and returns a new <code>FakeSeries</code> with each of the values multiplied by it</li>
+        <li><code>__gt__</code> takes an integer and returns a new <code>FakeSeries</code> where each of the values is greater than it</li>
+        <li><code>__getitem__</code> takes another <code>FakeSeries</code> called <code>key</code> and returns a new <code>FakeSeries</code> with each of the values that had an index value contained in <code>key</code>'s index</li>
+    </ul>
+
+    <p>
+        We can now do some super <code>pandas</code>-y stuff, let's remind ourselves of the DataFrame we're working with.
+    </p>
+
+    <pre><code>    a |     b
+-------------
+    4 |     7
+    5 |     8
+    6 |     9</code></pre>
+
+    <pre><code>>>> df['b'] > 7
+&lt;FakeSeries: b {1: 8, 2: 9}></code></pre>
+
+    <pre><code>>>> df['a'][df['b'] > 7])
+&lt;FakeSeries: a {1: 5, 2: 6}></code></pre>
+
+    <p>
+        And to put it all together.
+    </p>
+
+    <pre><code>>>> df['mult'] = df['a'][df['b'] > 7] * 2
+>>> df
+    a |     b |  mult
+---------------------
+    4 |     7 |   NaN
+    5 |     8 |    10
+    6 |     9 |    12</code></pre>
+
+    <p>
+        Pretty cool huh!
+    </p>
+</body>
