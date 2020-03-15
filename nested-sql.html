@@ -1,0 +1,99 @@
+<head>
+    <title>leontrolski - Nested SQL Queries</title>
+    <style>
+        body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; text-shadow: 0 1px 0 #ffffff; max-width: 63%;}
+        code {background: #f0f0f0;}
+        pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
+        a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none;}
+        a:hover {border-bottom: 0;}
+    </style>
+    <link rel="stylesheet" href="https://unpkg.com/highlightjs@9.16.2/styles/default.css"></style>
+    <script src="https://unpkg.com/highlightjs@9.16.2/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</head>
+<body>
+    <h1>What nested SQL queries might look like</h1>
+    <p>
+        A <a href="http://calpaterson.com/">friend</a> was talking to me about ORM design recently. I'm a heavy <a href="https://www.sqlalchemy.org/">SQLAlchemy</a> user, but see all the reasons people dislike ORMs, so on a recent project I had a go at dipping back down to raw SQL land to see how I'd cope. 
+    </p>
+    <p>
+        I ended up finding the experience pretty frustrating - I'm sure someone will have written it before, but there's definitely some Greenspun's eleventh rule about any sufficiently complex SQL string munging codebase turning a half-arsed, bug-ridden ORM. I would include in this (although to a smaller degree) sufficiently complex code using only SQL query builder libraries (like <a href="http://knexjs.org/">knex</a> or <a href="https://docs.sqlalchemy.org/en/13/core/">SQLAlchemy core</a>).
+    </p>
+
+    <p>
+        Here's the features that postgres (or whatevever) would have to provide for me to ditch the ORM - although I'm still imagining using some kind of SQL query builder. They're vaguely in order of preference, also I have in no way have thought through the details :-)
+    </p>
+    
+    <h2>Nested join queries</h2>
+   
+    <p>
+        When I do joins between things that map to entites, I don't want to then have to manually munge them back into nested entites in my host language, I want to do something like:
+    </p>
+    
+    <pre><code>SELECT NESTED {
+    customer.name,
+    customer.email,
+    [
+        {
+            product.id,
+            product.cost,
+        }
+    ]
+    sum(product.cost) AS total_cost,
+}
+FROM customer
+LEFT OUTER JOIN NESTED product USING(customer_id)
+GROUP BY customer.customer_id</code></pre>
+    
+    <p>
+        Looks kinda similar to graphql I guess, but I want it in SQL!
+    </p>
+    
+    <p>
+        A slightly absurd thing to me is that despite all its denormalisation chat, the result of a <code>SELECT x.*, y.* FROM x  JOIN y</code> SQL query will have <code>x.*</code> values repeated over and over. I guess this has negative performance implications when <code>x</code> is wide and there are many <code>y</code>s for each <code>x</code>.
+    </p>
+    
+    <h2>Nested insertion</h2>
+    
+    <p>
+        Without this I have to do:
+    </p>
+    
+    <pre><code>INSERT INTO customer (name, email) VALUES ... RETURNING customer_id</code></pre>
+    
+    <p>
+        Then do a separate query to insert <code>product</code>s using the <code>customer_id</code>s I got back. In this case with only one level of nesting, this is fine, but things get very hairy when you start wanting to insert things with 2+ levels of nesting.
+    </p>
+    
+    <p>
+        I want to do something like:
+    </p>
+    
+    <pre><code>INSERT INTO customer
+INSERT NESTED product
+VALUES
+{
+    customer.name='oli',
+    customer.email='oli@oli.com',
+    [
+        {
+            product.customer_id=customer.customer_id,
+            product.cost=4.23,
+        }
+    ]
+}</code></pre>
+    
+    <p>
+        The syntax here seems harder to get right - this seems a bit ambiguous/inflexible.
+    </p>
+    
+    <h1>Problems/Prior work</h1>
+    
+    <ul>
+        <li>The main objection would seem to be that these new nested thingies are not rows and wouldn't play well with the existing conception of rows, esp. with filtering, grouping etc. I wonder if there's any deep thought that could be done to reconcile the two.</li>
+        <li>How would the result cursor iterate through nested things as opposed to flat rows?</li>
+        <li>Chris Date <em>(I agree with all the poor reviews of <a href="https://www.amazon.com/Database-Depth-Relational-Theory-Practitioners/dp/0596100124">this</a> book, but still can't help but love it to the point where it probably drove the creation of <a href="https://github.com/leontrolski/dawdle/blob/master/README.md">this</a> project)</em> talks about "relations with relation valued attributes". This <em>may</em> be the purist's answer to my problems, but I guess I'm more concerned with a practical way in which you might extend SQL.</li>
+        <li>Have I missed some other obvious features that would be super useful?</li>
+        <li>Someone else <em>must</em> have described nearly the same as above in some other forum - it doesn't seem particularly novel.</li>
+    </ul>
+
