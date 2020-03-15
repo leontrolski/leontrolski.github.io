@@ -50,7 +50,7 @@ GROUP BY customer.customer_id</code></pre>
     </p>
     
     <p>
-        A slightly absurd thing to me is that despite all its denormalisation chat, the result of a <code>SELECT x.*, y.* FROM x  JOIN y</code> SQL query will have <code>x.*</code> values repeated over and over. I guess this has negative performance implications when <code>x</code> is wide and there are many <code>y</code>s for each <code>x</code>.
+        A slightly absurd thing to me is that despite all its normalisation chat, the result of a <code>SELECT x.*, y.* FROM x  JOIN y</code> SQL query will have <code>x.*</code> values repeated over and over. I guess this has negative performance implications when <code>x</code> is wide and there are many <code>y</code>s for each <code>x</code>.
     </p>
     
     <h2>Nested insertion</h2>
