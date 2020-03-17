@@ -132,14 +132,14 @@
     def __gt__(self, other: int) -> 'FakeSeries':
         return FakeSeries(
             self.name,
-            {i: v for i, v in self.data.items() if v > other},
+            {i: v > other for i, v in self.data.items()},
         )
 
     # handle []
     def __getitem__(self, key: 'FakeSeries') -> 'FakeSeries':
         return FakeSeries(
             self.name,
-            {i: v for i, v in self.data.items() if i in key.data},
+            {i: v for i, v in self.data.items() if key.data.get(i, False)},
         )</code></pre>
 
     <ul>
@@ -159,7 +159,7 @@
     6 |     9</code></pre>
 
     <pre><code>>>> df['b'] > 7
-&lt;FakeSeries: b {1: 8, 2: 9}></code></pre>
+&lt;FakeSeries: b {0: False, 1: True, 2: True}></code></pre>
 
     <pre><code>>>> df['a'][df['b'] > 7]
 &lt;FakeSeries: a {1: 5, 2: 6}></code></pre>
