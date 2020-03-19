@@ -17,11 +17,11 @@
         A <a href="http://calpaterson.com/">friend</a> was talking to me about ORM design recently. I'm a heavy <a href="https://www.sqlalchemy.org/">SQLAlchemy</a> user, but see all the reasons people dislike ORMs, so on a recent project I had a go at dipping back down to raw SQL land to see how I'd cope. 
     </p>
     <p>
-        I ended up finding the experience pretty frustrating - I'm sure someone will have written it before, but there's definitely some Greenspun's eleventh rule about any sufficiently complex SQL string munging codebase turning a half-arsed, bug-ridden ORM. I would include in this (although to a smaller degree) sufficiently complex code using only SQL query builder libraries (like <a href="http://knexjs.org/">knex</a> or <a href="https://docs.sqlalchemy.org/en/13/core/">SQLAlchemy core</a>).
+        I ended up finding the experience pretty frustrating - I'm sure someone will have written it before, but there's definitely some Greenspun's eleventh rule about any sufficiently complex SQL string munging codebase turning into a half-arsed, bug-ridden ORM. I would include in this (although to a smaller degree) sufficiently complex code using only SQL query builder libraries (like <a href="http://knexjs.org/">knex</a> or <a href="https://docs.sqlalchemy.org/en/13/core/">SQLAlchemy core</a>).
     </p>
 
     <p>
-        Here's the features that postgres (or whatevever) would have to provide for me to ditch the ORM - although I'm still imagining using some kind of SQL query builder. They're vaguely in order of preference, also I have in no way have thought through the details :-)
+        Here's the features that postgres (or whatevever) would have to provide for me to ditch the ORM - although I'm still imagining using some kind of SQL query builder. They're vaguely in order of preference, also I've in no way thought through the details :-)
     </p>
     
     <h2>Nested join queries</h2>
