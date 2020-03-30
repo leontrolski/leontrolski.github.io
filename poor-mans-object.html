@@ -1,0 +1,231 @@
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<head>
+    <title>leontrolski - Poor man's object</title>
+    <style>
+        body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; text-shadow: 0 1px 0 #ffffff; max-width: 63%;}
+        @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+        code {background: #f0f0f0;}
+        pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
+        a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none;}
+        a:hover {border-bottom: 0;}
+    </style>
+    <link rel="stylesheet" href="https://unpkg.com/highlightjs@9.16.2/styles/default.css"></style>
+    <script src="https://unpkg.com/highlightjs@9.16.2/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</head>
+<body>
+    <h1>Making python style class system from rudimentary javascript</h1>
+    <p>
+        It's been said many times before, <a href="https://wiki.c2.com/?ClosuresAndObjectsAreEquivalent">objects are a poor man's closures are a poor man's objects</a>, I thought I'd try bring that home by implementing a limited bit of the python object system with a small subset of javascript.
+    </p>
+    <p>
+        You can play around with these in the <a href="https://javascript.info/devtools">developer tools console</a>.
+    </p>
+    <p>
+        Let's start with a basic subset of javascript.
+    </p>
+    <p>Values are strings or arrays of values:</p>
+    <pre><code>"string", [value]</pre></code>
+    <p>We can assign values to names:</p>
+        <pre><code>const a = "foo"</pre></code>
+    <p>We can get the nth element of an array with:</p>
+    <pre><code>array[n]</pre></code>
+    <p>We can concatenate strings:</p>
+    <pre><code>>>> "hello " + "oli"
+"hello oli"</pre></code>
+    <p>We can loop over arrays:</p>
+    <pre><code>for (const n of l){do something}</pre></code>
+    <p>If two strings are equal, we can do something:</p>
+    <pre><code>if (a === b){do something}</pre></code>
+    <p>We have functions that take arguments and return something:</p>
+    <pre><code>(x, y)=>{return z}</pre></code>
+    <p>We can refer to all the arguments of a function as an array:</p>
+    <pre><code>(...args)=>{return args}</pre></code>
+    <p>Functions are values too, we can pass them around:</p>
+    <pre><code>const addFour = (a)=>{return a + 4}
+const addNine = (a)=>{return a + 9}
+const adders = [addFour, addNine]
+
+>>> adders[0](10)
+14
+>>> adders[1](10)
+19</pre></code>
+    <p>
+        Assignments within the curly brackets of a function are visible to inner functions within the same curly brackets (lexical scope). These values are available for the lifetime of the inner function (closures). For example:
+    </p>
+    <pre><code>const makeAdder = (b)=>{
+    const adder = (a)=>{
+        return a + b
+    }
+    return adder
+}
+const addThree = makeAdder(3)
+const addSeven = makeAdder(7)
+
+>>> addThree(5)
+8
+>>> addSeven(6)
+13</pre></code>
+    <p>Now let's make something slightly more useful:</p>
+    <pre><code>const makeDict = (l)=>{
+    const getter = (getk)=>{
+        for (const kv of l){
+            if (kv[0] === getk){
+                return kv[1]
+            }
+        }
+    }
+    return getter
+}
+
+const d = makeDict([
+    ["foo", "1"],
+    ["bar", "2"],
+    ["baz", "3"],
+])
+
+>>> d("bar")
+"2"</pre></code>
+    <p>
+        OK, looks familiar, now let's imagine that we are going to use this <code>makeDict(...)</code> construct again and again. The program that runs our javascript (the interpreter) is going to transform a cuter bit of syntax (shown below) into our <code>makeDict(...)</code> code before it runs it (syntactic sugar):
+    </p>
+    <pre><code>const d = {
+    "foo": "1",
+    "bar": "2",
+    "baz": "3",
+}
+>>> d["bar"]
+"2"</pre></code>
+    <p>
+        That's a bit better, but let's make the transformation even cuter:
+    </p>
+    <pre><code>const d = {
+    foo: "1",
+    bar: "2",
+    baz: "3",
+}
+>>> d.bar
+"2"</pre></code>
+    <p>
+        Remember, when we run our program containing <code>const a = {b: "c"}</code>, <code>a.b</code>, our interpereter will transform it into <code>const a = makeDict([["b", "c"]])</code>, <code>a["b"]</code> before it runs it.
+    </p>
+    <p>
+        I'm going to cheat a bit here and allow us to assign to these dicts too:
+    </p>
+    <pre><code>d["qux"] = "4"</pre></code>
+    <p>
+        The interpereter would transform this in a similar way to the sugar we've invented for getting dict values.
+    </p>
+    <p>
+        Also, we're going to introduce a way to get all the keys of an object as an array:
+    </p>
+    <pre><code>>>> Object.keys({a: "1", b: "2"})
+["a", "b"]</pre></code>
+    <p>
+        Now, for the tough bit, we want to make an interface that looks pretty similar to python-style classes:
+    </p>
+    <pre><code>>>> const daisy = Animal("Daisy", "32")
+>>> daisy.age
+"32"
+>>> daisy.greet()
+"My name is Daisy and I am 32 years old"</pre></code>
+    <p>
+        We want to be able to define our class, again similar to python, like:
+    </p>
+    <pre><code>const Animal = ClassMaker({
+    __init__: (self, name, age)=>{
+        self.name = name
+        self.age = age
+    },
+    greet: (self)=>{
+        return "My name is " + self.name + " and I am " + self.age + " years old"
+    },
+})</pre></code>
+    <p>
+        So we write our class maker as such:
+    </p>
+    <pre><code>const ClassMaker = (cls)=>{
+    return (...args)=>{
+        const self = {}
+
+        for (const k of Object.keys(cls)){
+            self[k] = (...args)=>{
+                return cls[k](self, ...args)
+            }
+        }
+
+        self.__init__(...args)
+
+        return self
+    }
+}</pre></code>
+    <p>
+        Test it in the console, wahoo, it works! Now, just for good measure, let's add inheritance:
+    </p>
+    <pre><code>const ClassMaker = (parent, cls)=>{
+    const combined = {}
+    for (const k of Object.keys(parent)){
+        combined[k] = parent[k]
+    }
+    for (const k of Object.keys(cls)){
+        if (cls[k]){
+            combined[k] = cls[k]
+        }
+    }
+
+    const init = (...args)=>{
+        const self = {}
+
+        for (const k of Object.keys(combined)){
+            self[k] = (...args)=>{
+                return combined[k](self, ...args)
+            }
+        }
+
+        self.__init__(...args)
+
+        return self
+    }
+
+    for (const k of Object.keys(combined)){
+        init[k] = combined[k]
+    }
+
+    return init
+}</pre></code>
+    <p>
+        It shouldn't be too much of a stretch to image how the interpereter might transform the python-like class:
+    </p>
+    <pre><code>class Animal(Object){
+    const __init__ = (self, name, age)=>{
+        self.name = name
+        self.age = age
+    }
+    const greet = (self)=>{
+        return "My name is " + self.name + " and I am " + self.age + " years old"
+    }
+}
+
+class Dog(Animal){
+    const bark = (self, owner)=>{
+        return self.name + ": Hullo " + owner
+    }
+}</pre></code>
+
+    <p>Into:</p>
+    <pre><code>const Animal = ClassMaker(Object(), {
+    __init__: (self, name, age)=>{
+        self.name = name
+        self.age = age
+    },
+    greet: (self)=>{
+        return "My name is " + self.name + " and I am " + self.age + " years old"
+    },
+})
+
+const Dog = ClassMaker(Animal, {
+    bark: (self, owner)=>{
+        return self.name + ": Hullo " + owner
+    }
+})</pre></code>
+</body>
