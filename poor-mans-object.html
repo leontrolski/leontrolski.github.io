@@ -107,7 +107,7 @@ const d = makeDict([
 >>> d.bar
 "2"</pre></code>
     <p>
-        Remember, when we run our program containing <code>const a = {b: "c"}</code>, <code>a.b</code>, our interpereter will transform it into <code>const a = makeDict([["b", "c"]])</code>, <code>a["b"]</code> before it runs it.
+        Remember, when we run our program containing <code>const a = {b: "c"}</code>, <code>a.b</code>, our interpereter will transform it into <code>const a = makeDict([["b", "c"]])</code>, <code>a("b")</code> before it runs it.
     </p>
     <p>
         I'm going to cheat a bit here and allow us to assign to these dicts too:
@@ -148,15 +148,15 @@ const d = makeDict([
     // returns a function that will take arguments that
     // we then pass to __init__
     return (...initArgs)=>{
-        // create the instance's `self` to store any
+        // create the instance's self to store any
         // data/methods on
         const self = {}
 
         // for each method on the class
         for (const k of Object.keys(cls)){
-            // we take `cls.f(self, a, b)` and make
-            // `self.f(a, b)` by partially applying
-            // `f` with `self=self`
+            // we take cls.f(self, a, b) and make
+            // self.f(a, b) by partially applying
+            // f with self=self
             self[k] = (...args)=>{
                 return cls[k](self, ...args)
             }
