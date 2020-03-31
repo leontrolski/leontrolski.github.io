@@ -145,22 +145,35 @@ const d = makeDict([
         So we write our class maker as such:
     </p>
     <pre><code>const ClassMaker = (cls)=>{
-    return (...args)=>{
+    // returns a function that will take arguments that
+    // we then pass to __init__
+    return (...initArgs)=>{
+        // create the instance's `self` to store any
+        // data/methods on
         const self = {}
 
+        // for each method on the class
         for (const k of Object.keys(cls)){
+            // we take `cls.f(self, a, b)` and make
+            // `self.f(a, b)` by partially applying
+            // `f` with `self=self`
             self[k] = (...args)=>{
                 return cls[k](self, ...args)
             }
         }
 
-        self.__init__(...args)
-
+        // call __init__ and then return the instance
+        self.__init__(...initArgs)
         return self
     }
 }</pre></code>
     <p>
-        Test it in the console, wahoo, it works! Now, just for good measure, let's add inheritance:
+        Test it in the console, wahoo, it works!
+    </p>
+    
+    <h3>Bonus section</h3>
+    <p>
+        Now, just for good measure, let's add inheritance:
     </p>
     <pre><code>const ClassMaker = (parent, cls)=>{
     const combined = {}
@@ -173,7 +186,7 @@ const d = makeDict([
         }
     }
 
-    const init = (...args)=>{
+    const init = (...initArgs)=>{
         const self = {}
 
         for (const k of Object.keys(combined)){
@@ -182,7 +195,7 @@ const d = makeDict([
             }
         }
 
-        self.__init__(...args)
+        self.__init__(...initArgs)
 
         return self
     }
