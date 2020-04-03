@@ -1,0 +1,96 @@
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<head>
+    <title>leontrolski - calendar</title>
+    <style>
+        body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; text-shadow: 0 1px 0 #ffffff; max-width: 63%;}
+        @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+    </style>
+    <script src="33-line-react.js"></script>
+</head>
+<body>
+    <p>
+        Inspect the nodes in devtools to show the DOM elements are being updated efficiently.
+        <div id="calendar"></div>
+    </p>
+    <style>
+        .calendar{width:18em;}
+        .day{border-bottom:solid 1px black;}
+        .day-button{background:grey;}
+        .date-button{height:2em;width:100%;background:pink;}
+        .date-button-picked{background:green;}
+        .date-button-now{color:red;}
+    </style>
+    <script>
+        const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+        const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+        const now = new Date()
+        function firstDayOfMonth(year, month){
+            const date = new Date(year, month, 1)
+            return (date.getDay() + 6) % 7
+        }
+        function lengthOfMonth(year, month){
+            const date = new Date(year, (month + 1) % 12, 0)
+            return date.getDate()
+        }
+        function toString(year, month, date){
+            return `${year}-${(month + 1).toString().padStart(2, '0')}-${date.toString().padStart(2, '0')}`
+        }
+        function getRows(year, month){
+            let dayI = firstDayOfMonth(year, month)
+            let rowI = 0
+            const rows = [0, 1, 2, 3, 4, 6].map(_=>days.map(_=>false))
+            for(let i in [...Array(lengthOfMonth(year, month))]){
+                rows[rowI][dayI] = parseInt(i) + 1
+                if(dayI === 6){dayI = 0; rowI += 1}
+                else{dayI += 1}
+            }
+            return rows
+        }
+
+        const state = {picked: {}, year: now.getFullYear(), month: now.getMonth()}
+        function incMonth(){
+            if(state.month == 11){state.month = 0; state.year += 1}
+            else{state.month += 1}
+            renderCalendar()
+        }
+        function decMonth(){
+            if(state.month === 0){state.month = 11; state.year -= 1}
+            else{state.month -= 1}
+            renderCalendar()
+        }
+        function toggle(year, month, date){
+            const dateStr = toString(year, month, date)
+            if(state.picked[dateStr]){delete state.picked[dateStr]}
+            else{state.picked[dateStr] = true}
+            renderCalendar()
+        }
+
+        const DateButton = date=>m('button.date-button',
+            {
+                class: state.picked[toString(state.year, state.month, date)]? ['date-button-picked'] : [],
+                onclick: _=>toggle(state.year, state.month, date),
+            },
+            m('span',
+                {class: (state.month === now.getMonth() && date === now.getDate())? ['date-button-now'] : []},
+                date,
+            ),
+        )
+        const Month = ()=>m('.month',
+            months[state.month], ' ', state.year,
+        )
+        const Cal = ()=>m('',
+            Month(),
+            m('.arrows',
+                m('button.day-button', {onclick: decMonth}, '⟵'),
+                m('button.day-button', {onclick: incMonth}, '⟶')),
+            m('table.calendar',
+                m('thead', days.map(day=>m('th.day', day))),
+                m('tbody', getRows(state.year, state.month).map(row=>m('tr', row.map(
+                    date=>m('td', date?  DateButton(date) : null)))))),
+            m('ul', Object.keys(state.picked).sort().map(k=>state.picked[k]? m('li', k) : null)),
+        )
+        const renderCalendar = ()=>m.render(document.getElementById('calendar'), {children: [Cal()]})
+        renderCalendar()
+    </script>
+</body>

@@ -1,0 +1,166 @@
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<head>
+    <title>leontrolski - 33 line React</title>
+    <style>
+        body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; text-shadow: 0 1px 0 #ffffff; max-width: 63%;}
+        @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+        code {background: #f0f0f0;}
+        pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
+        a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none;}
+        a:hover {border-bottom: 0;}
+    </style>
+    <link rel="stylesheet" href="https://unpkg.com/highlightjs@9.16.2/styles/default.css"></style>
+    <script src="https://unpkg.com/highlightjs@9.16.2/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    <!-- Here it is! -->
+    <script src="33-line-react.js"></script>
+</head>
+<body>
+    <h1>33 line React</h1>
+    <p>
+        <a href="https://reactjs.org/">React</a>
+        <ul>
+            <li>you pass in a function that <em>takes</em> state and <em>returns</em> a virtual DOM (just a tree of plain ol' <code>js</code> objects)</li>
+            <li>renders that virtual DOM as a <em>real</em> DOM in the browser</li>
+            <li>if you change the state, it runs the function again, this returns a new virtual DOM</li>
+            <li>it efficiently updates the real DOM so that it matches the new virtual DOM</li>
+        </ul>
+        It also does a load of other crap as well, but we're going to ignore that.
+    </p>
+    <p>
+        In this post, I'm going to make the smallest React-like thing that can do the above. It's very <a href="https://mithril.js.org/">mithril</a> influenced.
+    </p>
+    <p>
+        Here is a sample <a href="33-line-react-calendar.html">calendar picker application</a> that uses the <a href="https://github.com/leontrolski/leontrolski.github.io/blob/master/33-line-react.js">library</a>.
+    </p>
+    <p>
+        <em>Lots of the code looks pretty code-golfy - I promise I don't do stuff like this at work, neither should you :-)</em>
+    </p>
+    <h2>Noughts and crosses</h2>
+    <p>
+        We're going to make this noughts and crosses game:
+        <div id="noughts"></div>
+    </p>
+    <style>
+        .o{background:red;}
+        .x{background:blue;}
+        .cell{height:4em;width:4em;border:1px solid black;}
+    </style>
+    <script>
+        let currentPlayer = 'o'
+        let winner = null
+        const g = [['', '', ''], ['', '', ''], ['', '', '']]  // grid
+
+        const move = (value, i, j)=>{
+            if (value !== '') return
+            g[i][j] = currentPlayer
+            currentPlayer = currentPlayer === 'x'? 'o' : 'x'
+            const winners = [
+                ...[0, 1, 2].map(i=>[g[i][0], g[i][1], g[i][2]].join('')),
+                ...[0, 1, 2].map(j=>[g[0][j], g[1][j], g[2][j]].join('')),
+                [g[0][0], g[1][1], g[2][2]].join(''),
+                [g[2][0], g[1][1], g[0][2]].join(''),
+            ]
+            if(winners.includes('xxx')) winner = 'x'
+            if(winners.includes('ooo')) winner = 'o'
+            renderNoughts()
+        }
+
+        const Cell = (value, i, j)=>m('button.cell',
+            {onclick: ()=>move(value, i, j)}, value
+        )
+        const Noughts = ()=>m('',
+            winner
+                ? m('marquee', `winner: ${winner}`)
+                : m('h3', `current player: ${currentPlayer}`),
+            m('table', g.map(
+                (row, i)=>m('tr', row.map(
+                    (value, j)=>m('td', {class: value}, Cell(value, i, j)))))),
+        )
+
+        const renderNoughts = ()=>m.render(
+            document.getElementById('noughts'),
+            {children: [Noughts()]},
+        )
+        renderNoughts()
+    </script>
+    <p>
+        Now let's look at the code to this, you can also just view the page source if you want.
+    </p>
+    <pre><code>let currentPlayer = 'o'
+let winner = null
+const g = [['', '', ''], ['', '', ''], ['', '', '']]  // grid
+
+const move = (value, i, j)=>{
+    // ... game logic goes here
+    renderNoughts()
+}
+
+const Cell = (value, i, j)=>m('button.cell',
+    {onclick: ()=>move(value, i, j)}, value
+)
+const Noughts = ()=>m('',
+    winner
+        ? m('marquee', `winner: ${winner}`)
+        : m('h3', `current player: ${currentPlayer}`),
+    m('table', g.map(
+        (row, i)=>m('tr', row.map(
+            (value, j)=>m('td', {class: value}, Cell(value, i, j)))))),
+)
+
+const renderNoughts = ()=>m.render(
+    document.getElementById('noughts'),
+    {children: [Noughts()]},
+)
+renderNoughts()</code></pre>
+    <p>Cute, so what's going on?</p>
+    <p>First we defined some state:</p>
+    <pre><code>let currentPlayer = 'o'
+let winner = null
+const g = [['', '', ''], ['', '', ''], ['', '', '']]  // grid</code></pre>
+    <p>These hold the state of our game, we will mutate them.</p>
+    <pre><code>const move = (value, i, j){...}</code></pre>
+    <p>This function makes a move in the game, it takes <code>'x'</code> or <code>'o'</code> along with 2 integer coordinates. It will mutate all the state variables to reflect the new state of the game. After that, it calls <code>renderNoughts()</code>, this is a call to rerender the game - but we'll come back to that.</p>
+    <p>Next we define the functions that return virtual DOMs, <code>Noughts</code> and <code>Cell</code>.</p>
+    <p>
+        The <code>m(...)</code> calls take:
+        <ul>
+            <li>a tag name (eg. <code>'tr'</code>), with <code>.</code>-separated class names</li>
+            <li>(optionally) a <code>{string: any}</code> object containing all the attributes to attach to the DOM node</li>
+            <li>an arbitrarily nested list of <b>children</b> - these are other virtual DOM nodes or strings of text</li>
+        </ul>
+        And return virtual DOM elements, for example, calling <code>Noughts()</code> would return:
+    </p>
+    <pre><code>{
+    tag: 'div',
+    attrs: {},
+    classes: [],
+    children: [
+        {
+            tag: 'h3',
+            attrs: {},
+            classes: [],
+            children: [
+                'current player: x'
+            ]
+        },
+        {
+            tag: 'table',
+            attrs: {},
+            classes: [],
+            children: [
+                {
+                    tag: 'tr',
+                    attrs: {},
+                    classes: [],
+                    children: [
+...</code></pre>
+    <p>Next we make the function <code>renderNoughts()</code>, when you call it, it will call our <code>Noughts</code> function, and attempt to efficiently render the resulting virtual DOM onto <code>document.getElementById('noughts')</code></p>
+
+    <h2>How does <code>m</code> work?</h2>
+    <p>
+        Here's the source <a href="https://github.com/leontrolski/leontrolski.github.io/blob/master/33-line-react-with-comments.js">with</a> and <a href="https://github.com/leontrolski/leontrolski.github.io/blob/master/33-line-react.js">without</a> comments.
+    <p>
+
+</body>
