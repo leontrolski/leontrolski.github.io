@@ -4,39 +4,34 @@ function tableCellClick(e, prop){
     e.preventDefault()
     e.stopPropagation()
 }
-const tableCellClickCache = {}
-function getTableCellClick(prop){
-    if (tableCellClickCache[prop]) return tableCellClickCache[prop]
-    return tableCellClickCache[prop] = e=>tableCellClick(e, prop)
-}
-const renderTableCell = prop=>m('td.TableCell',
-    {'data-text': prop, onclick: getTableCellClick(prop)},
+const TableCell = prop=>m('td.TableCell',
+    {'data-text': prop, onclick: e=>tableCellClick(e, prop)},
     prop,
 )
-const renderTableRow = data=>m('tr.TableRow',
+const TableRow = data=>m('tr.TableRow',
     {class: data.active? ['active'] : [], 'data-id': data.id},
-    renderTableCell(`#${data.id}`),
-    data.props.map(renderTableCell),
+    TableCell(`#${data.id}`),
+    data.props.map(TableCell),
 )
-const renderTable = data=>m('table.Table', m('tbody', data.table.items.map(renderTableRow)))
+const Table = data=>m('table.Table', m('tbody', data.table.items.map(TableRow)))
 const animBoxStyle = time=>`
     border-radius:${time % 10}px;
     background:rgba(0,0,0,${0.5 + ((time % 10) / 10)});
 `
-const renderAnimBox = props=>m('.AnimBox', {style: animBoxStyle(props.time), 'data-id': props.id})
-const renderAnim =data=>m('.Anim', data.anim.items.map(renderAnimBox))
-const renderTreeLeaf = props=>m('li.TreeLeaf', props.id)
-const renderTreeNode = data=>m('ul.TreeNode', data.children.map(n=>n.container? renderTreeNode(n) : renderTreeLeaf(n)))
-const renderTree = data=>m('.Tree', renderTreeNode(data.tree.root))
+const AnimBox = props=>m('.AnimBox', {style: animBoxStyle(props.time), 'data-id': props.id})
+const Anim =data=>m('.Anim', data.anim.items.map(AnimBox))
+const TreeLeaf = props=>m('li.TreeLeaf', props.id)
+const TreeNode = data=>m('ul.TreeNode', data.children.map(n=>n.container? TreeNode(n) : TreeLeaf(n)))
+const Tree = data=>m('.Tree', TreeNode(data.tree.root))
 
 // test
-uibench.init("React33", "0.0.1")
+uibench.init("33-line", "0.0.1")
 function renderState(container, state){
     const location = state && state.location
     const fs = {
-        table: renderTable,
-        anim: renderAnim,
-        tree: renderTree,
+        table: Table,
+        anim: Anim,
+        tree: Tree,
     }
     m.render(container, {children: [m('.Main', fs[location](state))]})
 }
@@ -48,13 +43,6 @@ document.addEventListener("DOMContentLoaded", (e) => {
     container = document.querySelector("#App")
     uibench.run(state=>renderState(container, state), renderSamples)
 })
-// const [x, row] = [100, [...Array(4)].map((_, i)=>i)]
-// const state = {
-//     location: 'table',
-//     table: {
-//         items: [...Array(x)].map((_, i)=>({active: false, id: i, props: row})),
-//     }
-// }
 
 // Framework:
 const m = (...args)=>{
