@@ -38,10 +38,18 @@ function renderState(container, state){
 function renderSamples(samples){
     document.body.innerHTML = "<pre>" + JSON.stringify(samples, null, " ") + "</pre>"
 }
+let container
 document.addEventListener("DOMContentLoaded", (e) => {
-    const container = document.querySelector("#App")
+    container = document.querySelector("#App")
     uibench.run(state=>renderState(container, state), renderSamples)
 })
+// const [x, row] = [3, [...Array(2)].map((_, i)=>i)]
+// const state = {
+//     location: 'table',
+//     table: {
+//         items: [...Array(x)].map((_, i)=>({active: false, id: i, props: row})),
+//     }
+// }
 
 // Framework:
 const m = (...args)=>{
@@ -62,10 +70,10 @@ m.update = (el, v)=>{
     for (const name of el.classList) if (!v.classes.includes(name)) el.classList.remove(name)
     const normal = Object.keys(v.attrs).filter(name=>!name.startsWith('data-'))
     for (const name of normal) if (el[name] !== v.attrs[name]) el[name] = v.attrs[name]
-    for (const {name} of el.attributes) if (!normal.includes(name) && name !== 'class') el.removeAttribute(name)
-    const data = Object.keys(v.attrs).filter(name=>name.startsWith('data-'))
-    for (const name of data) if (el.dataset[name.slice(5)] !== `${v.attrs[name]}`) el.dataset[name.slice(5)] = v.attrs[name]
-    for (const name of Object.keys(el.dataset)) if (!data.includes(`data-${name}`)) delete el.dataset[name.slice(5)]
+    for (const {name} of el.attributes) if (!normal.includes(name) && name !== 'class' && !name.startsWith('data-')) el.removeAttribute(name)
+    const data = Object.keys(v.attrs).filter(name=>name.startsWith('data-')).map(name=>name.slice(5))
+    for (const name of data) if (el.dataset[name] !== `${v.attrs[`data-${name}`]}`) el.dataset[name] = v.attrs[`data-${name}`]
+    for (const name of Object.keys(el.dataset)) if (!data.includes(name)) delete el.dataset[name]
 }
 m.makeEl = v=>v.__m? document.createElement(v.tag) : document.createTextNode(v)
 m.render = (parent, v)=>{
