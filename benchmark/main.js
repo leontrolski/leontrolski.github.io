@@ -4,8 +4,13 @@ function tableCellClick(e, prop){
     e.preventDefault()
     e.stopPropagation()
 }
+const tableCellClickCache = {}
+function getTableCellClick(prop){
+    if (tableCellClickCache[prop]) return tableCellClickCache[prop]
+    return tableCellClickCache[prop] = e=>tableCellClick(e, prop)
+}
 const renderTableCell = prop=>m('td.TableCell',
-    {'data-text': prop, onclick: e=>tableCellClick(e, prop)},
+    {'data-text': prop, onclick: getTableCellClick(prop)},
     prop,
 )
 const renderTableRow = data=>m('tr.TableRow',
@@ -43,7 +48,7 @@ document.addEventListener("DOMContentLoaded", (e) => {
     container = document.querySelector("#App")
     uibench.run(state=>renderState(container, state), renderSamples)
 })
-// const [x, row] = [3, [...Array(2)].map((_, i)=>i)]
+// const [x, row] = [100, [...Array(4)].map((_, i)=>i)]
 // const state = {
 //     location: 'table',
 //     table: {
@@ -75,17 +80,27 @@ m.update = (el, v)=>{
     for (const name of data) if (el.dataset[name] !== `${v.attrs[`data-${name}`]}`) el.dataset[name] = v.attrs[`data-${name}`]
     for (const name of Object.keys(el.dataset)) if (!data.includes(name)) delete el.dataset[name]
 }
+m.fresh = (el, v)=>{
+    if (!v.__m) return el.data = v
+    el.classList.add(...v.classes)
+    const normal = Object.keys(v.attrs).filter(name=>!name.startsWith('data-'))
+    for (const name of normal) el[name] = v.attrs[name]
+    const data = Object.keys(v.attrs).filter(name=>name.startsWith('data-')).map(name=>name.slice(5))
+    for (const name of data) el.dataset[name] = v.attrs[`data-${name}`]
+}
 m.makeEl = v=>v.__m? document.createElement(v.tag) : document.createTextNode(v)
 m.render = (parent, v)=>{
     const olds = parent.childNodes || []
     const news = v.children || []
     for (const _ of Array(Math.max(0, olds.length - news.length))) parent.removeChild(parent.lastChild)
     for (const [i, child] of news.entries()){
-        let el = olds[i] || m.makeEl(child)
+        const original = olds[i]
+        let el = original || m.makeEl(child)
         if (!olds[i]) parent.appendChild(el)
         const mismatch = (el.tagName || '') !== (child.tag || '').toUpperCase()
         if (mismatch) (el = m.makeEl(child)) && parent.replaceChild(el, olds[i])
-        m.update(el, child)
+        if (!original || mismatch) m.fresh(el, child)
+        else m.update(el, child)
         m.render(el, child)
     }
 }
