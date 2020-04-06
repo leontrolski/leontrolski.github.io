@@ -1,7 +1,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <head>
-    <title>leontrolski - 33 line React</title>
+    <title>leontrolski - 33 line React - thoughts</title>
     <style>
         body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; text-shadow: 0 1px 0 #ffffff; max-width: 63%;}
         @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
@@ -16,44 +16,19 @@
 </head>
 <body>
     <h1>33 line React - thoughts</h1>
-
-    Thanks
-
     <p>
         <em><a href="33-line-react.html">Original post</a>, <a href="https://news.ycombinator.com/item?id=22776753">original discussion</a>.</em>
     </p>
 
-    <h2>TLDR</h2>
+    <p>
+        There were lots of insightful comments in the hacker news thread - thanks, I thought I'd write up some of the thoughts that came out of it. Looking now, this may just be a rant piece - I'll let you decide. In a vaguely Top-Gear-esque way, this post is split into <a href="#style">style</a>, <a href="#performance">performance</a>, <a href="#conclusions">conclusions</a>.
+    </p>
+
+    <h1>TLDR</h1>
     <p>Have a go building your next frontend with <em>an as simple as possible</em> <code>pageState -> DOM</code> model, maybe use <a href="https://mithril.js.org/">mithril</a>.</p>
 
-    <h2>Performance</h2>
-    <p>
-        I had a very unscientific play around with this neat <a href="https://localvoid.github.io/uibench/">benchmarking tool</a>, you can use the <code>Custom URL</code> "http://leontrolski.github.io/benchmark" to compare yourself. I'm going to keep the performance figures intentionally vague - I was comparing Vanilla JS, React 16 and 33-line.
-        <ul>
-            <li>React tended to be faster than 33-line by a factor of 2 to 10.</li>
-            <li>The Vanilla JS solution would often outperform 33-line.</li>
-            <li>For smaller DOM trees, often the <em>winner</em> was Vanilla JS (small discussion below).</li>
-            <li>Occasionally (particularly on the <code>tree</code> tests for some reason), 33-line would be fastest, but only by a tad.</li>
-            <li>The <a href="https://localvoid.github.io/uibench-react/16/main.js">React code</a> was (gzipped) 40kb of minified ugliness, the <a href="https://leontrolski.github.io/benchmark/main.js">33-line code</a> was (gzipped) 1.8kb of bog standard JS.</li>
-            <li>The "JS Init Time" of react would be 2 to 10 times slower than 33-line js, think in the order of 100ms.</li>
-            <li>The performance of 33-line got proportially worse as the number of divs increased, this makes sense, given the diff algorithm is <em>basic</em>.</li>
-        </ul>
-    </p>
-    <h3>Performance - Notes</h3>
-    <p>
-        The <a href="https://github.com/leontrolski/leontrolski.github.io/blob/4f9cea8a5afc55252d38eb1aa1a20eda264a880f/benchmark/main.js">Vanilla JS one</a> just shoves strings of html together and does a big <code>container.innerHTML =</code>, nice and simple. On the other hand, string munging sucks for obvious reasons. Also, you end up with a lot of updates flashing around in the devtools inspector - this alone might kill the approach for a lot of people.
-    </p>
-    <p>
-        I had to write a <a href="https://github.com/leontrolski/leontrolski.github.io/blob/54bb7ff011065f0d46ae8f2e3c841dc3aa30c157/benchmark/main.js#L67-L69">few extra lines</a> to handle <code>data-</code> attributes, that cranked it up to 37 lines. I think if you were to try productionise this toy code you'd end up with about 3/4 of a <a href="https://mithril.js.org/">mithril</a>.
-    </p>
-    <p>
-        I did one run with the <a href="https://github.com/Freak613/stage0">stage0</a> library thingy, the code was a bit more <a href="https://github.com/Freak613/stage0/blob/master/examples/uibench/app.js">gnarly</a>, but it was <em>rapid</em>. If I was writing eg. a game or a big spreadsheet app that needed high performance, I'd definitely be considering a library in this space.
-    </p>
-    <p>
-        Things that I'd imagine React particularly excels at versus a naive approach would be things like clock counters/animations - small bits of the DOM changing at high frequency - the tradeoff for this performance seems to be API complexity. If one is to use a simpler <code>pageState -> DOM</code> model with few library hooks into the guts, it may be necessary to implement clocks etc. out of band of the normal library's render loop.
-    </p>
 
-    <h2><code>.jsx</code>, state management and aesthetics</h2>
+    <h2 id="style"><code>.jsx</code>, state management and aesthetics</h2>
     <p>
         The React homepage, has the following snippet:
     </p>
@@ -82,15 +57,15 @@
     }
 }</code></pre>
     <p>
-        Versus, for example, the code for the noughts and crosses in my <a href="33-line-react.html">original post</a>, there's a huge amount of ceremony. I have to:
-        <ul>
+        Versus, for example, the code for the noughts and crosses in my <a href="33-line-react.html">original post</a>, there's a huge amount of ceremony here. I have to:
+        <ul id="ceremony">
             <li>Do some OO gubbins.</li>
             <li>Wrap all calls to update the state with <code>this.setState(...)</code>.</li>
             <li>Conform with quite a large API.</li>
             <li>Constantly pass state around with <code>props</code> and <code>this.state</code> (I understand some of this has been sorted with hooks, right?).</li>
             <li>Compile the JSX to boring js.</li>
         </ul>
-        There are alleged performance/codebase management reasons for some of these, but I remain a bit sceptical of their applicability.
+        There are alleged performance/codebase management reasons for some of these, but I remain a bit sceptical of their applicability to "normal" sized web applications.
     </p>
     <h3>Ezz-thetic</h3>
     <p>
@@ -121,17 +96,51 @@
 }</code></pre>
     <h3>Routing</h3>
     <p>
-        As a consumer of webpages, I'm not sure I've ever seen the URL change in an SPA and thought "phewph, I'm glad I wasn't redirected to a new page" - just gimme a normal <code>&lt;a></code> yo.
+        As a consumer of webpages, I'm not sure I've ever seen the URL change in an SPA and thought "phewph, I'm glad I wasn't redirected to a new page" - just gimme a normal <code>&lt;a></code> and split your app up yo.
     </p>
+
+    <h2 id="performance">Performance</h2>
+    <p>
+        I had a very unscientific play around with this neat <a href="https://localvoid.github.io/uibench/">benchmarking tool</a>, you can use the "Custom URL"s <code>http://leontrolski.github.io</code> <code>/benchmark</code> and <code>/benchmark/mithril.html</code> to compare yourself. I'm going to keep the performance figures intentionally vague - I was comparing Vanilla JS, React 16, mithril and 33-line.
+        <ul>
+            <li>React and mithril performed very similarly.</li>
+            <li>React tended to be faster than 33-line by a factor of 2 to 10.</li>
+            <li>The Vanilla JS solution would often outperform 33-line.</li>
+            <li>For smaller DOM trees, often the <em>winner</em> was Vanilla JS (small discussion below).</li>
+            <li>The <a href="https://localvoid.github.io/uibench-react/16/main.js">React code</a> was (gzipped + minified) 40kb, the <a href="https://leontrolski.github.io/benchmark/main.js">33-line code</a> was (gzipped, not minified) 1.8kb, mithril was (gzipped + minified) 9kb.</li>
+            <li>The "JS Init Time" of react would be 2 to 10+ times slower than both 33-line and mithril, think in the order of +100ms.</li>
+            <li>The performance of 33-line got proportially worse as the number of divs increased, this makes sense, given the diff algorithm is <em>basic</em>.</li>
+        </ul>
+    </p>
+    <h3>Performance - Notes</h3>
+    <p>
+        The <a href="https://github.com/leontrolski/leontrolski.github.io/blob/4f9cea8a5afc55252d38eb1aa1a20eda264a880f/benchmark/main.js">Vanilla JS one</a> just shoves strings of html together and does a big <code>container.innerHTML =</code>, nice and simple. On the other hand, string munging sucks for obvious reasons. Also, you end up with a lot of updates flashing around in the devtools inspector.
+    </p>
+    <p>
+        I had to write a <a href="https://github.com/leontrolski/leontrolski.github.io/blob/54bb7ff011065f0d46ae8f2e3c841dc3aa30c157/benchmark/main.js#L67-L69">few extra lines</a> of 33-line to handle <code>data-</code> attributes, that cranked it up to 37 lines. I think if you were to try productionise this toy code you'd end up with about 3/4 of a <a href="https://mithril.js.org/">mithril</a>.
+    </p>
+    <p>
+        I did one run with the <a href="https://github.com/Freak613/stage0">stage0</a> library thingy, the code was a bit more <a href="https://github.com/Freak613/stage0/blob/master/examples/uibench/app.js">gnarly</a>, but it was <em>rapid</em>. If I was writing eg. a game or a big spreadsheet app that needed high performance, I'd definitely be considering a library in this space.
+    </p>
+    <p>
+        Things that I'd imagine React particularly excels at versus a naive approach would be things like clock counters/animations - small bits of the DOM changing at high frequency - the tradeoff for this performance seems to be state-management-based API complexity. If one is to use a simpler <code>pageState -> DOM</code> model with few library hooks into the guts, it may be necessary to implement clocks etc. out of band of the normal library's render loop.
+    </p>
+
 
     <h2>Hacker news meta bit</h2>
     <p>
         For a while, the top-voted thread was people moaning about how a variable was called <code>m</code>, then a later comment in the code said it was a <code>grid</code>. I agree it was maybe a bit annoying, but I dunno, you read the article and that was your takeaway.. I've been part of a fair few code reviews with this vibe in my time :-)
     </p>
 
-    <h2>Conclusions</h2>
+    <h2 id="conclusions">Conclusions</h2>
     <p>
-        Doing <code>document.querySelectorAll('*')</code> on the airbnb map view (a reasonably complex SPA) returns 3407 elements. With no thought to performance at all, a simple library can render in the order of 100s of divs per <em>millisecond</em>. You could probably swap React out with 33-line on most sites and no-one would notice, you could also swap it out with some Vanilla JS string munging too - although the developer egonomics would be a bit rubbish.
+        Doing <code>document.querySelectorAll('*')</code> on the airbnb map view (a reasonably complex SPA) returns <b>3407</b> elements.
+    </p>
+    <p>
+        With no thought to performance at all, a simple library can render in the order of 100s of divs per <em>millisecond</em>. You could probably swap React out with 33-line on most sites and no-one would notice, you could also swap it out with some Vanilla JS string munging too - although the developer egonomics would be a bit rubbish.
+    </p>
+    <p>
+        In their next project, I'd recommended any frontend devs out there embrace there inner minimalist and cut the <a href="#ceremony">fat</a>. Make a plain ol' <code>state</code> variable at the top of your file, throw in some functions that mutate it, a touch of <a href="https://mithril.js.org/">mithril</a> to render it, and bang, you're done.
     </p>
     <p>
         If your site's slow (unless you're something really complicated like a game/spreadsheet), it's probably that you put a lot of crap on it, rather than anything to do with how you render your divs.
