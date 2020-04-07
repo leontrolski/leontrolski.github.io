@@ -45,9 +45,7 @@
     </p>
     <p>Below is a minimalist blocks game, see the page source to see how it works!</p>
     <div id="blocks"></div>
-</body>
-<footer>
-    <script src="https://unpkg.com/mithril@1.1.5/mithril.js"></script>
+    <script src="33-line-react.js"></script>
     <script>
 var width = 8
 var height = 8
@@ -124,6 +122,7 @@ function setGrid(emptyI, emptyJ){
         grid=>doUntilIdempotent(grid, emptyAdjacentCells),
         grid=>doUntilIdempotent(grid, shiftIntoEmpty),
     )(grid)
+    render()
 }
 // UI
 var View = ()=>m('',
@@ -132,9 +131,10 @@ var View = ()=>m('',
         ? m('marquee', m('h1', 'congrats!'))
         : grid.map((row, i)=>m('.row', row.map((cell, j)=>
             m('.block', {
-                style: {'background-color': colourMap[cell.colour]},
+                style: `background-color: ${colourMap[cell.colour]};`,
                 onclick: cell.isEmpty? _=>_ : _=>setGrid(i, j)
             })))))
-m.mount(document.getElementById('blocks'), {view: View})
+render = ()=>m.render(document.getElementById('blocks'), {children: [View()]})
+render()
     </script>
-</footer>
+</body>
