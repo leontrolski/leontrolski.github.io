@@ -14,9 +14,10 @@
     <script>hljs.initHighlightingOnLoad();</script>
 </head>
 <body>
+    <a href="index.html"><img style="height:2em" src="pic.png"/>⇦</a>
     <h1>What nested SQL queries might look like</h1>
     <p>
-        A <a href="http://calpaterson.com/">friend</a> was talking to me about ORM design recently. I'm a heavy <a href="https://www.sqlalchemy.org/">SQLAlchemy</a> user, but see all the reasons people dislike ORMs, so on a recent project I had a go at dipping back down to raw SQL land to see how I'd cope. 
+        A <a href="http://calpaterson.com/">friend</a> was talking to me about ORM design recently. I'm a heavy <a href="https://www.sqlalchemy.org/">SQLAlchemy</a> user, but see all the reasons people dislike ORMs, so on a recent project I had a go at dipping back down to raw SQL land to see how I'd cope.
     </p>
     <p>
         I ended up finding the experience pretty frustrating - I'm sure someone will have written it before, but there's definitely some Greenspun's eleventh rule about any sufficiently complex SQL string munging codebase turning into a half-arsed, bug-ridden ORM. I would include in this (although to a smaller degree) sufficiently complex code using only SQL query builder libraries (like <a href="http://knexjs.org/">knex</a> or <a href="https://docs.sqlalchemy.org/en/13/core/">SQLAlchemy core</a>).
@@ -25,13 +26,13 @@
     <p>
         Here's the features that postgres (or whatevever) would have to provide for me to ditch the ORM - although I'm still imagining using some kind of SQL query builder. They're vaguely in order of preference, also I've in no way thought through the details :-)
     </p>
-    
+
     <h2>Nested join queries</h2>
-   
+
     <p>
         When I do joins between things that map to entites, I don't want to then have to manually munge them back into nested entites in my host language, I want to do something like:
     </p>
-    
+
     <pre><code>SELECT NESTED {
     customer.name,
     customer.email,
@@ -46,31 +47,31 @@
 FROM customer
 LEFT OUTER JOIN NESTED product USING(customer_id)
 GROUP BY customer.customer_id</code></pre>
-    
+
     <p>
         Looks kinda similar to graphql I guess, but I want it in SQL!
     </p>
-    
+
     <p>
         A slightly absurd thing to me is that despite all its normalisation chat, the result of a <code>SELECT x.*, y.* FROM x  JOIN y</code> SQL query will have <code>x.*</code> values repeated over and over. I guess this has negative performance implications when <code>x</code> is wide and there are many <code>y</code>s for each <code>x</code>.
     </p>
-    
+
     <h2>Nested insertion</h2>
-    
+
     <p>
         Without this I have to do:
     </p>
-    
+
     <pre><code>INSERT INTO customer (name, email) VALUES ... RETURNING customer_id</code></pre>
-    
+
     <p>
         Then do a separate query to insert <code>product</code>s using the <code>customer_id</code>s I got back. In this case with only one level of nesting, this is fine, but things get very hairy when you start wanting to insert things with 2+ levels of nesting.
     </p>
-    
+
     <p>
         I want to do something like:
     </p>
-    
+
     <pre><code>INSERT INTO customer
 INSERT NESTED product
 VALUES
@@ -84,13 +85,13 @@ VALUES
         }
     ]
 }</code></pre>
-    
+
     <p>
         The syntax here seems harder to get right - this seems a bit ambiguous/inflexible.
     </p>
-    
+
     <h1>Problems/Prior work</h1>
-    
+
     <ul>
         <li>The main objection would seem to be that these new nested thingies are not rows and wouldn't play well with the existing conception of rows, esp. with filtering, grouping etc. I wonder if there's any deep thought that could be done to reconcile the two.</li>
         <li>How would the result cursor iterate through nested things as opposed to flat rows?</li>
