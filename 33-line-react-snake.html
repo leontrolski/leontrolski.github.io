@@ -1,0 +1,84 @@
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<head>
+    <title>leontrolski - snake</title>
+    <style>
+        body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; text-shadow: 0 1px 0 #ffffff; max-width: 63%;}
+        @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+        a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none;}
+        a:hover {border-bottom: 0;}
+    </style>
+    <script src="33-line-react.js"></script>
+</head>
+<body>
+    <a href="index.html"><img style="height:2em" src="pic.png"/>⇦</a>
+    <p>
+        <div id="snake"></div>
+    </p>
+    <style>
+        .container{display:inline-block;border:solid 1px black;}
+        .game-over{background-color:red;}
+        .square{display:inline-block;width:1em;height:1em;}
+        .snake{background-color:green;}
+        .fruit{background-color:blue;}
+    </style>
+    <script>
+        // constants
+        const [u, d, l, r] = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']
+        const arrowMap = {[u]: {i: -1, j: 0}, [d]: {i: 1, j: 0}, [l]: {i: 0, j: -1}, [r]: {i: 0, j: 1}}
+        const arrowOpposites = {[u]: d, [d]: u, [l]: r, [r]: l}
+        // state
+        let gameOver = false
+        const [h, w] = [12, 20]
+        const squares = [...Array(h)].map((_, i)=>[...Array(w)].map((_, j)=>({i, j})))
+        const snake = [{i: 3, j: 2}, {i: 3, j: 3}, {i: 3, j: 4}, {i: 3, j: 5}]
+        let arrow = r
+        let keydownHappened = false
+        let iteration = 0
+        let fruit
+        // derive functions
+        const eq = (a, b)=>a.i === b.i && a.j === b.j
+        const eqSnake = (a)=>snake.some(b=>eq(a, b))
+        const rollover = (x, max)=>x === -1? max : x % max
+        // actions
+        const setFruit = _=>{
+            fruit = {i: Math.floor(Math.random() * h), j: Math.floor(Math.random() * w)}
+            if (eqSnake(fruit)) setFruit()
+        }
+        const onkeydown = e=>{
+            if (!Object.keys(arrowMap).includes(e.key)) return
+            if (arrowOpposites[e.key] === arrow) return
+            if (keydownHappened) return
+            keydownHappened = true
+            arrow = e.key || arrow
+        }
+        const incrementState = _=>{
+            const head = snake.slice(-1)[0]
+            const direction = arrowMap[arrow]
+            const next = {i: rollover(head.i + direction.i, h), j: rollover(head.j + direction.j, w)}
+            if (eqSnake(next)){
+                gameOver = true
+                return renderSnake()
+            }
+            snake.push(next)
+            eq(next, fruit)? setFruit() : snake.splice(0, 1)
+            keydownHappened = false
+            iteration += 1
+            renderSnake()
+            setTimeout(incrementState, 100 - Math.min(80 * iteration / 1000, 70))
+        }
+        // UI
+        const classes = o=>({class: Object.keys(o).filter(k=>o[k])})
+        const Square = square=>m('.square', classes({'snake': eqSnake(square), 'fruit': eq(square, fruit)}))
+        const Snake = _=>[
+            m('h2', `Score: ${snake.length - 4}`),
+            m('.container', classes({'game-over': gameOver}), squares.map(row=>m('', row.map(Square)))),
+        ]
+        const renderSnake = ()=>m.render(document.getElementById('snake'), {children: Snake()})
+        // go!
+        window.onkeydown = onkeydown
+        setFruit()
+        renderSnake()
+        incrementState()
+    </script>
+</body>
