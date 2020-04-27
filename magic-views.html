@@ -1,0 +1,166 @@
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<head>
+    <title>leontrolski - Magic Views</title>
+    <style>
+        body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; text-shadow: 0 1px 0 #ffffff; max-width: 63%;}
+        @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+        code {background: #f0f0f0;padding:0 0.3em 0 0.3em}
+        pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
+        a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none;}
+        a:hover {border-bottom: 0;}
+        blockquote {font-style: italic;color:black}
+    </style>
+    <link rel="stylesheet" href="https://unpkg.com/highlightjs@9.16.2/styles/default.css"></style>
+    <script src="https://unpkg.com/highlightjs@9.16.2/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</head>
+<body>
+    USe prism to render!!
+    <a href="index.html"><img style="height:2em" src="pic.png"/>⇦</a>
+    <h1>Magic Views</h1>
+    <em>Or, thoughts on <b>turning the database inside out</b> and <b>incremental view maintenance</b>.</em>
+    <p>
+        Many moons ago, I found myself really enjoying <a href="https://www.confluent.io/blog/turning-the-database-inside-out-with-apache-samza/">Turning the Database Inside Out</a> by Martin Kleppmann (also author of <a href="http://dataintensive.net/">Designing Data-Intensive Applications</a>). On rereading months later, I formed a blanket distaste for the post and its many proponents, but coming full circle, I've since <b>rere</b>read the piece and enjoyed it - what happened? 🤷
+    </p>
+    <p>
+        I said I enjoyed it, what I really meant was that I enjoyed the first two thirds - TDIO's recommendations I'm less sure of - let's have a look.
+    </p>
+    <h2>TDIO's starting point</h2>
+    <p>
+        In a nutshell, here's what all the nice diagrams in TDIO say:
+    </p>
+    <ul>
+        <li>Caches (Redis and friends) can be good, they are a copy of data in a more usefully (in this case <em>quickly</em>) accessible form. They are a faff to keep up to date.</li>
+        <li>Indexes on databases are also good, they are a copy of data in a more usefully accessible form. Importantly, they are automagically kept up to date by the database in an ACID way, nice!</li>
+        <li>Materialized Views are kind-of like indexes, they are a copy of data in a more useful form, we can have aggregates, joins, etc. They (in postgres at least) aren't automagically/efficiently kept up to date, boo!</li>
+        <li>SQL is a bit rubbish at expressing some of the transformations we want to do on data, we could use stored procedures in other languages, but yughh!</li>
+        <li>Read replicas of databases are fed by streams of immutable facts - <code>UPDATE this</code>, <code>ADD that</code>, etc. Append only logs of facts are good.</li>
+    </ul>
+
+    <h2>TDIO's proposal</h2>
+    <ul>
+        <li>Write everything as immutable events to a log - let's use <a href="https://kafka.apache.org/">Kafka</a>.</li>
+        <li>Process/aggregate log data on the fly - let's use <a href="http://samza.apache.org/">Apache Samza</a>. This has extensible versions of SQL's <code>WHERE</code>, <code>JOIN</code> etc. and a whole <a href="http://samza.apache.org/learn/documentation/latest/api/samza-sql.html">SQL  interface</a> that supports the <code>COUNT()</code> aggregation.</li>
+        <li>These views of the log data are maintained in traditional dbs/caches. We only <em>read</em> from these.</li>
+        <li>Streams everywhere, bring 'em in to the UI etc.</li>
+    </ul>
+
+    <h2>A general view of the problem</h2>
+    <p>
+        I'm going to have a go trying to describe our problem in a fairly general way - some of this may be better described in the <a href="#literature">academic literature</a>.
+    </p>
+    <p>
+        Replace <sub>t</sub>s with the delta t approach
+
+        Let's call data at a point in time <code>d<sub>t</sub></code>, Caches, Indexes and Materialized Views are a function of data <code>f(d<sub>t</sub>)</code>.
+        <ul>
+            <li>Caches are limited in that <code>f</code> can only be the identity function and it can only operate on one row of <code>d</code> at a time. To compute <code>f(d<sub>t+1</sub>)</code> is in principle easy, but faffy in practice.</li>
+            <li>Indexes have an <code>f</code> that can do many things (eg. <code>UPPER(row)</code>), but it is similarly limited to one row of <code>d</code> at a time. Computing <code>f(d<sub>t+1</sub>)</code> is easy and automatic.</li>
+            <li>Materialized Views have a powerful <code>f</code> that can do joins, aggregates and other exciting things, not only that, they can consider the whole of <code>d</code>. Computing <code>f(d<sub>t+1</sub>)</code> is potentially inefficient and not automatic.</li>
+        </ul>
+        If we summarise the things we need to consider.
+        <ol id="consider">
+            <li>How expressive can <code>f</code> be?</li>
+            <li>How much of <code>d</code> can <code>f</code> consider?</li>
+            <li>Can we compute <code>f(d<sub>t+1</sub>)</code> efficiently?</li>
+            <li>Can we store <code>f(d)</code> in an <a href="https://en.wikipedia.org/wiki/ACID">ACID</a> way?</li>
+            <li>Can we ↕/↔ scale?</li>
+            <li>How <em>easy</em> was all that? (Did I add one line of code somewhere and relax, or did I have to write loads of code/deploy something/maintain something/etc).</li>
+        </ol>
+    </p>
+
+    <h3 id="indexes"><em>Aside on functional covering indexes</em></h3>
+    <p>
+        It's an oft-forgot thing how expressive indexes can be
+    </p>
+
+    <h2>Why it's a great idea</h2>
+    <p>
+        Let's call it Magic Views, describe just in SQL terms, this will allow us to focus on ... and ignore infra etc≈.
+        How immutable/temporal tables can be a subset of Magic View functionality.
+        This is why I haven't included immutability in "things we need to consider" - this just becomes a design option (a good one).
+        <a href="nested-sql.html">nested SQL</a>
+    </p>
+
+    <h2>Issues</h2>
+    <p>
+        Some of these are just problems with the TDIO "Kafka and friends" approach.
+
+        Do these do away with the need for ACID? probs not, but why..
+        Note there are two orthogonal ideas here:
+        (Warning: some of this is from the dev grapevine rather than personal working experience).
+        Querying!!
+
+        Caveat: the following is applicable to classic CRUD app development, it <em>probably</em> doesn't apply to the whizz-bang data warehouse processing a bazillion mouseclick events a second.
+    </p>
+    <ul>
+        <li>Consider locking in account, how does one implement this with just a stream? "If materialized views are only ever updated via the log, then a whole class of race conditions goes away: the log defines the order in which writes are applied"</li>
+        <li>Doing simple things where we would have just done a <code>COUNT(*) ... GROUP BY ...</code> often look <a href="https://samza.apache.org/startup/quick-start/latest/samza.html#add-word-count-processing-logic">hairy</a>.</li>
+        <li>migrating</li>
+        <li>tooling</li>
+        <li>typing</li>
+        <li>Similarly GDPR</li>
+        <li>"But what about transactions?" - see links in TDIO</li>
+        <li>data access arbitrary select</li>
+        <li>How much data can be cached, how much is "on request"</li>
+        <li>Scaling might be important, but <a href="contrair-articles.html#scaling">probably isn't</a>, at least be aware that you're probably trading it for a big chunk of developer agility.</li>
+        <li>What if we change <code>f</code>/migrate the underlying data</li>
+    </ul>
+
+    <h2>Other interesting players</h2>
+    <h3>Materialize</h3>
+    <p>
+        The folk at <a href="https://materialize.io/">materialize</a> seem to have solved the problem of ..., but not ...
+        timely dataflows - are these online or whatever - read paper
+
+        Do the differential dataflows somehow support all aggregations in a general way? Averages vs median, online learning. Whutttt
+    </p>
+    <h3>Incremental View Maintenance</h3>
+    <p>
+        Incremental views are ...
+    </p>
+    <p>
+        Some crazy guy is <a href="https://www.pgcon.org/2019/schedule/attachments/546_pgcon2019.pdf">trying</a> to do these in postgres. (Page with all links <a href="https://wiki.postgresql.org/wiki/Incremental_View_Maintenance">here</a>). It's unclear to me how many other attempts like this there have been.
+
+        A bit more here.
+    </p>
+    <p>
+        A <a href="">post</a> by citus in 2016 recommends a <code>TRIGGER</code>-based solution to maintaining a simple <code>COUNT(*)</code> of a table. This is the only <em>exact</em> way of counting it recommends that has good read performance, and yet even with that simple a trigger, inserts "are fifty times slower".
+    </p>
+    <p>
+        To give an idea of the complexity entailed in implementing ACID Magic Views, here is a quote from <a href="https://wiki.postgresql.org/images/8/85/Materialised_Views_-_FOSDEM.pdf">a talk</a> at pgDay 2014, detailing how "eager" one's incremental updates might be:
+        <blockquote>
+            <ul>
+                <li>Very Eager – Applied before incrementing command counter so appears up-to-date within the transaction.</li>
+                <li>Eager – Applied at commit time, and visible with all other changes in the transaction.</li>
+                <li>Inbetween – Queued to apply immediately after transaction commit asynchronously.</li>
+                <li>Lazy – Queued to apply on a specified schedule.</li>
+                <li>Very Lazy – Queued to be applied on demand.</li>
+                <li>Trade-off: More eager = fresh more frequently but with the price of greater overhead.</li>
+            </ul>
+        </blockquote>
+    </p>
+    <h3>Datomic</h3>
+    <p>
+        I would claim temporal databases are a subset
+
+        why??
+
+        <a href="https://www.datomic.com/">Datomic</a> is Rich Hickey's go at a <a href="https://en.wikipedia.org/wiki/Temporal_database">temporal database</a>.
+
+        Internet grapevines have a a mixed opinion of Datomic's performance characteristics.
+    </p>
+
+
+    <h2>What do we do? Practical issues to overcome.</h2>
+    <p>
+        Where does there appear to be space?
+
+        Do we need a DB standard on reading streams containing <code>UPDATE this</code>?
+    </p>
+
+    <h2 id="literature">Academic Literature</h2>
+    <p>
+        There is academic literature describing some of the above, starting points: googling for <a href="https://www.google.com/search?q=incremental+view+maintenance">incremental view maintenance</a>, the <a href="https://github.com/timelydataflow/differential-dataflow/blob/master/differentialdataflow.pdf">differential dataflow</a> paper. More general wiki links: <a href="https://en.wikipedia.org/wiki/Dynamic_problem_(algorithms)">Dynamic Problems</a>, <a href="https://en.wikipedia.org/wiki/Online_algorithm">Online Algorithms</a>, <a href="https://en.wikipedia.org/wiki/Relational_algebra">Relational Algebra</a>.
+    </p>
+</body>
