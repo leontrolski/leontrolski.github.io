@@ -180,6 +180,14 @@ const myLi = name => li{'My name is ' em{name}}
 const myUl = names => ul{class: ['my-ul'] ...names.map(myLi)}
 
 app.get('/', (req, res) => res.send(myUl().asHTMLStr())</code></pre>
+    <p>
+        Instead of this page's html:
+    </p>
+    <pre><code>body{class: "language-javascript"
+    a{href: "index.html" img{style: "height:2em" src: "pic.png"} "⇦"}
+    h1{"What if we'd had better " code{"html"} "-in-" code{"js"} syntax all along?"}
+    p{"I have a theory that a grave mistake was made in 1995 ..."}
+    ...</code></pre>
 
     <h2>What if we'd always had something like this in <code>js</code>?</h2>
     <ul>
