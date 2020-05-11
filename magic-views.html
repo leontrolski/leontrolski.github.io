@@ -2,23 +2,23 @@
 <head>
     <title>leontrolski - Magic Views</title>
     <style>
-        body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; text-shadow: 0 1px 0 #ffffff; max-width: 63%;}
+        body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 63%;}
         @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
         code {background: #f0f0f0;padding:0 0.3em 0 0.3em}
         pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
-        a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none;}
+        a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none;text-shadow: 0 1px 0 #ffffff;}
         a:hover {border-bottom: 0;}
         blockquote {font-style: italic;color:black}
     </style>
-    <link rel="stylesheet" href="https://unpkg.com/highlightjs@9.16.2/styles/default.css"></style>
-    <script src="https://unpkg.com/highlightjs@9.16.2/highlight.pack.js"></script>
-    <script>hljs.initHighlightingOnLoad();</script>
+    <link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js"></script>
 </head>
-<body>
-    USe prism to render!!
+<body class="language-sql">
     <a href="index.html"><img style="height:2em" src="pic.png"/>⇦</a>
     <h1>Magic Views</h1>
     <em>Or, thoughts on <b>turning the database inside out</b> and <b>incremental view maintenance</b>.</em>
+    <p>Make this weird bit shorter, then explain yourself more - what's the point?</p>
     <p>
         Many moons ago, I found myself really enjoying <a href="https://www.confluent.io/blog/turning-the-database-inside-out-with-apache-samza/">Turning the Database Inside Out</a> by Martin Kleppmann (also author of <a href="http://dataintensive.net/">Designing Data-Intensive Applications</a>). On rereading months later, I formed a blanket distaste for the post and its many proponents, but coming full circle, I've since <b>rere</b>read the piece and enjoyed it - what happened? 🤷
     </p>
@@ -30,9 +30,9 @@
         In a nutshell, here's what all the nice diagrams in TDIO say:
     </p>
     <ul>
-        <li>Caches (Redis and friends) can be good, they are a copy of data in a more usefully (in this case <em>quickly</em>) accessible form. They are a faff to keep up to date.</li>
-        <li>Indexes on databases are also good, they are a copy of data in a more usefully accessible form. Importantly, they are automagically kept up to date by the database in an ACID way, nice!</li>
-        <li>Materialized Views are kind-of like indexes, they are a copy of data in a more useful form, we can have aggregates, joins, etc. They (in postgres at least) aren't automagically/efficiently kept up to date, boo!</li>
+        <li><b>Caches</b> (Redis and friends) can be good, they are a copy of data in a more usefully (in this case <em>quickly</em>) accessible form. They are a faff to keep up to date.</li>
+        <li><b>Indexes</b> on databases are also good, they are a copy of data in a more usefully accessible form. Importantly, they are automagically kept up to date by the database in an ACID way, nice!</li>
+        <li><b>Materialized Views</b> are kind-of like indexes, they are a copy of data in a more useful form, we can have aggregates, joins, etc. They (in postgres at least) aren't automagically/efficiently kept up to date, boo!</li>
         <li>SQL is a bit rubbish at expressing some of the transformations we want to do on data, we could use stored procedures in other languages, but yughh!</li>
         <li>Read replicas of databases are fed by streams of immutable facts - <code>UPDATE this</code>, <code>ADD that</code>, etc. Append only logs of facts are good.</li>
     </ul>

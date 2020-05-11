@@ -1,0 +1,230 @@
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<head>
+    <title>leontrolski - html-in-js syntax</title>
+    <style>
+        body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 63%;}
+        @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+        pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
+        a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none;text-shadow: 0 1px 0 #ffffff;}
+        a:hover {border-bottom: 0;}
+    </style>
+    <link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</head>
+<body class="language-javascript">
+    <a href="index.html"><img style="height:2em" src="pic.png"/>⇦</a>
+    <h1>What if we'd had better <code>html</code>-in-<code>js</code> syntax all along?</h1>
+    <p>
+        I have a theory that a grave mistake was made in 1995 - the decision not to have a neat, succinct and declarative way of representing html elements in javascript.
+    </p>
+    <p>
+        In this post, I'm going to describe the current state of affairs, show a couple of very small additions to javascript's syntax that might've made all the difference, then talk about the repercussions.
+    </p>
+
+    <h2>What options do we have now?</h2>
+    <p>
+        We have some APIs available to us, including all the <a href="https://developer.mozilla.org/en-US/docs/Web/API/Element">Element</a> properties/methods:
+    </p>
+    <pre><code>document.createElement("div")
+document.createTextNode("Hi there and greetings!")
+el.classList
+el.innerHTML
+el.removeAttribute()
+...</code></pre>
+
+    <p>
+        We can use string templates and functions to try be more declarative:
+    </p>
+    <pre><code>const myLi = name => `&lt;li>My name is &lt;em>${name}&lt;/em>&lt;/li>`
+const myUl = names => `&lt;ul class="my-ul">${names.map(myLi).join('')}&lt;/ul>`</code></pre>
+    <p>
+        This is rubbish for obvious reasons - composing the strings is bug-prone, no typing/linting etc etc. We then have to turn them into elements with the <a href="https://stackoverflow.com/questions/494143">less than elegant</a>:
+    </p>
+    <pre><code>function createElementFromHTML(htmlString) {
+    var div = document.createElement('div');
+    div.innerHTML = htmlString.trim();
+    return div.firstChild;
+}</code></pre>
+    <p>
+        Mmm...
+    </p>
+
+    <p>
+        We can use the new <a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/template">template</a> elements, from the MDN docs:
+    </p>
+    <pre><code>&lt;template id="productrow">
+    &lt;tr>
+        &lt;td class="record">&lt;/td>
+        &lt;td>&lt;/td>
+    &lt;/tr>
+&lt;/template></code></pre>
+    <pre><code>const template = document.querySelector('#productrow')
+const clone = template.content.cloneNode(true)
+const td = clone.querySelectorAll("td")
+td[0].textContent = "1235646565"
+tbody.appendChild(clone)</code></pre>
+    <p>
+        I don't know about you, but that felt pretty yucky.
+    </p>
+    <p>
+        Of course, there are also various libraries, ranging from string templating ones (like <a href="https://handlebarsjs.com/">handlebars</a>) through to compile-away ones like <code>.jsx</code>.
+    </p>
+
+    <h2>Representing html nodes now</h2>
+    <p>
+        In contemporary typescript, a node of html can map to and from the type:
+    </p>
+    <pre><code>type HtmlNode = {
+    tag: string,
+    attributes: {[key: string]: string | Function},
+    children: (HtmlNode | string)[]
+}</code></pre>
+    <p>
+        A node like:
+    </p>
+    <pre><code class="language-html">&lt;button id="baz" class="foo bar" data="1" onclick=f>
+    Hello
+    &lt;em>there&lt;/em>
+&lt;/button></code></pre>
+    <p>
+        Would map to and from:
+    </p>
+    <pre><code>{
+    tag: "button",
+    attributes: {
+        "id": "baz",
+        "class": "foo bar",
+        "data": "1",
+        "onclick": f,
+    },
+    children: [
+        "Hello",
+        {
+            tag: "em",
+            attributes: {},
+            children: ["there"],
+        }
+    ]
+}</code></pre>
+    <p>
+        Notice the <code>js</code> representation is a bit verbose.
+    </p>
+    <p>
+        The most terse html description language I've worked with was <a href="http://jade-lang.com/">jade</a>, here's an example:
+    </p>
+    <pre><code class="language-pug">html(lang="en")
+    head
+        title= pageTitle
+    body
+        h1.some-class Jade - node template engine
+        #container
+        - if (youAreUsingJade)
+            You are amazing</code></pre>
+    <p>
+        This seems nice, the main problem is we are a bit confined in our programming constructs, for example, how would we make the <code>&lt;h1></code> have the additional class <code>hidden</code> on some condition? Jade gets around this by having 3 different ways of specifying classes. Rather than come up with a special templating language, let's just slightly extend vanilla <code>js</code> syntax.
+    </p>
+
+    <h2>Extending the object syntax</h2>
+    <p>
+        Right, let's have a go with the example from above. I'm not going to put too much weight on the correctness of this as I'm not suggesting we change all our code, only a "what might've been".
+    </p>
+    <pre><code class="language-html">&lt;button id="baz" class="foo bar" data="1" onclick=f>
+    Hello
+    &lt;em>there&lt;/em>
+&lt;/button></code></pre>
+    <p>
+        Would instead be:
+    </p>
+    <pre><code class="language-none">button{id: 'baz' class: ['foo' 'bar'] data: '1' onclick: f
+    'Hello '
+    em{'there'}
+}</code></pre>
+    <p>
+        Or formatted longhand:
+    </p>
+    <pre><code class="language-none">button{
+    id: 'baz'
+    class: ['foo' 'bar']
+    data: '1'
+    onclick: f
+    'Hello '
+    em{'there'}
+}</code></pre>
+    <p>
+        So, a checklist of things to allow existing <code>js</code> object syntax to represent html nodes in a reasonably succinct way:
+    </p>
+    <ul>
+        <li>As well as <code>key: value</code> pairs, objects allow trailing <code>value</code>s. I guess these would be accessible with <code>foo.~</code> or some special construct.</li>
+        <li>They get an optional tag (in this case <code>button</code>). If you've done much JSON deserialisation, tags seem like a good idea (they can help you map data to types), take a look at how they're used (with custom namespacing) in <a href="https://github.com/edn-format/edn#tagged-elements">edn</a> - nice.</li>
+        <li>To get things nice and small, I've dropped the requirement for commas.</li>
+    </ul>
+    <p>
+        That's it. Our javascript would use this as the main data type (everything else would remain the same). Probably, we'd start (re)writing all our XML-ish html to also use this syntax.
+    </p>
+    <h3>Toy examples</h3>
+    <p>
+            In the browser:
+    </p>
+    <pre><code>const someUl = document.getElementById('some-ul')
+
+const myLi = name => li{'My name is ' em{name}}
+
+someUl.~.push(myLi('Tommy'))</code></pre>
+    <p>
+        An express route:
+    </p>
+    <pre><code>const names = ["Barry", "Lynette"]
+
+const myLi = name => li{'My name is ' em{name}}
+const myUl = names => ul{class: ['my-ul'] ...names.map(myLi)}
+
+app.get('/', (req, res) => res.send(myUl().asHTMLStr())</code></pre>
+
+    <h2>What if we'd always had something like this in <code>js</code>?</h2>
+    <ul>
+        <li>
+            There would be no distinction between <code>JSON</code> and <code>html</code>. <em>(What would have been the downstream consequences to API design?)</em>
+        </li>
+        <li>
+            It would be constantly staring us in the face that our html is <em>just structured data</em>.
+        </li>
+        <li>
+            We wouldn't have had the years of weird logic-in-html stuff like in <a href="https://knockoutjs.com/">knockout</a> (remember that one?)
+            <pre><code>&lt;button data-bind="enable: myItems().length &lt; 5">Add&lt;/button></code></pre>
+            <p>
+                Or <a href="https://knockoutjs.com/">Vue</a> (remember that one?)
+            </p>
+            <pre><code>&lt;span v-bind:title="message"></code></pre>
+        </li>
+        <li>
+            We might've had a React-a-like in 1996, and it would have just been "duh, obviously we'll just do it like <a href="https://en.wikipedia.org/wiki/Curses_(programming_library)">curses</a>".
+        </li>
+        <li>
+            We would have had a composable libraries for date selectors, modals, etc. without having to use said big-hairy-library.
+        </li>
+        <li>
+            Noone would be using handlebars/Jinja/twig string munging libraries to make html (in the node world at least).
+        </li>
+        <li>
+            The html <code>&lt;form></code> &lt;-> <code>json</code> impedence mismatch (try describing nested data as a form) would probably have been properly sorted by now.
+        </li>
+        <li>
+            Everyones' early noughties plans for <em>everything</em> to be <code>XML</code> might've been more successful. <em>(Would that have been good?)</em>
+        </li>
+    </ul>
+
+
+    <h2>What about <code>.jsx</code> though?</h2>
+    <p>
+        I think it's a fine enough solution, but the fact that it's a different syntax from your standard <code>js</code> objects encourages people to consider the VDOM objects as "not normal data", but they <em>are</em>. <a href="http://www.eecg.toronto.edu/~jzhu/csc326/readings/iverson.pdf">Notation as a tool of thought</a> innit.
+    </p>
+
+    <h2>Other thoughts</h2>
+    <p>
+        There's some great links relating to <code>XML</code> &lt;-> <code>Scheme</code> equivalence/syntax <a href="https://news.ycombinator.com/item?id=9549841">here</a>.
+    </p>
+    <p>
+        Our alternative history having never happened, I <a href="33-line-react-thoughts.html#ezzthetic">prefer</a> the boring hyperscript style, everything is "just code".
+    </p>
+</body>
