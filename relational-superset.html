@@ -1,0 +1,376 @@
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<head>
+    <title>leontrolski - Nested projection of relational</title>
+    <style>
+        body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 63%;}
+        @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+        a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none;text-shadow: 0 1px 0 #ffffff;}
+        a:hover {border-bottom: 0;}
+        blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
+    </style>
+    <link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</head>
+<body class="language-sql">
+    <a href="index.html"><img style="height:2em" src="pic.png"/>⇦</a>
+    <h1>Nested data is a projection of relational data</h1>
+    <p>
+        Devs often have boring arguments about the pros and cons of different database types, vendors, SQL versus NoSQL etc. These arguments tend towards boring, as they normally conflate the following (nearly) orthogonal things:
+    </p>
+    <ol id="points-of-comparison">
+        <li>Relational data versus nested documents</li>
+        <li>Typed versus untyped data storage</li>
+        <li>Query expressivity (can I express my fancy graph query?)</li>
+        <li>Some particular aspect of performance or ↕/↔ scaling</li>
+        <li>Consistency, transactions (or, which bit of <a href="https://codahale.com/you-cant-sacrifice-partition-tolerance/">CAP do I want</a>)</li>
+        <li>Other factors (these come up less); maturity of solution, ease of deployment, is it open source etc.</li>
+    </ol>
+    <p>
+        Arguing about the merits of these things individually and how well they're implemented by a particular database can still be interesting though.
+    </p>
+    <p>
+        In this post I'm going to say something about the first point that is, in no way novel, may be obvious to some readers, but bears repeating, namely that:
+    </p>
+    <blockquote>
+        Nested data is a projection of relational data.
+    </blockquote>
+    <p>
+        Further to this:
+    </p>
+    <blockquote>
+        If you store data in relational form, you can retreive it in <b>any</b> nested form. If you store data in a <b>particular</b> nested form, you cannot retrieve it in <b>any</b> nested form.
+    </blockquote>
+    <p>
+        The implication of this is that one should store data in a relational form if possible, as it is the more flexible option. This is especially true considering the difficulties in migrating large amounts of live data.
+    </p>
+
+    <h2>Whaddya mean?</h2>
+    <p>
+        Have a look through this long <a href="#worked-example">worked example</a>.
+    </p>
+
+    <h2>Bring relational into the application?</h2>
+    <p>
+        Should relational reach as far as the UI? LINQ etc
+        Bog standard nested is different from eg. SQLAlchemy models. Is this something about the nature of object references, can this be represented as "just data" with good support for immutability. Does this mean that we can arbitrarily map projections of nested -> nested?
+        One for a whole article
+    </p>
+
+    <h2>Why did NoSQL end up meaning NoRelational?</h2>
+    <p>
+        What were they trying to acheive, were those aims laudable, was dropping relation required for performance. Everyone implements relational with $lookup anyway, just to different extents.
+        Something about https://en.wikipedia.org/wiki/Object-relational_impedance_mismatch
+        Muse about why people picked documents after ages without. Syntax is ugly, everything is hard work. More effort is required in planet SQL as this shouldn't(?) be the work of ORMs.
+        <a href="contrair-articles.html#scaling">scaling important?</a>
+        <a href="">Amazon's Mongo is built on postgres?</a>
+    </p>
+
+    <br><hr>
+
+    <h1 id="worked-example">A worked example</h1>
+
+    <h2 id="data">Our data</h2>
+    <p>
+        We're going to pretend we run a shopping website. When our customer visits their account page, we'd like to render their baskets, the data required to do this will look like:
+    </p>
+    <pre class="language-javascript"><code>{
+    username: "oliver",
+    postcode: "SL95GH",
+    dob: "1990-01-20",
+    baskets: [
+        {
+            created_date: "2017-01-03",
+            total_price_cents: 760,
+            purchases: [
+                {
+                    product: {
+                        name: "banana",
+                        price_cents: 120
+                    },
+                    qty: 3
+                },
+                {
+                    product: {
+                        name: "ham",
+                        price_cents: 400
+                    },
+                    qty: 1
+                }
+            ]
+        },
+        {
+            created_date: "2017-01-04",
+            total_price_cents: 180,
+            purchases: [
+                {
+                    product: {
+                        name: "apple",
+                        price_cents: 90
+                    },
+                    qty: 2
+                }
+            ]
+        }
+    ]
+}</code></pre>
+    <p>We're also going to include 2 more customers in our <a href="https://github.com/leontrolski/leontrolski.github.io/blob/master/relational-superset.sql">total data set</a>.</p>
+
+    <h2>Storing the data as nested documents</h2>
+    <p>
+        In our nested-y document store (let's consider for the rest of this example <a href="https://www.mongodb.com/">mongodb</a>), we might choose to store the data above <b>as is</b>.
+    </p>
+    <p>
+        Then we may realise we want to be able to update the product quantities easily - we have to normalise the data so we only have to update the product data in one place. To achieve this, we store references to the products (and have them fetched with <a href="https://docs.mongodb.com/manual/reference/operator/aggregation/lookup/">$lookup</a>), and compute the <code>total_price_cents</code> in the app at query time. The db now stores:
+    </p>
+    <pre class="language-javascript"><code>// in the customers collection:
+
+{
+    username: "harry",
+    postcode: "HU2T54",
+    dob: "1983-05-11",
+    baskets: [
+        {
+            created_date: "2017-01-07",
+            purchases: [
+                {
+                    product_id: "507f1f77bcf86cd799439011",
+                    qty: 3
+                }
+                ...
+            ]
+        },
+        ...
+
+
+// in the products collection:</p>
+
+{
+    _id: "507f1f77bcf86cd799439011",
+    name: "banana",
+    price_cents: 120
+},
+...</code></pre>
+
+    <p>
+        It's kind of arbitrary to what extent we split the data up like this. For example, we may end up having to store the baskets by reference as well:
+    </p>
+    <pre class="language-javascript"><code>{
+    username: "harry",
+    postcode: "HU2T54",
+    dob: "1983-05-11",
+    baskets: [
+        "617f1f77bcf86cd7994390ab",
+        ...</code></pre>
+
+    <h2>Storing the data relationally</h2>
+    <p>
+        Let's take this splitting-up to it's natural conclusion and store the data in a relational way. We will have the following relationships:
+    </p>
+    <pre class="language-none"><code>customer -&lt; basket -&lt; purchase >- product
+
+-&lt; one-to-many
+>- many-to-one</code></pre>
+
+    <h3>Postgres setup</h3>
+    <p>In the terminal, let's make a new db.</p>
+    <pre><code>echo 'CREATE DATABASE shopping' | psql postgres</code></pre>
+    <p>Then let's <code>psql</code> into it.</p>
+    <pre><code>psql shopping</code></pre>
+    <p><em>The following commands will be ran from within <code>psql</code></em></p>
+    <p>Let's create the tables:</p>
+    <pre><code>CREATE TABLE IF NOT EXISTS customer (
+    customer_id SERIAL PRIMARY KEY,
+    username TEXT NOT NULL,
+    postcode TEXT NOT NULL,
+    dob DATE NOT NULL
+);
+CREATE TABLE IF NOT EXISTS product (
+    product_id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    price_cents INT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS basket (
+    basket_id SERIAL PRIMARY KEY,
+    customer_id INT REFERENCES customer(customer_id) ON DELETE CASCADE NOT NULL,
+    created_date DATE NOT NULL
+);
+CREATE TABLE IF NOT EXISTS purchase (
+    purchase_id SERIAL PRIMARY KEY,
+    basket_id INT REFERENCES basket(basket_id) ON DELETE CASCADE NOT NULL,
+    product_id INT REFERENCES product(product_id) ON DELETE CASCADE NOT NULL,
+    qty INT NOT NULL
+);</code></pre>
+    <p>And the values:</p>
+    <pre><code>INSERT INTO customer VALUES
+(1, 'oliver', 'SL95GH', '1990-01-20'),
+(2, 'tom', 'NW126GH', '1957-11-03'),
+(3, 'harry', 'HU2T54', '1983-05-11');
+INSERT INTO product VALUES
+(1, 'banana', 120),
+(2, 'apple', 90),
+(3, 'ham', 400);
+INSERT INTO basket VALUES
+(1, 1, '2017-01-03'),
+(2, 1, '2017-01-04'),
+(3, 3, '2017-01-07'),
+(4, 3, '2017-01-08');
+INSERT INTO purchase VALUES
+(1, 1, 1, 3),
+(2, 1, 3, 1),
+(3, 2, 2, 2),
+(4, 3, 3, 4);</code></pre>
+    <p><em>Note we've already introduced typing (<code>INT</code>, <code>TEXT</code>, etc.) where we didn't have any (see point 2 from the <a href="#points-of-comparison">points of comparison</a>). We could instead just have done <code>CREATE TABLE customer (customer_id SERIAL, data JSON)</code>, but it wouldn't feel like idiomatic SQL.</em></p>
+    <h3>Aside on nested insertions</h3>
+    <p>
+        Versus the <a href="#data">original data</a>, the <code>INSERT</code>s above are pretty confusing, I wrote a <a href="nested-sql.html">small piece</a> discussing alternative SQL syntax that would help alleviate this. In the mean time, you'll likely be using some kind of ORM though. With <a href="https://docs.sqlalchemy.org/en/13/orm/tutorial.html#adding-and-updating-objects">SQLAlchemy</a>, those inserts will look something like:
+    </p>
+    <pre class="language-python"><code>banana = Product(name="banana", price_cents=120)
+apple = Product(name="apple", price_cents=90)
+ham = Product(name="ham", price_cents=400)
+customer = Customer(
+    username="oliver",
+    postcode="SL95GH",
+    dob=date(1990, 1, 20),
+    baskets=[],
+)
+customer.baskets.append(
+    Basket(
+        created_date=date(2017, 1, 3),
+        total_price_cents=760,
+        purchases=[
+            Purchase(product=banana, qty=3),
+            Purchase(product=ham, qty=1),
+        ],
+    )
+)
+session.add_all([banana, apple, ham, customer])</code></pre>
+
+    <h2>Retreiving relational data</h2>
+    <p>
+        We'd like to retreive our data in the same nested form we specified <a href="#data">originally</a>. If we were using SQLAlchemy, we'd do:
+    </p>
+    <pre class="language-python"><code>session.query(Customer)
+.options(
+    joinedload(Customer.baskets)
+    .joinedload(Basket.purchases)
+    .joinedload(Purchases.products)
+)</code></pre>
+    <p>
+        This will emit a query similar to:
+    </p>
+    <pre><code>SELECT
+    customer.customer_id,
+    customer.username,
+    customer.postcode,
+    customer.dob,
+    basket.basket_id,
+    basket.customer_id,
+    basket.created_date,
+    purchase.purchase_id,
+    purchase.basket_id,
+    purchase.product_id,
+    purchase.qty,
+    product.product_id,
+    product.name,
+    product.price_cents
+FROM customer
+LEFT OUTER JOIN basket ON customer.customer_id = basket.customer_id
+LEFT OUTER JOIN purchase ON basket.basket_id = purchase.basket_id
+LEFT OUTER JOIN product ON product.product_id = purchase.product_id;</code></pre>
+    <p>
+        Postgres itself returns:
+    </p>
+    <pre><code> customer_id | username | postcode |    dob     | basket_id | customer_id | created_date | purchase_id | basket_id | product_id | qty | product_id |  name  | price_cents
+-------------+----------+----------+------------+-----------+-------------+--------------+-------------+-----------+------------+-----+------------+--------+-------------
+           1 | oliver   | SL95GH   | 1990-01-20 |         1 |           1 | 2017-01-03   |           1 |         1 |          1 |   3 |          1 | banana |         120
+           1 | oliver   | SL95GH   | 1990-01-20 |         1 |           1 | 2017-01-03   |           2 |         1 |          3 |   1 |          3 | ham    |         400
+           1 | oliver   | SL95GH   | 1990-01-20 |         2 |           1 | 2017-01-04   |           3 |         2 |          2 |   2 |          2 | apple  |          90
+           3 | harry    | HU2T54   | 1983-05-11 |         3 |           3 | 2017-01-07   |           4 |         3 |          3 |   4 |          3 | ham    |         400
+           3 | harry    | HU2T54   | 1983-05-11 |         4 |           3 | 2017-01-08   |             |           |            |     |            |        |
+           2 | tom      | NW126GH  | 1957-11-03 |           |             |              |             |           |            |     |            |        |</code></pre>
+    <p>
+        Then SQLAlchemy munges the data around such that we can do <code class="language-python">for basket in customer.baskets</code> etc. when rendering.
+    </p>
+    <h3>In pure SQL</h3>
+    <p>
+        We can express the nesting that our ORM did for us in pure SQL, again, <a href="nested-sql.html">wouldn't it be nice if this was less ugly</a>:
+    </p>
+    <pre><code>SELECT json_build_object(
+    'username', customer.username,
+    'postcode', customer.postcode,
+    'dob', customer.dob,
+    'baskets', CASE WHEN count(basket_.*) > 0
+        THEN json_agg(basket_.json_ ORDER BY basket_.created_date)
+        ELSE '[]'::JSON END
+)
+FROM customer
+LEFT OUTER JOIN (
+    SELECT
+        basket.customer_id,
+        basket.created_date,
+        json_build_object(
+            'created_date', basket.created_date,
+            'total_price_cents', coalesce(sum(purchase_.product_price_cents * purchase_.qty), 0),
+            'purchases', CASE WHEN count(purchase_.*) > 0
+                THEN json_agg(purchase_.json_)
+                ELSE '[]'::JSON END
+        ) AS json_
+    FROM basket
+    LEFT OUTER JOIN (
+        SELECT
+        purchase.basket_id,
+        purchase.qty,
+        product.price_cents AS product_price_cents,
+        json_build_object(
+            'product', json_build_object(
+                'name', product.name,
+                'price_cents', product.price_cents
+            ),
+            'qty', purchase.qty
+        ) AS json_
+        FROM purchase
+        JOIN product using(product_id)
+    ) AS purchase_ using(basket_id)
+    GROUP BY basket.customer_id, basket.created_date
+) AS basket_ using(customer_id)
+GROUP BY customer.customer_id, customer.username, customer.postcode, customer.dob
+ORDER BY customer.customer_id;</code></pre>
+    <p>
+        This will return:
+    </p>
+    <pre class="language-javascript"><code>{
+    "username": "oliver",
+    "postcode": "SL95GH",
+    "dob": "1990-01-20",
+    "baskets": [
+        {
+            "created_date": "2017-01-03",
+            "total_price_cents": 760,
+            "purchases": [
+                {
+                    "product": {
+                        "name": "banana",
+                        "price_cents": 120
+                    },
+                    "qty": 3
+                },
+                {
+                    "product": {
+                        "name": "ham",
+                        "price_cents": 400
+                    },
+                    "qty": 1
+                }
+            ]
+        },
+        ...
+    ]
+}
+...</code></pre>
+
+    <li>Show other way of looking at data</li>
+    <li>Show query with HAVING</li>
+    <li>Show graph query</li>
+
+</body>

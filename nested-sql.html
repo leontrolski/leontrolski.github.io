@@ -94,6 +94,7 @@ VALUES
     <ul>
         <li>The main objection would seem to be that these new nested thingies are not rows and wouldn't play well with the existing conception of rows, esp. with filtering, grouping etc. I wonder if there's any deep thought that could be done to reconcile the two.</li>
         <li>How would the result cursor iterate through nested things as opposed to flat rows?</li>
+        <li>It may look like it, but I don't want <code>JSON</code> - I'd like to preserve <code>DATE</code> types and nice things like that.</li>
         <li>Chris Date <em>(I agree with all the poor reviews of <a href="https://www.amazon.com/Database-Depth-Relational-Theory-Practitioners/dp/0596100124">this</a> book, but still can't help but love it to the point where it probably drove the creation of <a href="https://github.com/leontrolski/dawdle/blob/master/README.md">this</a> project)</em> talks about "relations with relation valued attributes". This <em>may</em> be the purist's answer to my problems, but I guess I'm more concerned with a practical way in which you might extend SQL.</li>
         <li>Have I missed some other obvious features that would be super useful?</li>
         <li>Someone else <em>must</em> have described nearly the same as above in some other forum - it doesn't seem particularly novel.</li>
