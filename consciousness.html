@@ -1,0 +1,162 @@
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<head>
+    <title>leontrolski - Consciousness and the Social Brain</title>
+    <style>
+        body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 63%;}
+        @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+        a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none;text-shadow: 0 1px 0 #ffffff;}
+        a:hover {border-bottom: 0;}
+        blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
+        q {color:black;background-color:#f2f2f2;quotes:none;}
+        pre {background-color:white;padding:2em;}
+    </style>
+</head>
+<body>
+    <a href="index.html"><img style="height:2em" src="pic.png"/>⇦</a>
+    <h1>A developer's summary of Consciousness and the Social Brain</em></h1>
+    <p>
+        "<a href="https://global.oup.com/academic/product/consciousness-and-the-social-brain-9780199928644">Consciousness and the Social Brain</a>" is a book by Princeton neuroscience professor <a href="https://en.wikipedia.org/wiki/Michael_Graziano">Michael Graziano</a>, outlining his theory of consciousness - <b>the attention schema theory</b>.
+    </p>
+    <p>
+        This is a developer's summary only in that I can't imagine many other people having much interest in this website. Having said that, the theory itself is one of information, computation and modelling and so it feels particularly interesting to working programmers. If you enjoyed/hated this post, read the book, it'll be way better than what I'm about to write.
+    </p>
+
+    <h2>Intro</h2>
+    <p>
+        As a first year student I attended a talk by <a href="https://en.wikipedia.org/wiki/Susan_Blackmore">Susan Blackmore</a> on consciousness. She is an engaging and thought-provoking speaker - that talk led me to reading further on the topic including her "best of" book "<a href="https://www.susanblackmore.uk/conversations-on-consciousness/">Conversations on Consciousness</a>" in which she talks to a wide spectrum of thinkers on <a href="https://en.wikipedia.org/wiki/Hard_problem_of_consciousness">the hard problem</a>.
+    </p>
+    <p>
+        A few years later, book three or four on the topic blew my mind in its clarity and concision - "Consciousness and the Social Brain" by Michael Graziano. The title is slightly misleading (to me at least) in that it implies his theory might be limited in scope to what our brain does as we interact with other people. Instead it is a simple, materialist theory of mind accompanied by series of observations from neuroscience that support the theory. On finishing the book you may find that the hard problem don't seem so hard after all.
+    </p>
+
+    <h2>Define consciousness</h2>
+    <p>
+        Everyone and their uncle has their own definition of consciousness, questions that get chucked around might include "how do I know that I'm someone distinct from the world?", "how are my memories formed?", "how do I experience the sweetness of the apple?" etc. Graziano starts us out by saying we should just focus on a more specific word: "awareness". In our brain, there is knowledge - <q>the apple is sweet</q>, <q>the traffic is loud</q>, <q>the memory was of a cat</q>, <q>my foot is in pain</q> - and then there is <em>awareness</em> of the knowledge - <q>I am aware of the apple's sweetness</q> etc.
+    </p>
+    <p>
+        This checks out intuitively, if you ask someone to <q>be especially consciousness for a bit</q> while they're eating an apple, they will likely focus in on their awareness of the sweetness/crunch etc. - we could similarly have asked <q>be especially aware for a bit</q>. By limiting our question to <q>what is awareness?</q> rather than <q>what is consciousness?</q>, we rid ourselves of a lot of baggage while remaining focused on the essence of the hard problem. Take for example a <a href="https://en.wikipedia.org/wiki/Philosophical_zombie">philosophical zombie</a>, would it be semantically zombie enough if it were never "aware" (as opposed to never "conscious")? If not and you think there's some other important aspect to the hard problem, this ain't the theory for you.
+    </p>
+    <p>
+        How our brain might represent the knowledge itself that we are aware of (taste, memories etc.) is something distinct from awareness and we'll leave that for another bit of the neuroscience department.
+    </p>
+
+    <h2>Graziano's squirrel</h2>
+    <p>
+        Graziano's colleague had a patient that reported a squirrel in his head, he agreed that it was physically impossible, but nonetheless it was there (he was <em>really</em> certain). The easy problem is working out how the brain might represent the squirrel, its fur, claws, its location (in the patient's head), this is a knowledge representation problem. The hard problem (especially from the patient's perspective) is how the squirrel (with all its vivid real-ness) might be there at all, in his head.
+    </p>
+    <blockquote>
+        If we all shared that man's delusion [...] we would be certain of its existence, [...] agree collectively that we have it [...] and yet we would have no way to jump from neuronal circuitry to squirrel. [...] We would be forced into the dualist position that the brain is somehow both a neuronal machine and, at the same time, on a higher plane, a squirrel.
+    </blockquote>
+    <p>
+        It is obvious in this case, there is no hard problem as there is no actual squirrel, only a description of one.
+    </p>
+
+    <h2>Graziano's awareness</h2>
+    <p>
+        Graziano's colleague had a patient that reported awareness in their head, he agreed that it was physically impossible, but nonetheless it was there (he was <em>really</em> certain). The easy problem is working out how the brain might represent awareness, its vividness, its ethereal nature, its location (in the patient's head)...
+    </p>
+    <p>
+        <em>You get the idea...</em>
+    </p>
+    <p>
+        Graziano's proposition is that there is still no hard problem as there is no actual awareness here, any more than there is an actual squirrel in the previous case, there is only a description of awareness.
+    </p>
+
+    <h2>Arrow <q>B</q></h2>
+    <p>
+        Consider the following diagram:
+    </p>
+    <pre>   Awareness
+   ↑ A   ↓ B
+Neuronal information
+   processing</pre>
+    <p>
+        A lot of theories only consider arrow <q>A</q> - <q>how does awareness arise?</q> (maybe it arises from complexity somehow, like heat?)
+    </p>
+    <p>
+        Given that we can report awareness, there must also exist an arrow <q>B</q>, information about awareness must eventually reach the neurons that operate our vocal chords. This leads us to ask - how does awareness then impact the neuronal machinery? Most theories consider <q>A</q> to be magical, but once you consider there <em>must</em> be an arrow <q>B</q>, and that the brain is an information processing machine, the simplest theory is that awareness <em>is</em> just an informational description in the brain.
+    </p>
+    <p>
+        Descriptions have the nice property of being able to describe even impossible, magical things (eg. Middle Earth) and so are a good fit for awareness. An uncontroversial example of a nonsensical thing our brain describes would be white light, we consider it to be a pure, low-colour thing, whereas we know from Newton that it's a muddy, many-coloured smush.
+    </p>
+
+    <h3>An optimistic note</h3>
+    <em>
+        Graziano makes the claim that this approach is deeply unsatisfying, but that "a theory does not need to be satisfying to be true". There is no ethereal magic to awareness any more, only the description of ethereal magic. Maybe it's one for the philosophers, and maybe it's my inner programmer speaking, but I don't particularly find the magic existing only as information to be particularly disappointing, or even make it particularly less "real". After all, there are branches of physics that consider everything as computation and yet I'd consider all those atoms whizzing around to be real enough for me.
+    </em>
+
+    <h2>What is awareness then, why bother?</h2>
+    <p>
+        A description of a squirrel would not be a useful thing for humans to have evolved to have in their head, so why awareness and why all its weird properties?
+    </p>
+    <blockquote>
+        Awareness itself [...] is a complex, continuously recomputed model that describes what it means - the conditions, dynamics and consequences - for a brain to attentively process information.
+    </blockquote>
+
+    <h2>Attention</h2>
+    <p>
+        <a href="https://en.wikipedia.org/wiki/Attention">Attention</a> is a well studied part of neuroscience. <em>Loads</em> of information comes to us via our senses and as we have limited computational resource, we limit our high-level computation of this information by only considering some of it of a time. This biasing of which-information-to-consider can be bottom up (caused by an unexpected tennis ball whizzing past our peripheral vision) or top down (caused by playing spot-the-difference). The spotlight of attention acts across the many-dimensions of the information coming in.
+    </p>
+
+    <h2>Attention schema</h2>
+    <p>
+        In Graziano's theory, we have an internal model of our own (and others') attention, like a simplified computer simulation/scientific theory that reduces a problem to its essence. We have internal models of real things in the physical world (like tennis balls and <a href="https://en.wikipedia.org/wiki/Body_transfer_illusion#Rubber_hand_illusion">our bodies</a>) and similarly, internal models of attention.
+    </p>
+    <p>
+        Consider the statement "I am aware of X". Awareness does not <em>arise</em> from the neurons responsible for describing the "I" or the "X", it is the "am aware of", a description of the relationship between the you and the thing, a description of attention.
+    </p>
+
+    <h2>The social bit</h2>
+    <p>
+        It is uncontroversial that we create models of others' attention (via their gaze, their facial expression, their previous behaviour etc), this is useful for predicting their behaviour and therefore serves an obvious evolutionary purpose. What if our awareness is the same kind of thing, but about ourselves rather than others? Now we have something falsifiable that we can apply our evidence to, if this were to be true, the same bits of brain would be buzzing in both cases and if that bit of brain were damaged, so would awareness.
+    </p>
+    <p>
+        It turns out there are bits of the brain that look likely candidates. As we're assuming a programmer audience rather than a biologist audience, we'll name them - the TPJ and STS - and leave it at that.
+    </p>
+    <p>
+        The brain (like lots of software) has weird feedback loops and mucky system boundaries, awareness and attention are deeply bound and one may accentuate the other. I am aware of something, that may boost a top-down attention bias, that itself boosts my attention of it, that attention triggers more awareness etc. Obviously, when building a model of someone else's attention, these feedback loops don't exist. Combine this with the far richer information we receive about ourselves and we get some way to explaining why the model of <em>our</em> attention is so much more complete than that of others.
+    </p>
+
+
+    <h1>Experimental Evidence</h1>
+    <blockquote>
+        That the truth consists of hard-to-vary assertions about reality is the most important fact about the physical world. - David Deutsch
+    </blockquote>
+    <p>
+        <em>If like me you're not a neuroscientist, the different ways the literature describes in which the brain can be damaged and yet still broadly function are really astonishing. Also surprising is the extent to which discoveries in the field seem to be driven by damage to the brain in stroke victims. If you want to read any of the articles referenced below and can't afford to pay, remember, scihub is your friend.</em>
+    </p>
+
+    <h2>Altering the description</h2>
+    <p>
+        If awareness is just a description, it should be possible to change part of that description and notice it. What if we could alter the spatial position in the description? Studies <a href="https://science.sciencemag.org/content/317/5841/1048">have shown</a> that you can easily induce out-of-body experiences (ie. alter the spatial postion in the description). One way of doing it is to <a href="https://pubmed.ncbi.nlm.nih.gov/12239558/">zap the TPJ a bit</a>.
+    </p>
+
+    <h2>Losing awareness</h2>
+    <p>
+        To test whether it is possible to compute awareness, one way would be to construct it with a computer - this seems a bit far off at the moment. Another way would be to knock out a bit of the brain such that only awareness is diminished - this would point to some neuronal machinery being responsible for it. (If we were to diminish <em>many</em> brain functions, this would be less useful as it would still leave us with the posibility of consciousness arising from brain function in and of itself).
+    </p>
+    <p>
+        <a href="http://www.cnbc.cmu.edu/braingroup/papers/goodale_milner_1992.pdf">Goodale and colleagues</a> studied a patient who had damaged a specific bit of the brain relating to hand-eye coordination. The patient was able to post different shaped letters into slots accurately, but was never conscious of the shape or the size of the letter. Similarly related is the well-studied phenomenon <a href="https://en.wikipedia.org/wiki/Blindsight">blindsight</a> - patients are unable to consciously see a particular region of their visual field - for example, the top right quadrant. Patients will report that they are totally unable to see things in the region, but when shown objects there, they will still often be able to guess correctly. Similar again is <a href="https://en.wikipedia.org/wiki/Binocular_rivalry">binocular rivalry</a> - when two different images are presented one to each eye, they each flick in and out of awareness (rather than super-imposing as you might expect). These studies are not inconsistent with the attention schema theory, but they don't <em>specifically</em> support it as they don't specifically address the bits of the brain hypothesised to model attention - they could support a wide range of theories of consciousness.
+    </p>
+
+    <h3>Which bits of the brain are active when modelling attention?</h3>
+    <p>
+        Humans' brains are especially active in the STS when they are processing social tasks, for example <a href="https://www.jneurosci.org/content/17/11/4302">when responding to faces</a>, it will <a href="https://pubmed.ncbi.nlm.nih.gov/15701223/">react more strongly</a> to goal orientated movements (such as an arm grabbing a cup) than to movements without purpose. The STS and the TPJ are also active when participants are <a href="https://pubmed.ncbi.nlm.nih.gov/8556839/">told stories</a> about people and then asked to guess what action they might take. The same regions are <em>also</em> active when people <a href="https://pubmed.ncbi.nlm.nih.gov/20219998/">redirect their own attention</a>.
+    </p>
+
+    <h3>Patients with a damaged STS/TPJ</h3>
+    <p>
+        If you ask a patient with <a href="https://en.wikipedia.org/wiki/Hemispatial_neglect">hemispatial neglect</a> to close their eyes and describe the layout of a public square they know, they will describe all the buildings on the right hand side, but totally ignore everything on the left hand side - they have lost awareness of the left side of space. These patients will still respond to images presented on the left side (they may flinch if something scary is presented), but they are not aware of the object in the image. This has shown to be the case even when processing high-level thoughts about things on the left - they are only missing awareness.
+    </p>
+    <p>
+        The attention schema theory predicts that there should <em>broadly</em> be two types of neglect, that in which the representation of attention is damaged (this should happen in the STS/TPJ) and that in which the control of attention is damaged (this should happen elsewhere in the brain). Results in this area were positive but ongoing at the time of the book being written (<a href="#footnote">I'd love to know more about progress here</a>).
+    </p>
+
+    <h1>Footnote</h1>
+    <p id="footnote">
+        Reading this book gave me a very strong "oh, that previously mysterious thing kinda makes sense now" feeling. Writing it up was a way for me to try and absorb its arguments but I don't feel I have the time to really delve any deeper into contemporary neuroscience. If anyone reading this is (or knows) someone in this area of neuroscience/psychology/philosophy/AI, I'd love to know (email me!): Is this theory widely read at all? Are there similar competiting theories? Did it make any waves in the field? or is it considered fringe nonsense? As a layman, where is the best place to read about the state of the art in the field? Are people using these ideas in their attempts at building strong AI?
+    </p>
+    <p>
+        Graziano has a <a href="https://www.wwnorton.co.uk/books/9780393652611-rethinking-consciousness">new(ish) book</a> out on the same topic but aimed more at the layman. It would be super cool if this were to become the new pop science bestseller a là A Brief History of Time or Sapiens, buy buy buy!
+    </p>
+</body>

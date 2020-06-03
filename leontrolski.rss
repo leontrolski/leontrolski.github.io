@@ -6,6 +6,10 @@
         <link>https://leontrolski.github.io</link>
         <!-- newest to oldest -->
         <item>
+            <title>A developer's summary of Consciousness and the Social Brain</title>
+            <link>https://leontrolski.github.io/consciousness.html</link>
+        </item>
+        <item>
             <title>What if we'd had nice html-in-js syntax from the beginning?</title>
             <link>https://leontrolski.github.io/dom-syntax.html</link>
         </item>
