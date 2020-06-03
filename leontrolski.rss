@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0">
+    <channel>
+        <title>Leon Trolski</title>
+        <description>The website of Leon Trolski</description>
+        <link>https://leontrolski.github.io</link>
+        <!-- newest to oldest -->
+        <item>
+            <title>What if we'd had nice html-in-js syntax from the beginning?</title>
+            <link>https://leontrolski.github.io/dom-syntax.html</link>
+        </item>
+        <item>
+            <title>Contrair articles - the beginning</title>
+            <link>https://leontrolski.github.io/contrair-articles.html</link>
+        </item>
+        <item>
+            <title>33 line React followup</title>
+            <link>https://leontrolski.github.io/33-line-react-with-comments.html</link>
+        </item>
+        <item>
+            <title>33 line React</title>
+            <link>https://leontrolski.github.io/33-line-react.html</link>
+        </item>
+        <item>
+            <title>Nested SQL</title>
+            <link>https://leontrolski.github.io/nested-sql.html</link>
+        </item>
+        <item>
+            <title>OO Nirvana</title>
+            <link>https://leontrolski.github.io/poor-mans-object.html</link>
+        </item>
+        <item>
+            <title>Fake DataFrame</title>
+            <link>https://leontrolski.github.io/fake-data-frame.html</link>
+        </item>
+    </channel>
+</rss>
