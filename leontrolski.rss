@@ -1,41 +1,1215 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<rss version="2.0">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
     <channel>
         <title>Leon Trolski</title>
         <description>The website of Leon Trolski</description>
         <link>https://leontrolski.github.io</link>
-        <!-- newest to oldest -->
+        <atom:link href="https://leontrolski.github.io/leontrolski.rss" rel="self" type="application/rss+xml" />
+        <image>
+            <title>Leon Trolski</title>
+            <url>https://leontrolski.github.io/pic.png</url>
+            <link>https://leontrolski.github.io</link>
+        </image>
         <item>
-            <title>A developer's summary of Consciousness and the Social Brain</title>
-            <link>https://leontrolski.github.io/consciousness.html</link>
-        </item>
-        <item>
-            <title>What if we'd had nice html-in-js syntax from the beginning?</title>
-            <link>https://leontrolski.github.io/dom-syntax.html</link>
-        </item>
-        <item>
-            <title>Contrair articles - the beginning</title>
-            <link>https://leontrolski.github.io/contrair-articles.html</link>
-        </item>
-        <item>
-            <title>33 line React followup</title>
-            <link>https://leontrolski.github.io/33-line-react-with-comments.html</link>
+            <title>33 line React - thoughts</title>
+            <pubDate>Mon, 11 May 2020 17:12:10 +0900</pubDate>
+            <link>https://leontrolski.github.io/33-line-react-thoughts.html</link>
+            <guid>https://leontrolski.github.io/33-line-react-thoughts.html</guid>
+            <description>
+&lt;body class="language-javascript"&gt;
+    &lt;a href="index.html"&gt;&lt;img style="height:2em" src="pic.png"/&gt;⇦&lt;/a&gt;
+    &lt;h1&gt;33 line React - thoughts&lt;/h1&gt;
+    &lt;p&gt;
+        &lt;em&gt;&lt;a href="33-line-react.html"&gt;Original post&lt;/a&gt;, &lt;a href="https://news.ycombinator.com/item?id=22776753"&gt;original discussion&lt;/a&gt;.&lt;/em&gt;
+    &lt;/p&gt;
+
+    &lt;p&gt;
+        There were lots of insightful comments in the hacker news thread - thanks, I thought I'd write up some of the thoughts that came out of it. Looking now, this may just be a rant piece - I'll let you decide. In a vaguely Top-Gear-esque way, this post is split into &lt;a href="#style"&gt;style&lt;/a&gt;, &lt;a href="#performance"&gt;performance&lt;/a&gt;, &lt;a href="#conclusions"&gt;conclusions&lt;/a&gt;.
+    &lt;/p&gt;
+
+    &lt;h1&gt;TLDR&lt;/h1&gt;
+    &lt;p&gt;Have a go building your next frontend with &lt;em&gt;an as simple as possible&lt;/em&gt; &lt;code&gt;pageState -&gt; DOM&lt;/code&gt; model, maybe use &lt;a href="https://mithril.js.org/"&gt;mithril&lt;/a&gt;.&lt;/p&gt;
+
+
+    &lt;h2 id="style"&gt;&lt;code&gt;.jsx&lt;/code&gt;, state management and aesthetics&lt;/h2&gt;
+    &lt;p&gt;
+        The React homepage, has the following snippet:
+    &lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;class Timer extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = { seconds: 0 };
+    }
+    tick() {
+        this.setState(state =&gt; ({
+            seconds: state.seconds + 1
+        }));
+    }
+    componentDidMount() {
+        this.interval = setInterval(() =&gt; this.tick(), 1000);
+    }
+    componentWillUnmount() {
+        clearInterval(this.interval);
+    }
+    render() {
+        return (
+            &amp;lt;div&gt;
+                Seconds: {this.state.seconds}
+            &amp;lt;/div&gt;
+        );
+    }
+}&lt;/code&gt;&lt;/pre&gt;
+    &lt;p&gt;
+        Versus, for example, the code for the noughts and crosses in my &lt;a href="33-line-react.html"&gt;original post&lt;/a&gt;, there's a huge amount of ceremony here. I have to:
+        &lt;ul id="ceremony"&gt;
+            &lt;li&gt;Do some OO gubbins.&lt;/li&gt;
+            &lt;li&gt;Wrap all calls to update the state with &lt;code&gt;this.setState(...)&lt;/code&gt;.&lt;/li&gt;
+            &lt;li&gt;Conform with quite a large API.&lt;/li&gt;
+            &lt;li&gt;Constantly pass state around with &lt;code&gt;props&lt;/code&gt; and &lt;code&gt;this.state&lt;/code&gt; (I understand some of this has been sorted with hooks, right?).&lt;/li&gt;
+            &lt;li&gt;Compile the JSX to boring js.&lt;/li&gt;
+        &lt;/ul&gt;
+        There are alleged performance/codebase management reasons for some of these, but I remain a bit sceptical of their applicability to "normal" sized web applications.
+    &lt;/p&gt;
+    &lt;h3 id="ezzthetic"&gt;Ezz-thetic&lt;/h3&gt;
+    &lt;p&gt;
+        To my eyes, the original mithril &lt;a href="https://raw.githack.com/MithrilJS/mithril.js/master/examples/todomvc/todomvc.js"&gt;TodoMVC source&lt;/a&gt; is exceptionally expressive and handsome, especially versus the equivalent React &lt;a href="https://github.com/tastejs/todomvc/tree/gh-pages/examples/react"&gt;example&lt;/a&gt;. Maybe I'm turning into Arthur Whitney, but I'm kind of enjoying long, dense lines like:
+    &lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;m("section#main", {style: {display: state.todos.length &gt; 0 ? "" : "none"}}, [
+    m("input#toggle-all[type='checkbox']", {checked: state.remaining === 0, onclick: ui.toggleAll})
+    ...&lt;/code&gt;&lt;/pre&gt;
+    &lt;p&gt;Consider the recommended React/JSX equivalent:&lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;if (todos.length) {
+    main = (
+        &amp;lt;section className="main"&gt;
+            &amp;lt;input
+                id="toggle-all"
+                className="toggle-all"
+                type="checkbox"
+                onChange={this.toggleAll}
+                checked={activeTodoCount === 0}
+            /&gt;
+            &amp;lt;label
+                htmlFor="toggle-all"
+            /&gt;
+            &amp;lt;ul className="todo-list"&gt;
+                {todoItems}
+            &amp;lt;/ul&gt;
+        &amp;lt;/section&gt;
+    );
+}&lt;/code&gt;&lt;/pre&gt;
+    &lt;h3&gt;Routing&lt;/h3&gt;
+    &lt;p&gt;
+        As a consumer of webpages, I'm not sure I've ever seen the URL change in an SPA and thought "phewph, I'm glad I wasn't redirected to a new page" - just gimme a normal &lt;code&gt;&amp;lt;a&gt;&lt;/code&gt; and split your app up yo.
+    &lt;/p&gt;
+
+    &lt;h2 id="performance"&gt;Performance&lt;/h2&gt;
+    &lt;p&gt;
+        I had a very unscientific play around with this neat &lt;a href="https://localvoid.github.io/uibench/"&gt;benchmarking tool&lt;/a&gt;, you can use the "Custom URL"s &lt;code&gt;http://leontrolski.github.io&lt;/code&gt; &lt;code&gt;/benchmark&lt;/code&gt; and &lt;code&gt;/benchmark/mithril.html&lt;/code&gt; to compare yourself. I'm going to keep the performance figures intentionally vague - I was comparing Vanilla JS, React 16, mithril and 33-line.
+        &lt;ul&gt;
+            &lt;li&gt;React and mithril performed very similarly.&lt;/li&gt;
+            &lt;li&gt;React tended to be faster than 33-line by a factor of 2 to 10.&lt;/li&gt;
+            &lt;li&gt;The Vanilla JS solution would often outperform 33-line.&lt;/li&gt;
+            &lt;li&gt;For smaller DOM trees, often the &lt;em&gt;winner&lt;/em&gt; was Vanilla JS (small discussion below).&lt;/li&gt;
+            &lt;li&gt;The &lt;a href="https://localvoid.github.io/uibench-react/16/main.js"&gt;React code&lt;/a&gt; was (gzipped + minified) 40kb, the &lt;a href="https://leontrolski.github.io/benchmark/main.js"&gt;33-line code&lt;/a&gt; was (gzipped, not minified) 1.8kb, mithril was (gzipped + minified) 9kb.&lt;/li&gt;
+            &lt;li&gt;The "JS Init Time" of react would be 2 to 10+ times slower than both 33-line and mithril, think in the order of +100ms.&lt;/li&gt;
+            &lt;li&gt;The performance of 33-line got proportially worse as the number of divs increased, this makes sense, given the diff algorithm is &lt;em&gt;basic&lt;/em&gt;.&lt;/li&gt;
+        &lt;/ul&gt;
+    &lt;/p&gt;
+    &lt;h3&gt;Performance - Notes&lt;/h3&gt;
+    &lt;p&gt;
+        The &lt;a href="https://github.com/leontrolski/leontrolski.github.io/blob/4f9cea8a5afc55252d38eb1aa1a20eda264a880f/benchmark/main.js"&gt;Vanilla JS one&lt;/a&gt; just shoves strings of html together and does a big &lt;code&gt;container.innerHTML =&lt;/code&gt;, nice and simple. On the other hand, string munging sucks for obvious reasons. Also, you end up with a lot of updates flashing around in the devtools inspector.
+    &lt;/p&gt;
+    &lt;p&gt;
+        I had to write a &lt;a href="https://github.com/leontrolski/leontrolski.github.io/blob/54bb7ff011065f0d46ae8f2e3c841dc3aa30c157/benchmark/main.js#L67-L69"&gt;few extra lines&lt;/a&gt; of 33-line to handle &lt;code&gt;data-&lt;/code&gt; attributes, that cranked it up to 37 lines. I think if you were to try productionise this toy code you'd end up with about 3/4 of a &lt;a href="https://mithril.js.org/"&gt;mithril&lt;/a&gt;.
+    &lt;/p&gt;
+    &lt;p&gt;
+        I did one run with the &lt;a href="https://github.com/Freak613/stage0"&gt;stage0&lt;/a&gt; library thingy, the code was a bit more &lt;a href="https://github.com/Freak613/stage0/blob/master/examples/uibench/app.js"&gt;gnarly&lt;/a&gt;, but it was &lt;em&gt;rapid&lt;/em&gt;. If I was writing eg. a game or a big spreadsheet app that needed high performance, I'd definitely be considering a library in this space.
+    &lt;/p&gt;
+    &lt;p&gt;
+        Things that I'd imagine React particularly excels at versus a naive approach would be things like clock counters/animations - small bits of the DOM changing at high frequency - the tradeoff for this performance seems to be state-management-based API complexity. If one is to use a simpler &lt;code&gt;pageState -&gt; DOM&lt;/code&gt; model with few library hooks into the guts, it may be necessary to implement clocks etc. out of band of the normal library's render loop.
+    &lt;/p&gt;
+
+
+    &lt;h2&gt;Hacker news meta bit&lt;/h2&gt;
+    &lt;p&gt;
+        For a while, the top-voted thread was people moaning about how a variable was called &lt;code&gt;m&lt;/code&gt;, then a later comment in the code said it was a &lt;code&gt;grid&lt;/code&gt;. I agree it was maybe a bit annoying, but I dunno, you read the article and that was your takeaway.. I've been part of a fair few code reviews with this vibe in my time :-)
+    &lt;/p&gt;
+
+    &lt;h2 id="conclusions"&gt;Conclusions&lt;/h2&gt;
+    &lt;p&gt;
+        Doing &lt;code&gt;document.querySelectorAll('*')&lt;/code&gt; on the airbnb map view (a reasonably complex SPA) returns &lt;b&gt;3407&lt;/b&gt; elements.
+    &lt;/p&gt;
+    &lt;p&gt;
+        With no thought to performance at all, a simple library can render in the order of 100s of divs per &lt;em&gt;millisecond&lt;/em&gt;. You could probably swap React out with 33-line on most sites and no-one would notice, you could also swap it out with some Vanilla JS string munging too - although the developer egonomics would be a bit rubbish.
+    &lt;/p&gt;
+    &lt;p&gt;
+        In their next project, I'd recommended any frontend devs out there embrace there inner minimalist and cut the &lt;a href="#ceremony"&gt;fat&lt;/a&gt;. Make a plain ol' &lt;code&gt;state&lt;/code&gt; variable at the top of your file, throw in some functions that mutate it, a touch of &lt;a href="https://mithril.js.org/"&gt;mithril&lt;/a&gt; to render it, and bang, you're done.
+    &lt;/p&gt;
+    &lt;p&gt;
+        If your site's slow (unless you're something really complicated like a game/spreadsheet), it's probably that you put a lot of crap on it, rather than anything to do with how you render your divs.
+    &lt;/p&gt;
+&lt;/body&gt;
+            </description>
         </item>
         <item>
             <title>33 line React</title>
+            <pubDate>Tue, 28 Apr 2020 06:56:54 +0900</pubDate>
             <link>https://leontrolski.github.io/33-line-react.html</link>
+            <guid>https://leontrolski.github.io/33-line-react.html</guid>
+            <description>
+&lt;body class="language-javascript"&gt;
+    &lt;a href="index.html"&gt;&lt;img style="height:2em" src="pic.png"/&gt;⇦&lt;/a&gt;
+    &lt;h1&gt;33 line React&lt;/h1&gt;
+    &lt;p&gt;
+        &lt;em&gt;&lt;a href="33-line-react-thoughts.html"&gt;Thoughts&lt;/a&gt; on reading through the hacker news &lt;a href="https://news.ycombinator.com/item?id=22776753"&gt;response&lt;/a&gt;.&lt;/em&gt;
+    &lt;/p&gt;
+    &lt;p&gt;
+        &lt;a href="https://reactjs.org/"&gt;React&lt;/a&gt;
+        &lt;ul&gt;
+            &lt;li&gt;you pass in a function that &lt;em&gt;takes&lt;/em&gt; state and &lt;em&gt;returns&lt;/em&gt; a virtual DOM (just a tree of plain ol' &lt;code&gt;js&lt;/code&gt; objects)&lt;/li&gt;
+            &lt;li&gt;it renders that virtual DOM as a &lt;em&gt;real&lt;/em&gt; DOM in the browser&lt;/li&gt;
+            &lt;li&gt;if you change the state, it runs the function again, this returns a new virtual DOM&lt;/li&gt;
+            &lt;li&gt;it efficiently updates the real DOM so that it matches the new virtual DOM&lt;/li&gt;
+        &lt;/ul&gt;
+        It also does a load of other crap as well, but we're going to ignore that.
+    &lt;/p&gt;
+    &lt;p&gt;
+        In this post, I'm going to make the smallest React-like thing that can do the above. It's very &lt;a href="https://mithril.js.org/"&gt;mithril&lt;/a&gt; influenced.
+    &lt;/p&gt;
+    &lt;p&gt;
+        Here are sample applications: &lt;a href="33-line-react-calendar.html"&gt;calendar picker&lt;/a&gt;, &lt;a href="33-line-react-snake.html"&gt;snake&lt;/a&gt; that use the &lt;a href="https://github.com/leontrolski/leontrolski.github.io/blob/master/33-line-react.js"&gt;library&lt;/a&gt;.
+    &lt;/p&gt;
+    &lt;p&gt;
+        &lt;em&gt;Lots of the code looks pretty code-golfy - I promise I don't do stuff like this at work, neither should you :-)&lt;/em&gt;
+    &lt;/p&gt;
+    &lt;h2&gt;Noughts and crosses&lt;/h2&gt;
+    &lt;p&gt;
+        We're going to make this noughts and crosses game:
+        &lt;div id="noughts"&gt;&lt;/div&gt;
+    &lt;/p&gt;
+    &lt;style&gt;
+        .o{background:red;}
+        .x{background:blue;}
+        .cell{height:4em;width:4em;border:1px solid black;}
+    &lt;/style&gt;
+    &lt;script&gt;
+        let currentPlayer = 'o'
+        let winner = null
+        const g = [['', '', ''], ['', '', ''], ['', '', '']]  // grid
+
+        const move = (value, i, j)=&gt;{
+            if (value !== '') return
+            g[i][j] = currentPlayer
+            currentPlayer = currentPlayer === 'x'? 'o' : 'x'
+            const winners = [
+                ...[0, 1, 2].map(i=&gt;[g[i][0], g[i][1], g[i][2]].join('')),
+                ...[0, 1, 2].map(j=&gt;[g[0][j], g[1][j], g[2][j]].join('')),
+                [g[0][0], g[1][1], g[2][2]].join(''),
+                [g[2][0], g[1][1], g[0][2]].join(''),
+            ]
+            if(winners.includes('xxx')) winner = 'x'
+            if(winners.includes('ooo')) winner = 'o'
+            renderNoughts()
+        }
+
+        const Cell = (value, i, j)=&gt;m('button.cell',
+            {onclick: ()=&gt;move(value, i, j)}, value
+        )
+        const Noughts = ()=&gt;m('',
+            winner
+                ? m('marquee', `winner: ${winner}`)
+                : m('h3', `current player: ${currentPlayer}`),
+            m('table', g.map(
+                (row, i)=&gt;m('tr', row.map(
+                    (value, j)=&gt;m('td', {class: value}, Cell(value, i, j)))))),
+        )
+
+        const renderNoughts = ()=&gt;m.render(
+            document.getElementById('noughts'),
+            {children: [Noughts()]},
+        )
+        renderNoughts()
+    &lt;/script&gt;
+    &lt;p&gt;
+        Now let's look at the code to this, you can also just view the page source if you want.
+    &lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;let currentPlayer = 'o'
+let winner = null
+const g = [['', '', ''], ['', '', ''], ['', '', '']]  // grid
+
+const move = (value, i, j)=&gt;{
+    // ... game logic goes here
+    renderNoughts()
+}
+
+const Cell = (value, i, j)=&gt;m('button.cell',
+    {onclick: ()=&gt;move(value, i, j)}, value
+)
+const Noughts = ()=&gt;m('',
+    winner
+        ? m('marquee', `winner: ${winner}`)
+        : m('h3', `current player: ${currentPlayer}`),
+    m('table', g.map(
+        (row, i)=&gt;m('tr', row.map(
+            (value, j)=&gt;m('td', {class: value}, Cell(value, i, j)))))),
+)
+
+const renderNoughts = ()=&gt;m.render(
+    document.getElementById('noughts'),
+    {children: [Noughts()]},
+)
+renderNoughts()&lt;/code&gt;&lt;/pre&gt;
+    &lt;p&gt;Cute, so what's going on?&lt;/p&gt;
+    &lt;p&gt;First we defined some state:&lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;let currentPlayer = 'o'
+let winner = null
+const g = [['', '', ''], ['', '', ''], ['', '', '']]  // grid&lt;/code&gt;&lt;/pre&gt;
+    &lt;p&gt;These hold the state of our game, we will mutate them.&lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;const move = (value, i, j){...}&lt;/code&gt;&lt;/pre&gt;
+    &lt;p&gt;This function makes a move in the game, it takes &lt;code&gt;'x'&lt;/code&gt; or &lt;code&gt;'o'&lt;/code&gt; along with 2 integer coordinates. It will mutate all the state variables to reflect the new state of the game. After that, it calls &lt;code&gt;renderNoughts()&lt;/code&gt;, this is a call to rerender the game - but we'll come back to that.&lt;/p&gt;
+    &lt;p&gt;Next we define the functions that return virtual DOMs, &lt;code&gt;Noughts&lt;/code&gt; and &lt;code&gt;Cell&lt;/code&gt;.&lt;/p&gt;
+    &lt;p&gt;
+        The &lt;code&gt;m(...)&lt;/code&gt; calls take:
+        &lt;ul&gt;
+            &lt;li&gt;a tag name (eg. &lt;code&gt;'tr'&lt;/code&gt;), with &lt;code&gt;.&lt;/code&gt;-separated class names&lt;/li&gt;
+            &lt;li&gt;(optionally) a &lt;code&gt;{string: any}&lt;/code&gt; object containing all the attributes to attach to the DOM node&lt;/li&gt;
+            &lt;li&gt;an arbitrarily nested list of &lt;b&gt;children&lt;/b&gt; - these are other virtual DOM nodes or strings of text&lt;/li&gt;
+        &lt;/ul&gt;
+        And return virtual DOM elements, for example, calling &lt;code&gt;Noughts()&lt;/code&gt; would return:
+    &lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;{
+    tag: 'div',
+    attrs: {},
+    classes: [],
+    children: [
+        {
+            tag: 'h3',
+            attrs: {},
+            classes: [],
+            children: [
+                'current player: x'
+            ]
+        },
+        {
+            tag: 'table',
+            attrs: {},
+            classes: [],
+            children: [
+                {
+                    tag: 'tr',
+                    attrs: {},
+                    classes: [],
+                    children: [
+...&lt;/code&gt;&lt;/pre&gt;
+    &lt;p&gt;Next we make the function &lt;code&gt;renderNoughts()&lt;/code&gt;, when you call it, it will call our &lt;code&gt;Noughts&lt;/code&gt; function, and attempt to efficiently render the resulting virtual DOM onto &lt;code&gt;document.getElementById('noughts')&lt;/code&gt;&lt;/p&gt;
+
+    &lt;h2&gt;How does &lt;code&gt;m&lt;/code&gt; work?&lt;/h2&gt;
+    &lt;p&gt;
+        Here's the source &lt;a href="https://github.com/leontrolski/leontrolski.github.io/blob/master/33-line-react-with-comments.js"&gt;with&lt;/a&gt; and &lt;a href="https://github.com/leontrolski/leontrolski.github.io/blob/master/33-line-react.js"&gt;without&lt;/a&gt; comments.
+    &lt;p&gt;
+
+&lt;/body&gt;
+            </description>
         </item>
         <item>
-            <title>Nested SQL</title>
-            <link>https://leontrolski.github.io/nested-sql.html</link>
+            <title>A developer's summary of Consciousness and the Social Brain&lt;/em&gt;</title>
+            <pubDate>Thu, 4 Jun 2020 01:45:41 +0900</pubDate>
+            <link>https://leontrolski.github.io/consciousness.html</link>
+            <guid>https://leontrolski.github.io/consciousness.html</guid>
+            <description>
+&lt;body&gt;
+    &lt;a href="index.html"&gt;&lt;img style="height:2em" src="pic.png"/&gt;⇦&lt;/a&gt;
+    &lt;h1&gt;A developer's summary of Consciousness and the Social Brain&lt;/em&gt;&lt;/h1&gt;
+    &lt;p&gt;
+        "&lt;a href="https://global.oup.com/academic/product/consciousness-and-the-social-brain-9780199928644"&gt;Consciousness and the Social Brain&lt;/a&gt;" is a book by Princeton neuroscience professor &lt;a href="https://en.wikipedia.org/wiki/Michael_Graziano"&gt;Michael Graziano&lt;/a&gt;, outlining his theory of consciousness - &lt;b&gt;the attention schema theory&lt;/b&gt;.
+    &lt;/p&gt;
+    &lt;p&gt;
+        This is a developer's summary only in that I can't imagine many other people having much interest in this website. Having said that, the theory itself is one of information, computation and modelling and so it feels particularly interesting to working programmers. If you enjoyed/hated this post, read the book, it'll be way better than what I'm about to write.
+    &lt;/p&gt;
+
+    &lt;h2&gt;Intro&lt;/h2&gt;
+    &lt;p&gt;
+        As a first year student I attended a talk by &lt;a href="https://en.wikipedia.org/wiki/Susan_Blackmore"&gt;Susan Blackmore&lt;/a&gt; on consciousness. She is an engaging and thought-provoking speaker - that talk led me to reading further on the topic including her "best of" book "&lt;a href="https://www.susanblackmore.uk/conversations-on-consciousness/"&gt;Conversations on Consciousness&lt;/a&gt;" in which she talks to a wide spectrum of thinkers on &lt;a href="https://en.wikipedia.org/wiki/Hard_problem_of_consciousness"&gt;the hard problem&lt;/a&gt;.
+    &lt;/p&gt;
+    &lt;p&gt;
+        A few years later, book three or four on the topic blew my mind in its clarity and concision - "Consciousness and the Social Brain" by Michael Graziano. The title is slightly misleading (to me at least) in that it implies his theory might be limited in scope to what our brain does as we interact with other people. Instead it is a simple, materialist theory of mind accompanied by series of observations from neuroscience that support the theory. On finishing the book you may find that the hard problem don't seem so hard after all.
+    &lt;/p&gt;
+
+    &lt;h2&gt;Define consciousness&lt;/h2&gt;
+    &lt;p&gt;
+        Everyone and their uncle has their own definition of consciousness, questions that get chucked around might include "how do I know that I'm someone distinct from the world?", "how are my memories formed?", "how do I experience the sweetness of the apple?" etc. Graziano starts us out by saying we should just focus on a more specific word: "awareness". In our brain, there is knowledge - &lt;q&gt;the apple is sweet&lt;/q&gt;, &lt;q&gt;the traffic is loud&lt;/q&gt;, &lt;q&gt;the memory was of a cat&lt;/q&gt;, &lt;q&gt;my foot is in pain&lt;/q&gt; - and then there is &lt;em&gt;awareness&lt;/em&gt; of the knowledge - &lt;q&gt;I am aware of the apple's sweetness&lt;/q&gt; etc.
+    &lt;/p&gt;
+    &lt;p&gt;
+        This checks out intuitively, if you ask someone to &lt;q&gt;be especially consciousness for a bit&lt;/q&gt; while they're eating an apple, they will likely focus in on their awareness of the sweetness/crunch etc. - we could similarly have asked &lt;q&gt;be especially aware for a bit&lt;/q&gt;. By limiting our question to &lt;q&gt;what is awareness?&lt;/q&gt; rather than &lt;q&gt;what is consciousness?&lt;/q&gt;, we rid ourselves of a lot of baggage while remaining focused on the essence of the hard problem. Take for example a &lt;a href="https://en.wikipedia.org/wiki/Philosophical_zombie"&gt;philosophical zombie&lt;/a&gt;, would it be semantically zombie enough if it were never "aware" (as opposed to never "conscious")? If not and you think there's some other important aspect to the hard problem, this ain't the theory for you.
+    &lt;/p&gt;
+    &lt;p&gt;
+        How our brain might represent the knowledge itself that we are aware of (taste, memories etc.) is something distinct from awareness and we'll leave that for another bit of the neuroscience department.
+    &lt;/p&gt;
+
+    &lt;h2&gt;Graziano's squirrel&lt;/h2&gt;
+    &lt;p&gt;
+        Graziano's colleague had a patient that reported a squirrel in his head, he agreed that it was physically impossible, but nonetheless it was there (he was &lt;em&gt;really&lt;/em&gt; certain). The easy problem is working out how the brain might represent the squirrel, its fur, claws, its location (in the patient's head), this is a knowledge representation problem. The hard problem (especially from the patient's perspective) is how the squirrel (with all its vivid real-ness) might be there at all, in his head.
+    &lt;/p&gt;
+    &lt;blockquote&gt;
+        If we all shared that man's delusion [...] we would be certain of its existence, [...] agree collectively that we have it [...] and yet we would have no way to jump from neuronal circuitry to squirrel. [...] We would be forced into the dualist position that the brain is somehow both a neuronal machine and, at the same time, on a higher plane, a squirrel.
+    &lt;/blockquote&gt;
+    &lt;p&gt;
+        It is obvious in this case, there is no hard problem as there is no actual squirrel, only a description of one.
+    &lt;/p&gt;
+
+    &lt;h2&gt;Graziano's awareness&lt;/h2&gt;
+    &lt;p&gt;
+        Graziano's colleague had a patient that reported awareness in their head, he agreed that it was physically impossible, but nonetheless it was there (he was &lt;em&gt;really&lt;/em&gt; certain). The easy problem is working out how the brain might represent awareness, its vividness, its ethereal nature, its location (in the patient's head)...
+    &lt;/p&gt;
+    &lt;p&gt;
+        &lt;em&gt;You get the idea...&lt;/em&gt;
+    &lt;/p&gt;
+    &lt;p&gt;
+        Graziano's proposition is that there is still no hard problem as there is no actual awareness here, any more than there is an actual squirrel in the previous case, there is only a description of awareness.
+    &lt;/p&gt;
+
+    &lt;h2&gt;Arrow &lt;q&gt;B&lt;/q&gt;&lt;/h2&gt;
+    &lt;p&gt;
+        Consider the following diagram:
+    &lt;/p&gt;
+    &lt;pre&gt;   Awareness
+   ↑ A   ↓ B
+Neuronal information
+   processing&lt;/pre&gt;
+    &lt;p&gt;
+        A lot of theories only consider arrow &lt;q&gt;A&lt;/q&gt; - &lt;q&gt;how does awareness arise?&lt;/q&gt; (maybe it arises from complexity somehow, like heat?)
+    &lt;/p&gt;
+    &lt;p&gt;
+        Given that we can report awareness, there must also exist an arrow &lt;q&gt;B&lt;/q&gt;, information about awareness must eventually reach the neurons that operate our vocal chords. This leads us to ask - how does awareness then impact the neuronal machinery? Most theories consider &lt;q&gt;A&lt;/q&gt; to be magical, but once you consider there &lt;em&gt;must&lt;/em&gt; be an arrow &lt;q&gt;B&lt;/q&gt;, and that the brain is an information processing machine, the simplest theory is that awareness &lt;em&gt;is&lt;/em&gt; just an informational description in the brain.
+    &lt;/p&gt;
+    &lt;p&gt;
+        Descriptions have the nice property of being able to describe even impossible, magical things (eg. Middle Earth) and so are a good fit for awareness. An uncontroversial example of a nonsensical thing our brain describes would be white light, we consider it to be a pure, low-colour thing, whereas we know from Newton that it's a muddy, many-coloured smush.
+    &lt;/p&gt;
+
+    &lt;h3&gt;An optimistic note&lt;/h3&gt;
+    &lt;em&gt;
+        Graziano makes the claim that this approach is deeply unsatisfying, but that "a theory does not need to be satisfying to be true". There is no ethereal magic to awareness any more, only the description of ethereal magic. Maybe it's one for the philosophers, and maybe it's my inner programmer speaking, but I don't particularly find the magic existing only as information to be particularly disappointing, or even make it particularly less "real". After all, there are branches of physics that consider everything as computation and yet I'd consider all those atoms whizzing around to be real enough for me.
+    &lt;/em&gt;
+
+    &lt;h2&gt;What is awareness then, why bother?&lt;/h2&gt;
+    &lt;p&gt;
+        A description of a squirrel would not be a useful thing for humans to have evolved to have in their head, so why awareness and why all its weird properties?
+    &lt;/p&gt;
+    &lt;blockquote&gt;
+        Awareness itself [...] is a complex, continuously recomputed model that describes what it means - the conditions, dynamics and consequences - for a brain to attentively process information.
+    &lt;/blockquote&gt;
+
+    &lt;h2&gt;Attention&lt;/h2&gt;
+    &lt;p&gt;
+        &lt;a href="https://en.wikipedia.org/wiki/Attention"&gt;Attention&lt;/a&gt; is a well studied part of neuroscience. &lt;em&gt;Loads&lt;/em&gt; of information comes to us via our senses and as we have limited computational resource, we limit our high-level computation of this information by only considering some of it of a time. This biasing of which-information-to-consider can be bottom up (caused by an unexpected tennis ball whizzing past our peripheral vision) or top down (caused by playing spot-the-difference). The spotlight of attention acts across the many-dimensions of the information coming in.
+    &lt;/p&gt;
+
+    &lt;h2&gt;Attention schema&lt;/h2&gt;
+    &lt;p&gt;
+        In Graziano's theory, we have an internal model of our own (and others') attention, like a simplified computer simulation/scientific theory that reduces a problem to its essence. We have internal models of real things in the physical world (like tennis balls and &lt;a href="https://en.wikipedia.org/wiki/Body_transfer_illusion#Rubber_hand_illusion"&gt;our bodies&lt;/a&gt;) and similarly, internal models of attention.
+    &lt;/p&gt;
+    &lt;p&gt;
+        Consider the statement "I am aware of X". Awareness does not &lt;em&gt;arise&lt;/em&gt; from the neurons responsible for describing the "I" or the "X", it is the "am aware of", a description of the relationship between the you and the thing, a description of attention.
+    &lt;/p&gt;
+
+    &lt;h2&gt;The social bit&lt;/h2&gt;
+    &lt;p&gt;
+        It is uncontroversial that we create models of others' attention (via their gaze, their facial expression, their previous behaviour etc), this is useful for predicting their behaviour and therefore serves an obvious evolutionary purpose. What if our awareness is the same kind of thing, but about ourselves rather than others? Now we have something falsifiable that we can apply our evidence to, if this were to be true, the same bits of brain would be buzzing in both cases and if that bit of brain were damaged, so would awareness.
+    &lt;/p&gt;
+    &lt;p&gt;
+        It turns out there are bits of the brain that look likely candidates. As we're assuming a programmer audience rather than a biologist audience, we'll name them - the TPJ and STS - and leave it at that.
+    &lt;/p&gt;
+    &lt;p&gt;
+        The brain (like lots of software) has weird feedback loops and mucky system boundaries, awareness and attention are deeply bound and one may accentuate the other. I am aware of something, that may boost a top-down attention bias, that itself boosts my attention of it, that attention triggers more awareness etc. Obviously, when building a model of someone else's attention, these feedback loops don't exist. Combine this with the far richer information we receive about ourselves and we get some way to explaining why the model of &lt;em&gt;our&lt;/em&gt; attention is so much more complete than that of others.
+    &lt;/p&gt;
+
+
+    &lt;h1&gt;Experimental Evidence&lt;/h1&gt;
+    &lt;blockquote&gt;
+        That the truth consists of hard-to-vary assertions about reality is the most important fact about the physical world. - David Deutsch
+    &lt;/blockquote&gt;
+    &lt;p&gt;
+        &lt;em&gt;If like me you're not a neuroscientist, the different ways the literature describes in which the brain can be damaged and yet still broadly function are really astonishing. Also surprising is the extent to which discoveries in the field seem to be driven by damage to the brain in stroke victims. If you want to read any of the articles referenced below and can't afford to pay, remember, scihub is your friend.&lt;/em&gt;
+    &lt;/p&gt;
+
+    &lt;h2&gt;Altering the description&lt;/h2&gt;
+    &lt;p&gt;
+        If awareness is just a description, it should be possible to change part of that description and notice it. What if we could alter the spatial position in the description? Studies &lt;a href="https://science.sciencemag.org/content/317/5841/1048"&gt;have shown&lt;/a&gt; that you can easily induce out-of-body experiences (ie. alter the spatial postion in the description). One way of doing it is to &lt;a href="https://pubmed.ncbi.nlm.nih.gov/12239558/"&gt;zap the TPJ a bit&lt;/a&gt;.
+    &lt;/p&gt;
+
+    &lt;h2&gt;Losing awareness&lt;/h2&gt;
+    &lt;p&gt;
+        To test whether it is possible to compute awareness, one way would be to construct it with a computer - this seems a bit far off at the moment. Another way would be to knock out a bit of the brain such that only awareness is diminished - this would point to some neuronal machinery being responsible for it. (If we were to diminish &lt;em&gt;many&lt;/em&gt; brain functions, this would be less useful as it would still leave us with the posibility of consciousness arising from brain function in and of itself).
+    &lt;/p&gt;
+    &lt;p&gt;
+        &lt;a href="http://www.cnbc.cmu.edu/braingroup/papers/goodale_milner_1992.pdf"&gt;Goodale and colleagues&lt;/a&gt; studied a patient who had damaged a specific bit of the brain relating to hand-eye coordination. The patient was able to post different shaped letters into slots accurately, but was never conscious of the shape or the size of the letter. Similarly related is the well-studied phenomenon &lt;a href="https://en.wikipedia.org/wiki/Blindsight"&gt;blindsight&lt;/a&gt; - patients are unable to consciously see a particular region of their visual field - for example, the top right quadrant. Patients will report that they are totally unable to see things in the region, but when shown objects there, they will still often be able to guess correctly. Similar again is &lt;a href="https://en.wikipedia.org/wiki/Binocular_rivalry"&gt;binocular rivalry&lt;/a&gt; - when two different images are presented one to each eye, they each flick in and out of awareness (rather than super-imposing as you might expect). These studies are not inconsistent with the attention schema theory, but they don't &lt;em&gt;specifically&lt;/em&gt; support it as they don't specifically address the bits of the brain hypothesised to model attention - they could support a wide range of theories of consciousness.
+    &lt;/p&gt;
+
+    &lt;h3&gt;Which bits of the brain are active when modelling attention?&lt;/h3&gt;
+    &lt;p&gt;
+        Humans' brains are especially active in the STS when they are processing social tasks, for example &lt;a href="https://www.jneurosci.org/content/17/11/4302"&gt;when responding to faces&lt;/a&gt;, it will &lt;a href="https://pubmed.ncbi.nlm.nih.gov/15701223/"&gt;react more strongly&lt;/a&gt; to goal orientated movements (such as an arm grabbing a cup) than to movements without purpose. The STS and the TPJ are also active when participants are &lt;a href="https://pubmed.ncbi.nlm.nih.gov/8556839/"&gt;told stories&lt;/a&gt; about people and then asked to guess what action they might take. The same regions are &lt;em&gt;also&lt;/em&gt; active when people &lt;a href="https://pubmed.ncbi.nlm.nih.gov/20219998/"&gt;redirect their own attention&lt;/a&gt;.
+    &lt;/p&gt;
+
+    &lt;h3&gt;Patients with a damaged STS/TPJ&lt;/h3&gt;
+    &lt;p&gt;
+        If you ask a patient with &lt;a href="https://en.wikipedia.org/wiki/Hemispatial_neglect"&gt;hemispatial neglect&lt;/a&gt; to close their eyes and describe the layout of a public square they know, they will describe all the buildings on the right hand side, but totally ignore everything on the left hand side - they have lost awareness of the left side of space. These patients will still respond to images presented on the left side (they may flinch if something scary is presented), but they are not aware of the object in the image. This has shown to be the case even when processing high-level thoughts about things on the left - they are only missing awareness.
+    &lt;/p&gt;
+    &lt;p&gt;
+        The attention schema theory predicts that there should &lt;em&gt;broadly&lt;/em&gt; be two types of neglect, that in which the representation of attention is damaged (this should happen in the STS/TPJ) and that in which the control of attention is damaged (this should happen elsewhere in the brain). Results in this area were positive but ongoing at the time of the book being written (&lt;a href="#footnote"&gt;I'd love to know more about progress here&lt;/a&gt;).
+    &lt;/p&gt;
+
+    &lt;h1&gt;Footnote&lt;/h1&gt;
+    &lt;p id="footnote"&gt;
+        Reading this book gave me a very strong "oh, that previously mysterious thing kinda makes sense now" feeling. Writing it up was a way for me to try and absorb its arguments but I don't feel I have the time to really delve any deeper into contemporary neuroscience. If anyone reading this is (or knows) someone in this area of neuroscience/psychology/philosophy/AI, I'd love to know (email me!): Is this theory widely read at all? Are there similar competiting theories? Did it make any waves in the field? or is it considered fringe nonsense? As a layman, where is the best place to read about the state of the art in the field? Are people using these ideas in their attempts at building strong AI?
+    &lt;/p&gt;
+    &lt;p&gt;
+        Graziano has a &lt;a href="https://www.wwnorton.co.uk/books/9780393652611-rethinking-consciousness"&gt;new(ish) book&lt;/a&gt; out on the same topic but aimed more at the layman. It would be super cool if this were to become the new pop science bestseller a là A Brief History of Time or Sapiens, buy buy buy!
+    &lt;/p&gt;
+&lt;/body&gt;
+            </description>
         </item>
         <item>
-            <title>OO Nirvana</title>
-            <link>https://leontrolski.github.io/poor-mans-object.html</link>
+            <title>What if we'd had better &lt;code&gt;html&lt;/code&gt;-in-&lt;code&gt;js&lt;/code&gt; syntax all along?</title>
+            <pubDate>Tue, 12 May 2020 16:09:22 +0900</pubDate>
+            <link>https://leontrolski.github.io/dom-syntax.html</link>
+            <guid>https://leontrolski.github.io/dom-syntax.html</guid>
+            <description>
+&lt;body class="language-javascript"&gt;
+    &lt;a href="index.html"&gt;&lt;img style="height:2em" src="pic.png"/&gt;⇦&lt;/a&gt;
+    &lt;h1&gt;What if we'd had better &lt;code&gt;html&lt;/code&gt;-in-&lt;code&gt;js&lt;/code&gt; syntax all along?&lt;/h1&gt;
+    &lt;p&gt;
+        I have a theory that a grave mistake was made in 1995 - the decision not to have a neat, succinct and declarative way of representing html elements in javascript. &lt;em&gt;[On reading the &lt;a href="https://news.ycombinator.com/item?id=23142300"&gt;hacker news comments&lt;/a&gt; this is pretty historically inaccurate, however, I think this article still stands as "look just how close javascript object notation is to a reasonable way of representing html".]&lt;/em&gt;
+    &lt;/p&gt;
+    &lt;p&gt;
+        In this post, I'm going to describe the current state of affairs, show a couple of very small additions to javascript's syntax that might've made all the difference, then talk about the repercussions.
+    &lt;/p&gt;
+
+    &lt;h2&gt;What options do we have now?&lt;/h2&gt;
+    &lt;p&gt;
+        We have some APIs available to us, including all the &lt;a href="https://developer.mozilla.org/en-US/docs/Web/API/Element"&gt;Element&lt;/a&gt; properties/methods:
+    &lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;document.createElement("div")
+document.createTextNode("Hi there and greetings!")
+el.classList
+el.innerHTML
+el.removeAttribute()
+...&lt;/code&gt;&lt;/pre&gt;
+
+    &lt;p&gt;
+        We can use string templates and functions to try be more declarative:
+    &lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;const myLi = name =&gt; `&amp;lt;li&gt;My name is &amp;lt;em&gt;${name}&amp;lt;/em&gt;&amp;lt;/li&gt;`
+const myUl = names =&gt; `&amp;lt;ul class="my-ul"&gt;${names.map(myLi).join('')}&amp;lt;/ul&gt;`&lt;/code&gt;&lt;/pre&gt;
+    &lt;p&gt;
+        This is rubbish for obvious reasons - composing the strings is bug-prone, no typing/linting etc etc. We then have to turn them into elements with the &lt;a href="https://stackoverflow.com/questions/494143"&gt;less than elegant&lt;/a&gt;:
+    &lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;function createElementFromHTML(htmlString) {
+    var div = document.createElement('div');
+    div.innerHTML = htmlString.trim();
+    return div.firstChild;
+}&lt;/code&gt;&lt;/pre&gt;
+    &lt;p&gt;
+        Mmm...
+    &lt;/p&gt;
+
+    &lt;p&gt;
+        We can use the new &lt;a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/template"&gt;template&lt;/a&gt; elements, from the MDN docs:
+    &lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;&amp;lt;template id="productrow"&gt;
+    &amp;lt;tr&gt;
+        &amp;lt;td class="record"&gt;&amp;lt;/td&gt;
+        &amp;lt;td&gt;&amp;lt;/td&gt;
+    &amp;lt;/tr&gt;
+&amp;lt;/template&gt;&lt;/code&gt;&lt;/pre&gt;
+    &lt;pre&gt;&lt;code&gt;const template = document.querySelector('#productrow')
+const clone = template.content.cloneNode(true)
+const td = clone.querySelectorAll("td")
+td[0].textContent = "1235646565"
+tbody.appendChild(clone)&lt;/code&gt;&lt;/pre&gt;
+    &lt;p&gt;
+        I don't know about you, but that felt pretty yucky.
+    &lt;/p&gt;
+    &lt;p&gt;
+        Of course, there are also various libraries, ranging from string templating ones (like &lt;a href="https://handlebarsjs.com/"&gt;handlebars&lt;/a&gt;) through to compile-away ones like &lt;code&gt;.jsx&lt;/code&gt;.
+    &lt;/p&gt;
+
+    &lt;h2&gt;Representing html nodes now&lt;/h2&gt;
+    &lt;p&gt;
+        In contemporary typescript, a node of html can map to and from the type:
+    &lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;type HtmlNode = {
+    tag: string,
+    attributes: {[key: string]: string | Function},
+    children: (HtmlNode | string)[]
+}&lt;/code&gt;&lt;/pre&gt;
+    &lt;p&gt;
+        A node like:
+    &lt;/p&gt;
+    &lt;pre&gt;&lt;code class="language-html"&gt;&amp;lt;button id="baz" class="foo bar" data="1" onclick=f&gt;
+    Hello
+    &amp;lt;em&gt;there&amp;lt;/em&gt;
+&amp;lt;/button&gt;&lt;/code&gt;&lt;/pre&gt;
+    &lt;p&gt;
+        Would map to and from:
+    &lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;{
+    tag: "button",
+    attributes: {
+        "id": "baz",
+        "class": "foo bar",
+        "data": "1",
+        "onclick": f,
+    },
+    children: [
+        "Hello",
+        {
+            tag: "em",
+            attributes: {},
+            children: ["there"],
+        }
+    ]
+}&lt;/code&gt;&lt;/pre&gt;
+    &lt;p&gt;
+        Notice the &lt;code&gt;js&lt;/code&gt; representation is a bit verbose.
+    &lt;/p&gt;
+    &lt;p&gt;
+        The most terse html description language I've worked with was &lt;a href="http://jade-lang.com/"&gt;jade&lt;/a&gt;, here's an example:
+    &lt;/p&gt;
+    &lt;pre&gt;&lt;code class="language-pug"&gt;html(lang="en")
+    head
+        title= pageTitle
+    body
+        h1.some-class Jade - node template engine
+        #container
+        - if (youAreUsingJade)
+            You are amazing&lt;/code&gt;&lt;/pre&gt;
+    &lt;p&gt;
+        This seems nice, the main problem is we are a bit confined in our programming constructs, for example, how would we make the &lt;code&gt;&amp;lt;h1&gt;&lt;/code&gt; have the additional class &lt;code&gt;hidden&lt;/code&gt; on some condition? Jade gets around this by having 3 different ways of specifying classes. Rather than come up with a special templating language, let's just slightly extend vanilla &lt;code&gt;js&lt;/code&gt; syntax.
+    &lt;/p&gt;
+
+    &lt;h2&gt;Extending the object syntax&lt;/h2&gt;
+    &lt;p&gt;
+        Right, let's have a go with the example from above. I'm not going to put too much weight on the correctness of this as I'm not suggesting we change all our code, only a "what might've been".
+    &lt;/p&gt;
+    &lt;pre&gt;&lt;code class="language-html"&gt;&amp;lt;button id="baz" class="foo bar" data="1" onclick=f&gt;
+    Hello
+    &amp;lt;em&gt;there&amp;lt;/em&gt;
+&amp;lt;/button&gt;&lt;/code&gt;&lt;/pre&gt;
+    &lt;p&gt;
+        Would instead be:
+    &lt;/p&gt;
+    &lt;pre&gt;&lt;code class="language-none"&gt;button{id: 'baz' class: ['foo' 'bar'] data: '1' onclick: f
+    'Hello '
+    em{'there'}
+}&lt;/code&gt;&lt;/pre&gt;
+    &lt;p&gt;
+        Or formatted longhand:
+    &lt;/p&gt;
+    &lt;pre&gt;&lt;code class="language-none"&gt;button{
+    id: 'baz'
+    class: ['foo' 'bar']
+    data: '1'
+    onclick: f
+    'Hello '
+    em{'there'}
+}&lt;/code&gt;&lt;/pre&gt;
+    &lt;p&gt;
+        So, a checklist of things to allow existing &lt;code&gt;js&lt;/code&gt; object syntax to represent html nodes in a reasonably succinct way:
+    &lt;/p&gt;
+    &lt;ul&gt;
+        &lt;li&gt;As well as &lt;code&gt;key: value&lt;/code&gt; pairs, objects allow trailing &lt;code&gt;value&lt;/code&gt;s. I guess these would be accessible with &lt;code&gt;foo.~&lt;/code&gt; or some special construct.&lt;/li&gt;
+        &lt;li&gt;They get an optional tag (in this case &lt;code&gt;button&lt;/code&gt;). If you've done much JSON deserialisation, tags seem like a good idea (they can help you map data to types), take a look at how they're used (with custom namespacing) in &lt;a href="https://github.com/edn-format/edn#tagged-elements"&gt;edn&lt;/a&gt; - nice.&lt;/li&gt;
+        &lt;li&gt;To get things nice and small, I've dropped the requirement for commas.&lt;/li&gt;
+    &lt;/ul&gt;
+    &lt;p&gt;
+        That's it. Our javascript would use this as the main data type (everything else would remain the same). Probably, we'd start (re)writing all our XML-ish html to also use this syntax.
+    &lt;/p&gt;
+    &lt;h3&gt;Toy examples&lt;/h3&gt;
+    &lt;p&gt;
+            In the browser:
+    &lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;const someUl = document.getElementById('some-ul')
+
+const myLi = name =&gt; li{'My name is ' em{name}}
+
+someUl.~.push(myLi('Tommy'))&lt;/code&gt;&lt;/pre&gt;
+    &lt;p&gt;
+        An express route:
+    &lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;const names = ["Barry", "Lynette"]
+
+const myLi = name =&gt; li{'My name is ' em{name}}
+const myUl = names =&gt; ul{class: ['my-ul'] ...names.map(myLi)}
+
+app.get('/', (req, res) =&gt; res.send(myUl().asHTMLStr())&lt;/code&gt;&lt;/pre&gt;
+    &lt;p&gt;
+        Instead of this page's html:
+    &lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;body{class: "language-javascript"
+    a{href: "index.html" img{style: "height:2em" src: "pic.png"} "⇦"}
+    h1{"What if we'd had better " code{"html"} "-in-" code{"js"} syntax all along?"}
+    p{"I have a theory that a grave mistake was made in 1995 ..."}
+    ...&lt;/code&gt;&lt;/pre&gt;
+
+    &lt;h2&gt;What if we'd always had something like this in &lt;code&gt;js&lt;/code&gt;?&lt;/h2&gt;
+    &lt;ul&gt;
+        &lt;li&gt;
+            There would be no distinction between &lt;code&gt;JSON&lt;/code&gt; and &lt;code&gt;html&lt;/code&gt;. &lt;em&gt;(What would have been the downstream consequences to API design?)&lt;/em&gt;
+        &lt;/li&gt;
+        &lt;li&gt;
+            It would be constantly staring us in the face that our html is &lt;em&gt;just structured data&lt;/em&gt;.
+        &lt;/li&gt;
+        &lt;li&gt;
+            We wouldn't have had the years of weird logic-in-html stuff like in &lt;a href="https://knockoutjs.com/"&gt;knockout&lt;/a&gt; (remember that one?)
+            &lt;pre&gt;&lt;code&gt;&amp;lt;button data-bind="enable: myItems().length &amp;lt; 5"&gt;Add&amp;lt;/button&gt;&lt;/code&gt;&lt;/pre&gt;
+            &lt;p&gt;
+                Or &lt;a href="https://vuejs.org/"&gt;Vue&lt;/a&gt; (remember that one?)
+            &lt;/p&gt;
+            &lt;pre&gt;&lt;code&gt;&amp;lt;span v-bind:title="message"&gt;&lt;/code&gt;&lt;/pre&gt;
+        &lt;/li&gt;
+        &lt;li&gt;
+            We might've had a React-a-like in 1996, and it would have just been "duh, obviously we'll just do it like &lt;a href="https://en.wikipedia.org/wiki/Curses_(programming_library)"&gt;curses&lt;/a&gt;".
+        &lt;/li&gt;
+        &lt;li&gt;
+            We would have had a composable libraries for date selectors, modals, etc. without having to use said big-hairy-library.
+        &lt;/li&gt;
+        &lt;li&gt;
+            No one would be using handlebars/Jinja/twig string munging libraries to make html (in the node world at least).
+        &lt;/li&gt;
+        &lt;li&gt;
+            The html &lt;code&gt;&amp;lt;form&gt;&lt;/code&gt; &amp;lt;-&gt; &lt;code&gt;json&lt;/code&gt; impedence mismatch (try describing nested data as a form) would probably have been properly sorted by now.
+        &lt;/li&gt;
+        &lt;li&gt;
+            Everyones' early noughties plans for &lt;em&gt;everything&lt;/em&gt; to be &lt;code&gt;XML&lt;/code&gt; might've been more successful. &lt;em&gt;(Would that have been good?)&lt;/em&gt;
+        &lt;/li&gt;
+    &lt;/ul&gt;
+
+
+    &lt;h2&gt;What about &lt;code&gt;.jsx&lt;/code&gt; though?&lt;/h2&gt;
+    &lt;p&gt;
+        I think it's a fine enough solution, but the fact that it's a different syntax from your standard &lt;code&gt;js&lt;/code&gt; objects encourages people to consider the VDOM objects as "not normal data", but they &lt;em&gt;are&lt;/em&gt;. &lt;a href="http://www.eecg.toronto.edu/~jzhu/csc326/readings/iverson.pdf"&gt;Notation as a tool of thought&lt;/a&gt; innit.
+    &lt;/p&gt;
+
+    &lt;h2&gt;Other thoughts&lt;/h2&gt;
+    &lt;p&gt;
+        There's some great links relating to &lt;code&gt;XML&lt;/code&gt; &amp;lt;-&gt; &lt;code&gt;Scheme&lt;/code&gt; equivalence/syntax &lt;a href="https://news.ycombinator.com/item?id=9549841"&gt;here&lt;/a&gt;.
+    &lt;/p&gt;
+    &lt;p&gt;
+        Our alternative history having never happened, I &lt;a href="33-line-react-thoughts.html#ezzthetic"&gt;prefer&lt;/a&gt; the boring hyperscript style, everything is "just code".
+    &lt;/p&gt;
+&lt;/body&gt;
+            </description>
         </item>
         <item>
-            <title>Fake DataFrame</title>
+            <title>How do pandas DataFrames work? (kinda)</title>
+            <pubDate>Tue, 28 Apr 2020 06:56:54 +0900</pubDate>
             <link>https://leontrolski.github.io/fake-data-frame.html</link>
+            <guid>https://leontrolski.github.io/fake-data-frame.html</guid>
+            <description>
+&lt;body class="language-python"&gt;
+    &lt;a href="index.html"&gt;&lt;img style="height:2em" src="pic.png"/&gt;⇦&lt;/a&gt;
+    &lt;h1&gt;How do pandas DataFrames work? (kinda)&lt;/h1&gt;
+    &lt;p&gt;
+        When you're used to plain ol' &lt;code&gt;dict&lt;/code&gt;s, &lt;code&gt;int&lt;/code&gt;s, &lt;code&gt;list&lt;/code&gt;s etc, &lt;code&gt;pandas.DataFrame&lt;/code&gt;s exhibit some weirdo behaviour, particulary concerning assignment and operators. This page is a short walk-through of how some of these things happen (and a quick intro to Python's magic methods), you can see the outcome &lt;a href="https://github.com/leontrolski/fake-data-frame"&gt;here&lt;/a&gt;.
+    &lt;/p&gt;
+    &lt;p&gt;
+        &lt;em&gt;Disclaimer:&lt;/em&gt; the things presented here are not &lt;em&gt;entirely&lt;/em&gt; as the &lt;code&gt;pandas&lt;/code&gt; &lt;code&gt;DataFrame&lt;/code&gt;s work, they are more intended as a guide to how they do.
+    &lt;/p&gt;
+
+    &lt;p&gt;
+        The below examples use python type hints to help keep things a bit clearer, at the &lt;a href="https://github.com/leontrolski/fake-data-frame/blob/master/fake_data_frame.py"&gt;top&lt;/a&gt;, we have:
+    &lt;/p&gt;
+
+    &lt;pre&gt;&lt;code&gt;from typing import Any, Dict, List&lt;/code&gt;&lt;/pre&gt;
+
+    &lt;p&gt;
+        &lt;code&gt;DataFrame&lt;/code&gt;s are a collection of &lt;code&gt;Series&lt;/code&gt; (AKA columns), let's start with a really dumb &lt;code&gt;FakeSeries&lt;/code&gt;.
+    &lt;/p&gt;
+
+    &lt;pre&gt;&lt;code&gt;class FakeSeries:
+    def __init__(self, name: str, data: Dict[int, Any]):
+        self.name = name
+        self.data = data
+
+    def __repr__(self) -&gt; str:
+        return f'&amp;lt;FakeSeries: {self.name} {self.data}&gt;'&lt;/code&gt;&lt;/pre&gt;
+
+    &lt;pre&gt;&lt;code&gt;&gt;&gt;&gt; my_series = FakeSeries("some_column_name", {0: 5, 1: 7, 2: 9})
+&amp;lt;FakeSeries: some_column_name {0: 5, 1: 7, 2: 9}&gt;&lt;/code&gt;&lt;/pre&gt;
+
+    &lt;ul&gt;
+        &lt;li&gt;Note how the &lt;code&gt;__repr__&lt;/code&gt; method is used by &lt;code&gt;print()&lt;/code&gt;&lt;/li&gt;
+        &lt;li&gt;There a list of all the magic methods you can override on a class &lt;a href="https://docs.python.org/3/reference/datamodel.html#basic-customization"&gt;here&lt;/a&gt;&lt;/li&gt;
+        &lt;li&gt;Note how we are storing the series as a map of indices (0, 1, 2) to values (5, 7, 9)&lt;/li&gt;
+    &lt;/ul&gt;
+
+    &lt;p&gt;
+        Now we will define our &lt;code&gt;FakeDataFrame&lt;/code&gt;, it similarly has a useful &lt;code&gt;__init__&lt;/code&gt; and &lt;code&gt;__repr__&lt;/code&gt; (although this is only fully fleshed out in the &lt;a href="https://github.com/leontrolski/fake-data-frame/blob/master/fake_data_frame.py"&gt;original&lt;/a&gt;). On initialisation, it sets &lt;code&gt;self.series_map&lt;/code&gt; which is a map of series names to series.
+    &lt;/p&gt;
+
+    &lt;pre&gt;&lt;code&gt;class FakeDataFrame:
+    def __init__(self, d: Dict[str, List[Any]]):
+        self.series_map = {
+            k: FakeSeries(k, {i: v for i, v in enumerate(l)})
+            for k, l in d.items()
+        }
+        self.length = len(list(d.values())[0])
+
+    def __repr__(self):
+        width = 5
+        ...
+        return '\n'.join((headers, divider) + rows) + '\n'&lt;/code&gt;&lt;/pre&gt;
+
+    &lt;p&gt;
+        Already, we can see the beginnings of a &lt;code&gt;pandas&lt;/code&gt;-like &lt;code&gt;DataFrame&lt;/code&gt; interface.
+    &lt;/p&gt;
+
+    &lt;pre&gt;&lt;code&gt;&gt;&gt;&gt; df = FakeDataFrame({
+    'a': [4, 5, 6],
+    'b': [7, 8, 9],
+})
+
+    a |     b
+-------------
+    4 |     7
+    5 |     8
+    6 |     9&lt;/code&gt;&lt;/pre&gt;
+
+    &lt;p&gt;
+        Now the clever stuff begins, lets add two methods to &lt;code&gt;FakeDataFrame&lt;/code&gt; so that we can retreive and set its &lt;code&gt;Series&lt;/code&gt;.
+    &lt;/p&gt;
+
+    &lt;pre&gt;&lt;code&gt;    # handle []
+    def __getitem__(self, key: str) -&gt; FakeSeries:
+        return self.series_map[key]
+
+    # handle [] =
+    def __setitem__(self, key: str, value: FakeSeries) -&gt; None:
+        if key not in self.series_map:
+            self.series_map[key] = FakeSeries(key, {})
+        for i, v in value.data.items():
+            self[key].data[i] = v&lt;/code&gt;&lt;/pre&gt;
+
+    &lt;p&gt;
+        Let's retreive a series.
+    &lt;/p&gt;
+
+    &lt;pre&gt;&lt;code&gt;&gt;&gt;&gt; df['b']
+&amp;lt;FakeSeries: b {0: 7, 1: 8, 2: 9}&gt;&lt;/code&gt;&lt;/pre&gt;
+
+    &lt;p&gt;
+        And let's set one.
+    &lt;/p&gt;
+
+    &lt;pre&gt;&lt;code&gt;&gt;&gt;&gt; df['b'] = FakeSeries("not_b", {1: 'foo', 2: 'bar'})
+&gt;&gt;&gt; df
+    a |     b
+-------------
+    4 |     7
+    5 |   foo
+    6 |   bar&lt;/code&gt;&lt;/pre&gt;
+
+    &lt;p&gt;
+        Note how that the name of the series didn't need to align with "b", and that we were able to assign to series &lt;code&gt;b&lt;/code&gt; at only indices 1 and 2.
+    &lt;/p&gt;
+
+    &lt;p&gt;
+        Now to add some more smarts to our &lt;code&gt;FakeSeries&lt;/code&gt;.
+    &lt;/p&gt;
+
+    &lt;pre&gt;&lt;code&gt;    # handle *
+    def __mul__(self, other: int) -&gt; 'FakeSeries':
+        return FakeSeries(
+            self.name,
+            {i: v * other for i, v in self.data.items()},
+        )
+
+    # handle &gt;;
+    def __gt__(self, other: int) -&gt; 'FakeSeries':
+        return FakeSeries(
+            self.name,
+            {i: v &gt; other for i, v in self.data.items()},
+        )
+
+    # handle []
+    def __getitem__(self, key: 'FakeSeries') -&gt; 'FakeSeries':
+        return FakeSeries(
+            self.name,
+            {i: v for i, v in self.data.items() if key.data.get(i, False)},
+        )&lt;/code&gt;&lt;/pre&gt;
+
+    &lt;ul&gt;
+        &lt;li&gt;&lt;code&gt;__mul__&lt;/code&gt; takes an integer and returns a new &lt;code&gt;FakeSeries&lt;/code&gt; with each of the values multiplied by it&lt;/li&gt;
+        &lt;li&gt;&lt;code&gt;__gt__&lt;/code&gt; takes an integer and returns a new &lt;code&gt;FakeSeries&lt;/code&gt; where each of the values is greater than it&lt;/li&gt;
+        &lt;li&gt;&lt;code&gt;__getitem__&lt;/code&gt; takes another &lt;code&gt;FakeSeries&lt;/code&gt; called &lt;code&gt;key&lt;/code&gt; and returns a new &lt;code&gt;FakeSeries&lt;/code&gt; with each of the values that had an index value contained in &lt;code&gt;key&lt;/code&gt;'s index&lt;/li&gt;
+    &lt;/ul&gt;
+
+    &lt;p&gt;
+        We can now do some super &lt;code&gt;pandas&lt;/code&gt;-y stuff, let's remind ourselves of the DataFrame we're working with.
+    &lt;/p&gt;
+
+    &lt;pre&gt;&lt;code&gt;    a |     b
+-------------
+    4 |     7
+    5 |     8
+    6 |     9&lt;/code&gt;&lt;/pre&gt;
+
+    &lt;pre&gt;&lt;code&gt;&gt;&gt;&gt; df['b'] &gt; 7
+&amp;lt;FakeSeries: b {0: False, 1: True, 2: True}&gt;&lt;/code&gt;&lt;/pre&gt;
+
+    &lt;pre&gt;&lt;code&gt;&gt;&gt;&gt; df['a'][df['b'] &gt; 7]
+&amp;lt;FakeSeries: a {1: 5, 2: 6}&gt;&lt;/code&gt;&lt;/pre&gt;
+
+    &lt;p&gt;
+        And to put it all together.
+    &lt;/p&gt;
+
+    &lt;pre&gt;&lt;code&gt;&gt;&gt;&gt; df['mult'] = df['a'][df['b'] &gt; 7] * 2
+&gt;&gt;&gt; df
+    a |     b |  mult
+---------------------
+    4 |     7 |   NaN
+    5 |     8 |    10
+    6 |     9 |    12&lt;/code&gt;&lt;/pre&gt;
+
+    &lt;p&gt;
+        Pretty cool huh!
+    &lt;/p&gt;
+&lt;/body&gt;
+            </description>
+        </item>
+        <item>
+            <title>What nested SQL queries might look like</title>
+            <pubDate>Fri, 15 May 2020 01:40:01 +0900</pubDate>
+            <link>https://leontrolski.github.io/nested-sql.html</link>
+            <guid>https://leontrolski.github.io/nested-sql.html</guid>
+            <description>
+&lt;body class="language-sql"&gt;
+    &lt;a href="index.html"&gt;&lt;img style="height:2em" src="pic.png"/&gt;⇦&lt;/a&gt;
+    &lt;h1&gt;What nested SQL queries might look like&lt;/h1&gt;
+    &lt;p&gt;
+        A &lt;a href="http://calpaterson.com/"&gt;friend&lt;/a&gt; was talking to me about ORM design recently. I'm a heavy &lt;a href="https://www.sqlalchemy.org/"&gt;SQLAlchemy&lt;/a&gt; user, but see all the reasons people dislike ORMs, so on a recent project I had a go at dipping back down to raw SQL land to see how I'd cope.
+    &lt;/p&gt;
+    &lt;p&gt;
+        I ended up finding the experience pretty frustrating - I'm sure someone will have written it before, but there's definitely some Greenspun's eleventh rule about any sufficiently complex SQL string munging codebase turning into a half-arsed, bug-ridden ORM. I would include in this (although to a smaller degree) sufficiently complex code using only SQL query builder libraries (like &lt;a href="http://knexjs.org/"&gt;knex&lt;/a&gt; or &lt;a href="https://docs.sqlalchemy.org/en/13/core/"&gt;SQLAlchemy core&lt;/a&gt;).
+    &lt;/p&gt;
+
+    &lt;p&gt;
+        Here's the features that postgres (or whatevever) would have to provide for me to ditch the ORM - although I'm still imagining using some kind of SQL query builder. They're vaguely in order of preference, also I've in no way thought through the details :-)
+    &lt;/p&gt;
+
+    &lt;h2&gt;Nested join queries&lt;/h2&gt;
+
+    &lt;p&gt;
+        When I do joins between things that map to entites, I don't want to then have to manually munge them back into nested entites in my host language, I want to do something like:
+    &lt;/p&gt;
+
+    &lt;pre&gt;&lt;code&gt;SELECT NESTED {
+    customer.name,
+    customer.email,
+    [
+        {
+            product.id,
+            product.cost,
+        }
+    ]
+    sum(product.cost) AS total_cost,
+}
+FROM customer
+LEFT OUTER JOIN NESTED product USING(customer_id)
+GROUP BY customer.customer_id&lt;/code&gt;&lt;/pre&gt;
+
+    &lt;p&gt;
+        Looks kinda similar to graphql I guess, but I want it in SQL!
+    &lt;/p&gt;
+
+    &lt;p&gt;
+        A slightly absurd thing to me is that despite all its normalisation chat, the result of a &lt;code&gt;SELECT x.*, y.* FROM x  JOIN y&lt;/code&gt; SQL query will have &lt;code&gt;x.*&lt;/code&gt; values repeated over and over. I guess this has negative performance implications when &lt;code&gt;x&lt;/code&gt; is wide and there are many &lt;code&gt;y&lt;/code&gt;s for each &lt;code&gt;x&lt;/code&gt;.
+    &lt;/p&gt;
+
+    &lt;h2&gt;Nested insertion&lt;/h2&gt;
+
+    &lt;p&gt;
+        Without this I have to do:
+    &lt;/p&gt;
+
+    &lt;pre&gt;&lt;code&gt;INSERT INTO customer (name, email) VALUES ... RETURNING customer_id&lt;/code&gt;&lt;/pre&gt;
+
+    &lt;p&gt;
+        Then do a separate query to insert &lt;code&gt;product&lt;/code&gt;s using the &lt;code&gt;customer_id&lt;/code&gt;s I got back. In this case with only one level of nesting, this is fine, but things get very hairy when you start wanting to insert things with 2+ levels of nesting.
+    &lt;/p&gt;
+
+    &lt;p&gt;
+        I want to do something like:
+    &lt;/p&gt;
+
+    &lt;pre&gt;&lt;code&gt;INSERT INTO customer
+INSERT NESTED product
+VALUES
+{
+    customer.name='oli',
+    customer.email='oli@oli.com',
+    [
+        {
+            product.customer_id=customer.customer_id,
+            product.cost=4.23,
+        }
+    ]
+}&lt;/code&gt;&lt;/pre&gt;
+
+    &lt;p&gt;
+        The syntax here seems harder to get right - this seems a bit ambiguous/inflexible.
+    &lt;/p&gt;
+
+    &lt;h1&gt;Problems/Prior work&lt;/h1&gt;
+
+    &lt;ul&gt;
+        &lt;li&gt;The main objection would seem to be that these new nested thingies are not rows and wouldn't play well with the existing conception of rows, esp. with filtering, grouping etc. I wonder if there's any deep thought that could be done to reconcile the two.&lt;/li&gt;
+        &lt;li&gt;How would the result cursor iterate through nested things as opposed to flat rows?&lt;/li&gt;
+        &lt;li&gt;It may look like it, but I don't want &lt;code&gt;JSON&lt;/code&gt; - I'd like to preserve &lt;code&gt;DATE&lt;/code&gt; types and nice things like that.&lt;/li&gt;
+        &lt;li&gt;Chris Date &lt;em&gt;(I agree with all the poor reviews of &lt;a href="https://www.amazon.com/Database-Depth-Relational-Theory-Practitioners/dp/0596100124"&gt;this&lt;/a&gt; book, but still can't help but love it to the point where it probably drove the creation of &lt;a href="https://github.com/leontrolski/dawdle/blob/master/README.md"&gt;this&lt;/a&gt; project)&lt;/em&gt; talks about "relations with relation valued attributes". This &lt;em&gt;may&lt;/em&gt; be the purist's answer to my problems, but I guess I'm more concerned with a practical way in which you might extend SQL.&lt;/li&gt;
+        &lt;li&gt;Have I missed some other obvious features that would be super useful?&lt;/li&gt;
+        &lt;li&gt;Someone else &lt;em&gt;must&lt;/em&gt; have described nearly the same as above in some other forum - it doesn't seem particularly novel.&lt;/li&gt;
+    &lt;/ul&gt;
+&lt;/body&gt;
+            </description>
+        </item>
+        <item>
+            <title>Making python style class system from rudimentary javascript</title>
+            <pubDate>Tue, 28 Apr 2020 06:56:54 +0900</pubDate>
+            <link>https://leontrolski.github.io/poor-mans-object.html</link>
+            <guid>https://leontrolski.github.io/poor-mans-object.html</guid>
+            <description>
+&lt;body class="language-javascript"&gt;
+    &lt;a href="index.html"&gt;&lt;img style="height:2em" src="pic.png"/&gt;⇦&lt;/a&gt;
+    &lt;h1&gt;Making python style class system from rudimentary javascript&lt;/h1&gt;
+    &lt;p&gt;
+        It's been said many times before, &lt;a href="https://wiki.c2.com/?ClosuresAndObjectsAreEquivalent"&gt;objects are a poor man's closures are a poor man's objects&lt;/a&gt;, I thought I'd try bring that home by implementing a limited bit of the python object system with a small subset of javascript.
+    &lt;/p&gt;
+    &lt;p&gt;
+        You can play around with these in the &lt;a href="https://javascript.info/devtools"&gt;developer tools console&lt;/a&gt;.
+    &lt;/p&gt;
+    &lt;p&gt;
+        Let's start with a basic subset of javascript.
+    &lt;/p&gt;
+    &lt;p&gt;Values are strings or arrays of values:&lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;"string", [value]&lt;/pre&gt;&lt;/code&gt;
+    &lt;p&gt;We can assign values to names:&lt;/p&gt;
+        &lt;pre&gt;&lt;code&gt;const a = "foo"&lt;/pre&gt;&lt;/code&gt;
+    &lt;p&gt;We can get the nth element of an array with:&lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;array[n]&lt;/pre&gt;&lt;/code&gt;
+    &lt;p&gt;We can concatenate strings:&lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;&gt;&gt;&gt; "hello " + "oli"
+"hello oli"&lt;/pre&gt;&lt;/code&gt;
+    &lt;p&gt;We can loop over arrays:&lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;for (const n of l){do something}&lt;/pre&gt;&lt;/code&gt;
+    &lt;p&gt;If two strings are equal, we can do something:&lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;if (a === b){do something}&lt;/pre&gt;&lt;/code&gt;
+    &lt;p&gt;We have functions that take arguments and return something:&lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;(x, y)=&gt;{return z}&lt;/pre&gt;&lt;/code&gt;
+    &lt;p&gt;We can refer to all the arguments of a function as an array:&lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;(...args)=&gt;{return args}&lt;/pre&gt;&lt;/code&gt;
+    &lt;p&gt;Functions are values too, we can pass them around:&lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;const addFour = (a)=&gt;{return a + 4}
+const addNine = (a)=&gt;{return a + 9}
+const adders = [addFour, addNine]
+
+&gt;&gt;&gt; adders[0](10)
+14
+&gt;&gt;&gt; adders[1](10)
+19&lt;/pre&gt;&lt;/code&gt;
+    &lt;p&gt;
+        Assignments within the curly brackets of a function are visible to inner functions within the same curly brackets (lexical scope). These values are available for the lifetime of the inner function (closures). For example:
+    &lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;const makeAdder = (b)=&gt;{
+    const adder = (a)=&gt;{
+        return a + b
+    }
+    return adder
+}
+const addThree = makeAdder(3)
+const addSeven = makeAdder(7)
+
+&gt;&gt;&gt; addThree(5)
+8
+&gt;&gt;&gt; addSeven(6)
+13&lt;/pre&gt;&lt;/code&gt;
+    &lt;p&gt;Now let's make something slightly more useful:&lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;const makeDict = (l)=&gt;{
+    const getter = (getk)=&gt;{
+        for (const kv of l){
+            if (kv[0] === getk){
+                return kv[1]
+            }
+        }
+    }
+    return getter
+}
+
+const d = makeDict([
+    ["foo", "1"],
+    ["bar", "2"],
+    ["baz", "3"],
+])
+
+&gt;&gt;&gt; d("bar")
+"2"&lt;/pre&gt;&lt;/code&gt;
+    &lt;p&gt;
+        OK, looks familiar, now let's imagine that we are going to use this &lt;code&gt;makeDict(...)&lt;/code&gt; construct again and again. The program that runs our javascript (the interpreter) is going to transform a cuter bit of syntax (shown below) into our &lt;code&gt;makeDict(...)&lt;/code&gt; code before it runs it (syntactic sugar):
+    &lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;const d = {
+    "foo": "1",
+    "bar": "2",
+    "baz": "3",
+}
+&gt;&gt;&gt; d["bar"]
+"2"&lt;/pre&gt;&lt;/code&gt;
+    &lt;p&gt;
+        That's a bit better, but let's make the transformation even cuter:
+    &lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;const d = {
+    foo: "1",
+    bar: "2",
+    baz: "3",
+}
+&gt;&gt;&gt; d.bar
+"2"&lt;/pre&gt;&lt;/code&gt;
+    &lt;p&gt;
+        Remember, when we run our program containing &lt;code&gt;const a = {b: "c"}&lt;/code&gt;, &lt;code&gt;a.b&lt;/code&gt;, our interpereter will transform it into &lt;code&gt;const a = makeDict([["b", "c"]])&lt;/code&gt;, &lt;code&gt;a("b")&lt;/code&gt; before it runs it.
+    &lt;/p&gt;
+    &lt;p&gt;
+        I'm going to cheat a bit here and allow us to assign to these dicts too:
+    &lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;d["qux"] = "4"&lt;/pre&gt;&lt;/code&gt;
+    &lt;p&gt;
+        The interpereter would transform this in a similar way to the sugar we've invented for getting dict values.
+    &lt;/p&gt;
+    &lt;p&gt;
+        Also, we're going to introduce a way to get all the keys of an object as an array:
+    &lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;&gt;&gt;&gt; Object.keys({a: "1", b: "2"})
+["a", "b"]&lt;/pre&gt;&lt;/code&gt;
+    &lt;p&gt;
+        Now, for the tough bit, we want to make an interface that looks pretty similar to python-style classes:
+    &lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;&gt;&gt;&gt; const daisy = Animal("Daisy", "32")
+&gt;&gt;&gt; daisy.age
+"32"
+&gt;&gt;&gt; daisy.greet()
+"My name is Daisy and I am 32 years old"&lt;/pre&gt;&lt;/code&gt;
+    &lt;p&gt;
+        We want to be able to define our class, again similar to python, like:
+    &lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;const Animal = ClassMaker({
+    __init__: (self, name, age)=&gt;{
+        self.name = name
+        self.age = age
+    },
+    greet: (self)=&gt;{
+        return "My name is " + self.name + " and I am " + self.age + " years old"
+    },
+})&lt;/pre&gt;&lt;/code&gt;
+    &lt;p&gt;
+        So we write our class maker as such:
+    &lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;const ClassMaker = (cls)=&gt;{
+    // returns a function that will take arguments that
+    // we then pass to __init__
+    return (...initArgs)=&gt;{
+        // create the instance's self to store any
+        // data/methods on
+        const self = {}
+
+        // for each method on the class
+        for (const k of Object.keys(cls)){
+            // we take cls.f(self, a, b) and make
+            // self.f(a, b) by partially applying
+            // f with self=self
+            self[k] = (...args)=&gt;{
+                return cls[k](self, ...args)
+            }
+        }
+
+        // call __init__ and then return the instance
+        self.__init__(...initArgs)
+        return self
+    }
+}&lt;/pre&gt;&lt;/code&gt;
+    &lt;p&gt;
+        Test it in the console, wahoo, it works!
+    &lt;/p&gt;
+
+    &lt;h3&gt;Bonus section&lt;/h3&gt;
+    &lt;p&gt;
+        Now, just for good measure, let's add inheritance:
+    &lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;const ClassMaker = (parent, cls)=&gt;{
+    const combined = {}
+    for (const k of Object.keys(parent)){
+        combined[k] = parent[k]
+    }
+    for (const k of Object.keys(cls)){
+        if (cls[k]){
+            combined[k] = cls[k]
+        }
+    }
+
+    const init = (...initArgs)=&gt;{
+        const self = {}
+
+        for (const k of Object.keys(combined)){
+            self[k] = (...args)=&gt;{
+                return combined[k](self, ...args)
+            }
+        }
+
+        self.__init__(...initArgs)
+
+        return self
+    }
+
+    for (const k of Object.keys(combined)){
+        init[k] = combined[k]
+    }
+
+    return init
+}&lt;/pre&gt;&lt;/code&gt;
+    &lt;p&gt;
+        It shouldn't be too much of a stretch to imagine how the interpereter might transform the python-like class:
+    &lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;class Animal(Object){
+    const __init__ = (self, name, age)=&gt;{
+        self.name = name
+        self.age = age
+    }
+    const greet = (self)=&gt;{
+        return "My name is " + self.name + " and I am " + self.age + " years old"
+    }
+}
+
+class Dog(Animal){
+    const bark = (self, owner)=&gt;{
+        return self.name + ": Hullo " + owner
+    }
+}&lt;/pre&gt;&lt;/code&gt;
+
+    &lt;p&gt;Into:&lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;const Animal = ClassMaker(Object(), {
+    __init__: (self, name, age)=&gt;{
+        self.name = name
+        self.age = age
+    },
+    greet: (self)=&gt;{
+        return "My name is " + self.name + " and I am " + self.age + " years old"
+    },
+})
+
+const Dog = ClassMaker(Animal, {
+    bark: (self, owner)=&gt;{
+        return self.name + ": Hullo " + owner
+    }
+})&lt;/pre&gt;&lt;/code&gt;
+&lt;/body&gt;
+            </description>
         </item>
     </channel>
 </rss>
