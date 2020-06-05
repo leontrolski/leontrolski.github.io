@@ -15,8 +15,6 @@
             <link>https://leontrolski.github.io/33-line-react-thoughts.html</link>
             <guid>https://leontrolski.github.io/33-line-react-thoughts.html</guid>
             <description>
-&lt;body class="language-javascript"&gt;
-    &lt;a href="index.html"&gt;&lt;img style="height:2em" src="pic.png"/&gt;⇦&lt;/a&gt;
     &lt;h1&gt;33 line React - thoughts&lt;/h1&gt;
     &lt;p&gt;
         &lt;em&gt;&lt;a href="33-line-react.html"&gt;Original post&lt;/a&gt;, &lt;a href="https://news.ycombinator.com/item?id=22776753"&gt;original discussion&lt;/a&gt;.&lt;/em&gt;
@@ -156,8 +154,8 @@
             <link>https://leontrolski.github.io/33-line-react.html</link>
             <guid>https://leontrolski.github.io/33-line-react.html</guid>
             <description>
-&lt;body class="language-javascript"&gt;
-    &lt;a href="index.html"&gt;&lt;img style="height:2em" src="pic.png"/&gt;⇦&lt;/a&gt;
+&amp;#x26a0;&amp;#xfe0f; This article contains JS code. It might not work properly in your feed reader.
+You might want to visit the &lt;a href="https://leontrolski.github.io/33-line-react.html"&gt;original article&lt;/a&gt;.
     &lt;h1&gt;33 line React&lt;/h1&gt;
     &lt;p&gt;
         &lt;em&gt;&lt;a href="33-line-react-thoughts.html"&gt;Thoughts&lt;/a&gt; on reading through the hacker news &lt;a href="https://news.ycombinator.com/item?id=22776753"&gt;response&lt;/a&gt;.&lt;/em&gt;
@@ -316,8 +314,6 @@ const g = [['', '', ''], ['', '', ''], ['', '', '']]  // grid&lt;/code&gt;&lt;/p
             <link>https://leontrolski.github.io/consciousness.html</link>
             <guid>https://leontrolski.github.io/consciousness.html</guid>
             <description>
-&lt;body&gt;
-    &lt;a href="index.html"&gt;&lt;img style="height:2em" src="pic.png"/&gt;⇦&lt;/a&gt;
     &lt;h1&gt;A developer's summary of Consciousness and the Social Brain&lt;/em&gt;&lt;/h1&gt;
     &lt;p&gt;
         "&lt;a href="https://global.oup.com/academic/product/consciousness-and-the-social-brain-9780199928644"&gt;Consciousness and the Social Brain&lt;/a&gt;" is a book by Princeton neuroscience professor &lt;a href="https://en.wikipedia.org/wiki/Michael_Graziano"&gt;Michael Graziano&lt;/a&gt;, outlining his theory of consciousness - &lt;b&gt;the attention schema theory&lt;/b&gt;.
@@ -473,8 +469,6 @@ Neuronal information
             <link>https://leontrolski.github.io/dom-syntax.html</link>
             <guid>https://leontrolski.github.io/dom-syntax.html</guid>
             <description>
-&lt;body class="language-javascript"&gt;
-    &lt;a href="index.html"&gt;&lt;img style="height:2em" src="pic.png"/&gt;⇦&lt;/a&gt;
     &lt;h1&gt;What if we'd had better &lt;code&gt;html&lt;/code&gt;-in-&lt;code&gt;js&lt;/code&gt; syntax all along?&lt;/h1&gt;
     &lt;p&gt;
         I have a theory that a grave mistake was made in 1995 - the decision not to have a neat, succinct and declarative way of representing html elements in javascript. &lt;em&gt;[On reading the &lt;a href="https://news.ycombinator.com/item?id=23142300"&gt;hacker news comments&lt;/a&gt; this is pretty historically inaccurate, however, I think this article still stands as "look just how close javascript object notation is to a reasonable way of representing html".]&lt;/em&gt;
@@ -705,8 +699,6 @@ app.get('/', (req, res) =&gt; res.send(myUl().asHTMLStr())&lt;/code&gt;&lt;/pre&
             <link>https://leontrolski.github.io/fake-data-frame.html</link>
             <guid>https://leontrolski.github.io/fake-data-frame.html</guid>
             <description>
-&lt;body class="language-python"&gt;
-    &lt;a href="index.html"&gt;&lt;img style="height:2em" src="pic.png"/&gt;⇦&lt;/a&gt;
     &lt;h1&gt;How do pandas DataFrames work? (kinda)&lt;/h1&gt;
     &lt;p&gt;
         When you're used to plain ol' &lt;code&gt;dict&lt;/code&gt;s, &lt;code&gt;int&lt;/code&gt;s, &lt;code&gt;list&lt;/code&gt;s etc, &lt;code&gt;pandas.DataFrame&lt;/code&gt;s exhibit some weirdo behaviour, particulary concerning assignment and operators. This page is a short walk-through of how some of these things happen (and a quick intro to Python's magic methods), you can see the outcome &lt;a href="https://github.com/leontrolski/fake-data-frame"&gt;here&lt;/a&gt;.
@@ -883,8 +875,6 @@ app.get('/', (req, res) =&gt; res.send(myUl().asHTMLStr())&lt;/code&gt;&lt;/pre&
             <link>https://leontrolski.github.io/nested-sql.html</link>
             <guid>https://leontrolski.github.io/nested-sql.html</guid>
             <description>
-&lt;body class="language-sql"&gt;
-    &lt;a href="index.html"&gt;&lt;img style="height:2em" src="pic.png"/&gt;⇦&lt;/a&gt;
     &lt;h1&gt;What nested SQL queries might look like&lt;/h1&gt;
     &lt;p&gt;
         A &lt;a href="http://calpaterson.com/"&gt;friend&lt;/a&gt; was talking to me about ORM design recently. I'm a heavy &lt;a href="https://www.sqlalchemy.org/"&gt;SQLAlchemy&lt;/a&gt; user, but see all the reasons people dislike ORMs, so on a recent project I had a go at dipping back down to raw SQL land to see how I'd cope.
@@ -979,8 +969,6 @@ VALUES
             <link>https://leontrolski.github.io/poor-mans-object.html</link>
             <guid>https://leontrolski.github.io/poor-mans-object.html</guid>
             <description>
-&lt;body class="language-javascript"&gt;
-    &lt;a href="index.html"&gt;&lt;img style="height:2em" src="pic.png"/&gt;⇦&lt;/a&gt;
     &lt;h1&gt;Making python style class system from rudimentary javascript&lt;/h1&gt;
     &lt;p&gt;
         It's been said many times before, &lt;a href="https://wiki.c2.com/?ClosuresAndObjectsAreEquivalent"&gt;objects are a poor man's closures are a poor man's objects&lt;/a&gt;, I thought I'd try bring that home by implementing a limited bit of the python object system with a small subset of javascript.

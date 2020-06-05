@@ -32,20 +32,32 @@ article-date() {
 
 article-body() {
     local f="$1"
-    sed -n '/<body.*>/,/<\/body>/p' "$f"
+    local body
+    body="$(sed -n '/<h1[^>]*>/,/<\/body>/p' "$f")"
+    body="${body##"</body>"}"
+    local SCRIPT_REGEX='<script[^>]*>'
+    if [[ $body =~ $SCRIPT_REGEX ]];
+    then
+        body=$(cat<<EOF
+&#x26a0;&#xfe0f; This article contains JS code. It might not work properly in your feed reader.
+You might want to visit the <a href="https://leontrolski.github.io/$f">original article</a>.
+$body
+EOF
+            )
+    fi
+    echo "$body"
 }
 
 gen-item() {
     local f="$1"
     local title
     local date
+    local body
     title="$(article-title "$f" | escape-html)"
     date="$(article-date "$f")"
+    body="$(article-body "$f" | escape-html)"
     local link="https://leontrolski.github.io/$f"
-    if [ -z "$title" ]
-    then
-        return
-    fi
+    if [ -z "$title" ]; then return; fi
     cat <<EOF
         <item>
             <title>$title</title>
