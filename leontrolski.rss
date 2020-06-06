@@ -11,7 +11,7 @@
         </image>
         <item>
             <title>33 line React - thoughts</title>
-            <pubDate>Mon, 11 May 2020 17:12:10 +0900</pubDate>
+            <pubDate>Mon, 11 May 2020 09:12:10 +0100</pubDate>
             <link>https://leontrolski.github.io/33-line-react-thoughts.html</link>
             <guid>https://leontrolski.github.io/33-line-react-thoughts.html</guid>
             <description>
@@ -150,7 +150,7 @@
         </item>
         <item>
             <title>33 line React</title>
-            <pubDate>Tue, 28 Apr 2020 06:56:54 +0900</pubDate>
+            <pubDate>Mon, 27 Apr 2020 22:56:54 +0100</pubDate>
             <link>https://leontrolski.github.io/33-line-react.html</link>
             <guid>https://leontrolski.github.io/33-line-react.html</guid>
             <description>
@@ -310,7 +310,7 @@ const g = [['', '', ''], ['', '', ''], ['', '', '']]  // grid&lt;/code&gt;&lt;/p
         </item>
         <item>
             <title>A developer's summary of Consciousness and the Social Brain&lt;/em&gt;</title>
-            <pubDate>Thu, 4 Jun 2020 01:45:41 +0900</pubDate>
+            <pubDate>Thu, 4 Jun 2020 17:30:42 +0100</pubDate>
             <link>https://leontrolski.github.io/consciousness.html</link>
             <guid>https://leontrolski.github.io/consciousness.html</guid>
             <description>
@@ -332,10 +332,10 @@ const g = [['', '', ''], ['', '', ''], ['', '', '']]  // grid&lt;/code&gt;&lt;/p
 
     &lt;h2&gt;Define consciousness&lt;/h2&gt;
     &lt;p&gt;
-        Everyone and their uncle has their own definition of consciousness, questions that get chucked around might include "how do I know that I'm someone distinct from the world?", "how are my memories formed?", "how do I experience the sweetness of the apple?" etc. Graziano starts us out by saying we should just focus on a more specific word: "awareness". In our brain, there is knowledge - &lt;q&gt;the apple is sweet&lt;/q&gt;, &lt;q&gt;the traffic is loud&lt;/q&gt;, &lt;q&gt;the memory was of a cat&lt;/q&gt;, &lt;q&gt;my foot is in pain&lt;/q&gt; - and then there is &lt;em&gt;awareness&lt;/em&gt; of the knowledge - &lt;q&gt;I am aware of the apple's sweetness&lt;/q&gt; etc.
+        Everyone and their uncle has their own definition of consciousness. Questions that get chucked around might include "how do I know that I'm someone distinct from the world?", "how are my memories formed?", "how do I experience the sweetness of the apple?" etc. Graziano starts us out by saying we should just focus on a more specific word: "awareness". In our brain, there is knowledge - &lt;q&gt;the apple is sweet&lt;/q&gt;, &lt;q&gt;the traffic is loud&lt;/q&gt;, &lt;q&gt;the memory was of a cat&lt;/q&gt;, &lt;q&gt;my foot is in pain&lt;/q&gt; - and then there is &lt;em&gt;awareness&lt;/em&gt; of the knowledge - &lt;q&gt;I am aware of the apple's sweetness&lt;/q&gt; etc.
     &lt;/p&gt;
     &lt;p&gt;
-        This checks out intuitively, if you ask someone to &lt;q&gt;be especially consciousness for a bit&lt;/q&gt; while they're eating an apple, they will likely focus in on their awareness of the sweetness/crunch etc. - we could similarly have asked &lt;q&gt;be especially aware for a bit&lt;/q&gt;. By limiting our question to &lt;q&gt;what is awareness?&lt;/q&gt; rather than &lt;q&gt;what is consciousness?&lt;/q&gt;, we rid ourselves of a lot of baggage while remaining focused on the essence of the hard problem. Take for example a &lt;a href="https://en.wikipedia.org/wiki/Philosophical_zombie"&gt;philosophical zombie&lt;/a&gt;, would it be semantically zombie enough if it were never "aware" (as opposed to never "conscious")? If not and you think there's some other important aspect to the hard problem, this ain't the theory for you.
+        This checks out intuitively. If you ask someone to &lt;q&gt;be especially conscious for a bit&lt;/q&gt; while they're eating an apple, they will likely focus in on their awareness of the sweetness/crunch etc. - we could similarly have asked &lt;q&gt;be especially aware for a bit&lt;/q&gt;. By limiting our question to &lt;q&gt;what is awareness?&lt;/q&gt; rather than &lt;q&gt;what is consciousness?&lt;/q&gt;, we rid ourselves of a lot of baggage while remaining focused on the essence of the hard problem. Take for example a &lt;a href="https://en.wikipedia.org/wiki/Philosophical_zombie"&gt;philosophical zombie&lt;/a&gt;, would it be semantically zombie enough if it were never "aware" (as opposed to never "conscious")? If not and you think there's some other important aspect to the hard problem, this ain't the theory for you.
     &lt;/p&gt;
     &lt;p&gt;
         How our brain might represent the knowledge itself that we are aware of (taste, memories etc.) is something distinct from awareness and we'll leave that for another bit of the neuroscience department.
@@ -343,7 +343,7 @@ const g = [['', '', ''], ['', '', ''], ['', '', '']]  // grid&lt;/code&gt;&lt;/p
 
     &lt;h2&gt;Graziano's squirrel&lt;/h2&gt;
     &lt;p&gt;
-        Graziano's colleague had a patient that reported a squirrel in his head, he agreed that it was physically impossible, but nonetheless it was there (he was &lt;em&gt;really&lt;/em&gt; certain). The easy problem is working out how the brain might represent the squirrel, its fur, claws, its location (in the patient's head), this is a knowledge representation problem. The hard problem (especially from the patient's perspective) is how the squirrel (with all its vivid real-ness) might be there at all, in his head.
+        Graziano's colleague had a patient that reported a squirrel in his head. He agreed that it was physically impossible, but nonetheless it was there (he was &lt;em&gt;really&lt;/em&gt; certain). The easy problem is working out how the brain might represent the squirrel, its fur, claws, its location (in the patient's head), this is a knowledge representation problem. The hard problem (especially from the patient's perspective) is how the squirrel (with all its vivid real-ness) might be there at all, in his head.
     &lt;/p&gt;
     &lt;blockquote&gt;
         If we all shared that man's delusion [...] we would be certain of its existence, [...] agree collectively that we have it [...] and yet we would have no way to jump from neuronal circuitry to squirrel. [...] We would be forced into the dualist position that the brain is somehow both a neuronal machine and, at the same time, on a higher plane, a squirrel.
@@ -354,7 +354,7 @@ const g = [['', '', ''], ['', '', ''], ['', '', '']]  // grid&lt;/code&gt;&lt;/p
 
     &lt;h2&gt;Graziano's awareness&lt;/h2&gt;
     &lt;p&gt;
-        Graziano's colleague had a patient that reported awareness in their head, he agreed that it was physically impossible, but nonetheless it was there (he was &lt;em&gt;really&lt;/em&gt; certain). The easy problem is working out how the brain might represent awareness, its vividness, its ethereal nature, its location (in the patient's head)...
+        Graziano's colleague had a patient that reported awareness in their head. He agreed that it was physically impossible, but nonetheless it was there (he was &lt;em&gt;really&lt;/em&gt; certain). The easy problem is working out how the brain might represent awareness, its vividness, its ethereal nature, its location (in the patient's head)...
     &lt;/p&gt;
     &lt;p&gt;
         &lt;em&gt;You get the idea...&lt;/em&gt;
@@ -375,7 +375,7 @@ Neuronal information
         A lot of theories only consider arrow &lt;q&gt;A&lt;/q&gt; - &lt;q&gt;how does awareness arise?&lt;/q&gt; (maybe it arises from complexity somehow, like heat?)
     &lt;/p&gt;
     &lt;p&gt;
-        Given that we can report awareness, there must also exist an arrow &lt;q&gt;B&lt;/q&gt;, information about awareness must eventually reach the neurons that operate our vocal chords. This leads us to ask - how does awareness then impact the neuronal machinery? Most theories consider &lt;q&gt;A&lt;/q&gt; to be magical, but once you consider there &lt;em&gt;must&lt;/em&gt; be an arrow &lt;q&gt;B&lt;/q&gt;, and that the brain is an information processing machine, the simplest theory is that awareness &lt;em&gt;is&lt;/em&gt; just an informational description in the brain.
+        Given that we can report awareness, there must also exist an arrow &lt;q&gt;B&lt;/q&gt;: information about awareness must eventually reach the neurons that operate our vocal chords. This leads us to ask - how does awareness then impact the neuronal machinery? Most theories consider &lt;q&gt;A&lt;/q&gt; to be magical, but once you consider there &lt;em&gt;must&lt;/em&gt; be an arrow &lt;q&gt;B&lt;/q&gt;, and that the brain is an information processing machine, the simplest theory is that awareness &lt;em&gt;is&lt;/em&gt; just an informational description in the brain.
     &lt;/p&gt;
     &lt;p&gt;
         Descriptions have the nice property of being able to describe even impossible, magical things (eg. Middle Earth) and so are a good fit for awareness. An uncontroversial example of a nonsensical thing our brain describes would be white light, we consider it to be a pure, low-colour thing, whereas we know from Newton that it's a muddy, many-coloured smush.
@@ -409,10 +409,10 @@ Neuronal information
 
     &lt;h2&gt;The social bit&lt;/h2&gt;
     &lt;p&gt;
-        It is uncontroversial that we create models of others' attention (via their gaze, their facial expression, their previous behaviour etc), this is useful for predicting their behaviour and therefore serves an obvious evolutionary purpose. What if our awareness is the same kind of thing, but about ourselves rather than others? Now we have something falsifiable that we can apply our evidence to, if this were to be true, the same bits of brain would be buzzing in both cases and if that bit of brain were damaged, so would awareness.
+        It is uncontroversial that we create models of others' attention (via their gaze, their facial expression, their previous behaviour etc) - this is useful for predicting their behaviour and therefore serves an obvious evolutionary purpose. What if our awareness is the same kind of thing, but about ourselves rather than others? Now we have something falsifiable that we can apply our evidence to, if this were to be true, the same bits of brain would be buzzing in both cases and if that bit of brain were damaged, so would awareness.
     &lt;/p&gt;
     &lt;p&gt;
-        It turns out there are bits of the brain that look likely candidates. As we're assuming a programmer audience rather than a biologist audience, we'll name them - the TPJ and STS - and leave it at that.
+        It turns out there are bits of the brain that look likely candidates - the TPJ and STS. As we're assuming a programmer audience rather than a biologist audience, we won't worry what these stand for.
     &lt;/p&gt;
     &lt;p&gt;
         The brain (like lots of software) has weird feedback loops and mucky system boundaries, awareness and attention are deeply bound and one may accentuate the other. I am aware of something, that may boost a top-down attention bias, that itself boosts my attention of it, that attention triggers more awareness etc. Obviously, when building a model of someone else's attention, these feedback loops don't exist. Combine this with the far richer information we receive about ourselves and we get some way to explaining why the model of &lt;em&gt;our&lt;/em&gt; attention is so much more complete than that of others.
@@ -465,7 +465,7 @@ Neuronal information
         </item>
         <item>
             <title>What if we'd had better &lt;code&gt;html&lt;/code&gt;-in-&lt;code&gt;js&lt;/code&gt; syntax all along?</title>
-            <pubDate>Tue, 12 May 2020 16:09:22 +0900</pubDate>
+            <pubDate>Tue, 12 May 2020 08:09:22 +0100</pubDate>
             <link>https://leontrolski.github.io/dom-syntax.html</link>
             <guid>https://leontrolski.github.io/dom-syntax.html</guid>
             <description>
@@ -695,7 +695,7 @@ app.get('/', (req, res) =&gt; res.send(myUl().asHTMLStr())&lt;/code&gt;&lt;/pre&
         </item>
         <item>
             <title>How do pandas DataFrames work? (kinda)</title>
-            <pubDate>Tue, 28 Apr 2020 06:56:54 +0900</pubDate>
+            <pubDate>Mon, 27 Apr 2020 22:56:54 +0100</pubDate>
             <link>https://leontrolski.github.io/fake-data-frame.html</link>
             <guid>https://leontrolski.github.io/fake-data-frame.html</guid>
             <description>
@@ -871,7 +871,7 @@ app.get('/', (req, res) =&gt; res.send(myUl().asHTMLStr())&lt;/code&gt;&lt;/pre&
         </item>
         <item>
             <title>What nested SQL queries might look like</title>
-            <pubDate>Fri, 15 May 2020 01:40:01 +0900</pubDate>
+            <pubDate>Thu, 14 May 2020 17:40:01 +0100</pubDate>
             <link>https://leontrolski.github.io/nested-sql.html</link>
             <guid>https://leontrolski.github.io/nested-sql.html</guid>
             <description>
@@ -964,20 +964,49 @@ VALUES
             </description>
         </item>
         <item>
-            <title>Making python style class system from rudimentary javascript</title>
-            <pubDate>Tue, 28 Apr 2020 06:56:54 +0900</pubDate>
+            <title>Make python-style classes from not much javascript</title>
+            <pubDate>Mon, 27 Apr 2020 22:56:54 +0100</pubDate>
             <link>https://leontrolski.github.io/poor-mans-object.html</link>
             <guid>https://leontrolski.github.io/poor-mans-object.html</guid>
             <description>
-    &lt;h1&gt;Making python style class system from rudimentary javascript&lt;/h1&gt;
+    &lt;h1&gt;Make python-style classes from not much javascript&lt;/h1&gt;
     &lt;p&gt;
-        It's been said many times before, &lt;a href="https://wiki.c2.com/?ClosuresAndObjectsAreEquivalent"&gt;objects are a poor man's closures are a poor man's objects&lt;/a&gt;, I thought I'd try bring that home by implementing a limited bit of the python object system with a small subset of javascript.
+        It's been said many times before, &lt;a href="https://wiki.c2.com/?ClosuresAndObjectsAreEquivalent"&gt;objects are a poor man's closures are a poor man's objects&lt;/a&gt;, this is a &lt;em&gt;deep and important thing&lt;/em&gt;. In python and javascript, the leap is really quite small. I thought I'd try drum the lesson home by implementing a limited bit of the python object system with a subset of javascript. We will:
+        &lt;ul&gt;
+            &lt;li&gt;Describe a small subset of javascript with strings, arrays and functions.&lt;/li&gt;
+            &lt;li&gt;Show how with a bit of syntactic sugar you can add dicts (AKA maps, AKA plain ol' objects) to the above.&lt;/li&gt;
+            &lt;li&gt;Use closures to bind functions to a &lt;code&gt;self&lt;/code&gt;.&lt;/li&gt;
+            &lt;li&gt;Wrap that all up into a function &lt;code&gt;ClassMaker&lt;/code&gt;, that if you squint, is just like the python class syntax.&lt;/li&gt;
+            &lt;li&gt;In a bonus section, implement inheritance.&lt;/li&gt;
+        &lt;/ul&gt;
     &lt;/p&gt;
+    &lt;em&gt;
+        You'll have the best time with this post if you play around with the more complicated code snippets in the &lt;a href="https://javascript.info/devtools"&gt;developer tools console &lt;code&gt;Cmd + Opt + J or F12&lt;/code&gt;&lt;/a&gt;.
+    &lt;/em&gt;
+
+    &lt;h2&gt;Our aim&lt;/h2&gt;
     &lt;p&gt;
-        You can play around with these in the &lt;a href="https://javascript.info/devtools"&gt;developer tools console&lt;/a&gt;.
+        Our aim is to start with a very small language and write some code such that we can make classes similar to how we would in python, and have them behave similarly too:
     &lt;/p&gt;
+    &lt;pre id="aim" class="language-python"&gt;&lt;code&gt;class Animal:
+    def __init__(self, name, age):
+        self.name = name
+        self.age = age
+
+    def greet(self):
+        return "My name is " + self.name + " and I am " + self.age + " years old"
+
+&gt;&gt;&gt; const daisy = Animal("Daisy", "32")
+&gt;&gt;&gt; daisy.age
+"32"
+&gt;&gt;&gt; daisy.greet()
+"My name is Daisy and I am 32 years old"&lt;/pre&gt;&lt;/code&gt;
+
+    &lt;h2&gt;
+        Our subset of javascript
+    &lt;/h2&gt;
     &lt;p&gt;
-        Let's start with a basic subset of javascript.
+        We're going to pick a small bit of javascript to use, this bit may seem obvious, but we're just demonstrating how little stuff we need to get to OO. Feel free to go quickly through this bit.
     &lt;/p&gt;
     &lt;p&gt;Values are strings or arrays of values:&lt;/p&gt;
     &lt;pre&gt;&lt;code&gt;"string", [value]&lt;/pre&gt;&lt;/code&gt;
@@ -993,12 +1022,12 @@ VALUES
     &lt;p&gt;If two strings are equal, we can do something:&lt;/p&gt;
     &lt;pre&gt;&lt;code&gt;if (a === b){do something}&lt;/pre&gt;&lt;/code&gt;
     &lt;p&gt;We have functions that take arguments and return something:&lt;/p&gt;
-    &lt;pre&gt;&lt;code&gt;(x, y)=&gt;{return z}&lt;/pre&gt;&lt;/code&gt;
+    &lt;pre&gt;&lt;code&gt;(x, y) =&gt; {return z}&lt;/pre&gt;&lt;/code&gt;
     &lt;p&gt;We can refer to all the arguments of a function as an array:&lt;/p&gt;
-    &lt;pre&gt;&lt;code&gt;(...args)=&gt;{return args}&lt;/pre&gt;&lt;/code&gt;
+    &lt;pre&gt;&lt;code&gt;(...args) =&gt; {return args}&lt;/pre&gt;&lt;/code&gt;
     &lt;p&gt;Functions are values too, we can pass them around:&lt;/p&gt;
-    &lt;pre&gt;&lt;code&gt;const addFour = (a)=&gt;{return a + 4}
-const addNine = (a)=&gt;{return a + 9}
+    &lt;pre&gt;&lt;code&gt;const addFour = (a) =&gt; {return a + 4}
+const addNine = (a) =&gt; {return a + 9}
 const adders = [addFour, addNine]
 
 &gt;&gt;&gt; adders[0](10)
@@ -1008,8 +1037,8 @@ const adders = [addFour, addNine]
     &lt;p&gt;
         Assignments within the curly brackets of a function are visible to inner functions within the same curly brackets (lexical scope). These values are available for the lifetime of the inner function (closures). For example:
     &lt;/p&gt;
-    &lt;pre&gt;&lt;code&gt;const makeAdder = (b)=&gt;{
-    const adder = (a)=&gt;{
+    &lt;pre&gt;&lt;code&gt;const makeAdder = (b) =&gt; {
+    const adder = (a) =&gt; {
         return a + b
     }
     return adder
@@ -1021,15 +1050,22 @@ const addSeven = makeAdder(7)
 8
 &gt;&gt;&gt; addSeven(6)
 13&lt;/pre&gt;&lt;/code&gt;
+
+    &lt;h2&gt;Implementing dicts&lt;/h2&gt;
     &lt;p&gt;Now let's make something slightly more useful:&lt;/p&gt;
-    &lt;pre&gt;&lt;code&gt;const makeDict = (l)=&gt;{
-    const getter = (getk)=&gt;{
+    &lt;pre&gt;&lt;code&gt;const makeDict = (l) =&gt; {
+    const getter = (getk) =&gt; {
+
+        // for each [key, value] tuple in our dict,
+        // if the key matches getK, we return the value
+
         for (const kv of l){
             if (kv[0] === getk){
                 return kv[1]
             }
         }
     }
+
     return getter
 }
 
@@ -1042,13 +1078,14 @@ const d = makeDict([
 &gt;&gt;&gt; d("bar")
 "2"&lt;/pre&gt;&lt;/code&gt;
     &lt;p&gt;
-        OK, looks familiar, now let's imagine that we are going to use this &lt;code&gt;makeDict(...)&lt;/code&gt; construct again and again. The program that runs our javascript (the interpreter) is going to transform a cuter bit of syntax (shown below) into our &lt;code&gt;makeDict(...)&lt;/code&gt; code before it runs it (syntactic sugar):
+        OK, looks familiar, now let's imagine that we are going to use this &lt;code&gt;makeDict(...)&lt;/code&gt; construct again and again. The program that runs our javascript (the interpreter) is going to transform a cuter bit of syntax (shown below) into our &lt;code&gt;makeDict(...)&lt;/code&gt; code (shown above) before it runs it (syntactic sugar):
     &lt;/p&gt;
     &lt;pre&gt;&lt;code&gt;const d = {
     "foo": "1",
     "bar": "2",
     "baz": "3",
 }
+
 &gt;&gt;&gt; d["bar"]
 "2"&lt;/pre&gt;&lt;/code&gt;
     &lt;p&gt;
@@ -1059,78 +1096,124 @@ const d = makeDict([
     bar: "2",
     baz: "3",
 }
+
 &gt;&gt;&gt; d.bar
 "2"&lt;/pre&gt;&lt;/code&gt;
-    &lt;p&gt;
-        Remember, when we run our program containing &lt;code&gt;const a = {b: "c"}&lt;/code&gt;, &lt;code&gt;a.b&lt;/code&gt;, our interpereter will transform it into &lt;code&gt;const a = makeDict([["b", "c"]])&lt;/code&gt;, &lt;code&gt;a("b")&lt;/code&gt; before it runs it.
-    &lt;/p&gt;
-    &lt;p&gt;
-        I'm going to cheat a bit here and allow us to assign to these dicts too:
-    &lt;/p&gt;
+    &lt;p&gt;When our interpereter sees:&lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;const a = {b: "c"}
+a.b&lt;/code&gt;&lt;/pre&gt;
+    &lt;p&gt;Before it runs it, it will transform it into:&lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;const a = makeDict([["b", "c"]])
+a("b")&lt;/code&gt;&lt;/pre&gt;
+    &lt;em&gt;
+        I'm going to cheat a bit here and allow us to assign to these dicts too, you'll have to imagine how this might be implemented.
+    &lt;/em&gt;
     &lt;pre&gt;&lt;code&gt;d["qux"] = "4"&lt;/pre&gt;&lt;/code&gt;
     &lt;p&gt;
-        The interpereter would transform this in a similar way to the sugar we've invented for getting dict values.
-    &lt;/p&gt;
-    &lt;p&gt;
-        Also, we're going to introduce a way to get all the keys of an object as an array:
+        Now for one last bit of built-in language, we're going to introduce a way to get all the keys of an object as an array:
     &lt;/p&gt;
     &lt;pre&gt;&lt;code&gt;&gt;&gt;&gt; Object.keys({a: "1", b: "2"})
 ["a", "b"]&lt;/pre&gt;&lt;/code&gt;
+    &lt;h2&gt;Implementing classes&lt;/h2&gt;
     &lt;p&gt;
         Now, for the tough bit, we want to make an interface that looks pretty similar to python-style classes:
     &lt;/p&gt;
-    &lt;pre&gt;&lt;code&gt;&gt;&gt;&gt; const daisy = Animal("Daisy", "32")
+    &lt;pre id="js-aim"&gt;&lt;code&gt;&gt;&gt;&gt; const Animal = ClassMaker({
+    __init__: (self, name, age) =&gt; {
+        self.name = name
+        self.age = age
+    },
+    greet: (self) =&gt; {
+        return "My name is " + self.name + " and I am " + self.age + " years old"
+    },
+})
+
+&gt;&gt;&gt; const daisy = Animal("Daisy", "32")
 &gt;&gt;&gt; daisy.age
 "32"
 &gt;&gt;&gt; daisy.greet()
 "My name is Daisy and I am 32 years old"&lt;/pre&gt;&lt;/code&gt;
     &lt;p&gt;
-        We want to be able to define our class, again similar to python, like:
+        It should be easy to imagine how the interpereter would translate our &lt;a href="#aim"&gt;original form&lt;/a&gt; into the above, similar to how it translates &lt;code&gt;foo = {a: "43"}&lt;/code&gt; into &lt;code&gt;foo = makeDict([["a", "43"]])&lt;/code&gt;.
     &lt;/p&gt;
-    &lt;pre&gt;&lt;code&gt;const Animal = ClassMaker({
-    __init__: (self, name, age)=&gt;{
+    &lt;p&gt;
+        Let's start by demonstrating how we can attach some functions to an instance (in this case called &lt;code&gt;someInstance&lt;/code&gt;) using closures:
+    &lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;// cls is a dict of str -&gt; function
+
+const cls = {
+    __init__: (self, name, age) =&gt; {
         self.name = name
         self.age = age
     },
-    greet: (self)=&gt;{
+    greet: (self) =&gt; {
         return "My name is " + self.name + " and I am " + self.age + " years old"
     },
-})&lt;/pre&gt;&lt;/code&gt;
-    &lt;p&gt;
-        So we write our class maker as such:
-    &lt;/p&gt;
-    &lt;pre&gt;&lt;code&gt;const ClassMaker = (cls)=&gt;{
-    // returns a function that will take arguments that
-    // we then pass to __init__
-    return (...initArgs)=&gt;{
-        // create the instance's self to store any
-        // data/methods on
-        const self = {}
+}
 
-        // for each method on the class
+// someInstance starts as an empty dict
+
+const someInstance = {}
+
+// we populate someInstance with the functions in cls,
+// but we use closures to attach someInstance to the
+// first argument of each function
+
+for (const k of Object.keys(cls)){
+
+    const f = cls[k]
+
+    const appliedF = (...args) =&gt; {
+        return f(someInstance, ...args)
+    }
+
+    someInstance[k] = appliedF
+}&lt;/pre&gt;&lt;/code&gt;
+    &lt;p&gt;
+        Now we can initialise &lt;code&gt;someInstance&lt;/code&gt; and call &lt;code&gt;.greet()&lt;/code&gt;.
+    &lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;&gt;&gt;&gt; someInstance.__init__("Rodney", "63")
+&gt;&gt;&gt; someInstance.greet()
+"My name is Rodney and I am 63 years old"&lt;/code&gt;&lt;/pre&gt;
+    &lt;p&gt;
+        Nearly there, now we wrap up the loop and the &lt;code&gt;__init__&lt;/code&gt; into &lt;code&gt;ClassMaker&lt;/code&gt; such that &lt;code&gt;someInstance&lt;/code&gt; (in this case named &lt;code&gt;self&lt;/code&gt;) isn't in the global scope:
+    &lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;const ClassMaker = (cls) =&gt; {
+
+    // it will returns a function that takes arguments that
+    // we pass to __init__
+
+    return (...initArgs) =&gt; {
+
+        // create the self and attach the functions as above
+
+        const self = {}
         for (const k of Object.keys(cls)){
-            // we take cls.f(self, a, b) and make
-            // self.f(a, b) by partially applying
-            // f with self=self
-            self[k] = (...args)=&gt;{
-                return cls[k](self, ...args)
+            const f = cls[k]
+            const appliedF = (...args) =&gt; {
+                return f(self, ...args)
             }
+            self[k] = appliedF
         }
 
         // call __init__ and then return the instance
+
         self.__init__(...initArgs)
         return self
     }
 }&lt;/pre&gt;&lt;/code&gt;
     &lt;p&gt;
-        Test it in the console, wahoo, it works!
+        That's it, OO enlightenment, closures ≈ objects! Test &lt;a href="#js-aim"&gt;Daisy&lt;/a&gt; in the console to make sure it works.
     &lt;/p&gt;
+    &lt;br&gt;
+    &lt;br&gt;
+    &lt;br&gt;
 
-    &lt;h3&gt;Bonus section&lt;/h3&gt;
+    &lt;h2&gt;Bonus section - inheritance&lt;/h2&gt;
     &lt;p&gt;
-        Now, just for good measure, let's add inheritance:
+        Just for good measure, let's add inheritance:
     &lt;/p&gt;
-    &lt;pre&gt;&lt;code&gt;const ClassMaker = (parent, cls)=&gt;{
+    &lt;pre&gt;&lt;code&gt;const ClassMaker = (parent, cls) =&gt; {
     const combined = {}
     for (const k of Object.keys(parent)){
         combined[k] = parent[k]
@@ -1141,11 +1224,11 @@ const d = makeDict([
         }
     }
 
-    const init = (...initArgs)=&gt;{
+    const init = (...initArgs) =&gt; {
         const self = {}
 
         for (const k of Object.keys(combined)){
-            self[k] = (...args)=&gt;{
+            self[k] = (...args) =&gt; {
                 return combined[k](self, ...args)
             }
         }
@@ -1162,37 +1245,20 @@ const d = makeDict([
     return init
 }&lt;/pre&gt;&lt;/code&gt;
     &lt;p&gt;
-        It shouldn't be too much of a stretch to imagine how the interpereter might transform the python-like class:
+        Now we can do:
     &lt;/p&gt;
-    &lt;pre&gt;&lt;code&gt;class Animal(Object){
-    const __init__ = (self, name, age)=&gt;{
-        self.name = name
-        self.age = age
-    }
-    const greet = (self)=&gt;{
-        return "My name is " + self.name + " and I am " + self.age + " years old"
-    }
-}
-
-class Dog(Animal){
-    const bark = (self, owner)=&gt;{
-        return self.name + ": Hullo " + owner
-    }
-}&lt;/pre&gt;&lt;/code&gt;
-
-    &lt;p&gt;Into:&lt;/p&gt;
     &lt;pre&gt;&lt;code&gt;const Animal = ClassMaker(Object(), {
-    __init__: (self, name, age)=&gt;{
+    __init__: (self, name, age) =&gt; {
         self.name = name
         self.age = age
     },
-    greet: (self)=&gt;{
+    greet: (self) =&gt; {
         return "My name is " + self.name + " and I am " + self.age + " years old"
     },
 })
 
 const Dog = ClassMaker(Animal, {
-    bark: (self, owner)=&gt;{
+    bark: (self, owner) =&gt; {
         return self.name + ": Hullo " + owner
     }
 })&lt;/pre&gt;&lt;/code&gt;

@@ -14,15 +14,44 @@
 </head>
 <body class="language-javascript">
     <a href="index.html"><img style="height:2em" src="pic.png"/>⇦</a>
-    <h1>Making python style class system from rudimentary javascript</h1>
+    <h1>Make python-style classes from not much javascript</h1>
     <p>
-        It's been said many times before, <a href="https://wiki.c2.com/?ClosuresAndObjectsAreEquivalent">objects are a poor man's closures are a poor man's objects</a>, I thought I'd try bring that home by implementing a limited bit of the python object system with a small subset of javascript.
+        It's been said many times before, <a href="https://wiki.c2.com/?ClosuresAndObjectsAreEquivalent">objects are a poor man's closures are a poor man's objects</a>, this is a <em>deep and important thing</em>. In python and javascript, the leap is really quite small. I thought I'd try drum the lesson home by implementing a limited bit of the python object system with a subset of javascript. We will:
+        <ul>
+            <li>Describe a small subset of javascript with strings, arrays and functions.</li>
+            <li>Show how with a bit of syntactic sugar you can add dicts (AKA maps, AKA plain ol' objects) to the above.</li>
+            <li>Use closures to bind functions to a <code>self</code>.</li>
+            <li>Wrap that all up into a function <code>ClassMaker</code>, that if you squint, is just like the python class syntax.</li>
+            <li>In a bonus section, implement inheritance.</li>
+        </ul>
     </p>
+    <em>
+        You'll have the best time with this post if you play around with the more complicated code snippets in the <a href="https://javascript.info/devtools">developer tools console <code>Cmd + Opt + J or F12</code></a>.
+    </em>
+
+    <h2>Our aim</h2>
     <p>
-        You can play around with these in the <a href="https://javascript.info/devtools">developer tools console</a>.
+        Our aim is to start with a very small language and write some code such that we can make classes similar to how we would in python, and have them behave similarly too:
     </p>
+    <pre id="aim" class="language-python"><code>class Animal:
+    def __init__(self, name, age):
+        self.name = name
+        self.age = age
+
+    def greet(self):
+        return "My name is " + self.name + " and I am " + self.age + " years old"
+
+>>> const daisy = Animal("Daisy", "32")
+>>> daisy.age
+"32"
+>>> daisy.greet()
+"My name is Daisy and I am 32 years old"</pre></code>
+
+    <h2>
+        Our subset of javascript
+    </h2>
     <p>
-        Let's start with a basic subset of javascript.
+        We're going to pick a small bit of javascript to use, this bit may seem obvious, but we're just demonstrating how little stuff we need to get to OO. Feel free to go quickly through this bit.
     </p>
     <p>Values are strings or arrays of values:</p>
     <pre><code>"string", [value]</pre></code>
@@ -38,12 +67,12 @@
     <p>If two strings are equal, we can do something:</p>
     <pre><code>if (a === b){do something}</pre></code>
     <p>We have functions that take arguments and return something:</p>
-    <pre><code>(x, y)=>{return z}</pre></code>
+    <pre><code>(x, y) => {return z}</pre></code>
     <p>We can refer to all the arguments of a function as an array:</p>
-    <pre><code>(...args)=>{return args}</pre></code>
+    <pre><code>(...args) => {return args}</pre></code>
     <p>Functions are values too, we can pass them around:</p>
-    <pre><code>const addFour = (a)=>{return a + 4}
-const addNine = (a)=>{return a + 9}
+    <pre><code>const addFour = (a) => {return a + 4}
+const addNine = (a) => {return a + 9}
 const adders = [addFour, addNine]
 
 >>> adders[0](10)
@@ -53,8 +82,8 @@ const adders = [addFour, addNine]
     <p>
         Assignments within the curly brackets of a function are visible to inner functions within the same curly brackets (lexical scope). These values are available for the lifetime of the inner function (closures). For example:
     </p>
-    <pre><code>const makeAdder = (b)=>{
-    const adder = (a)=>{
+    <pre><code>const makeAdder = (b) => {
+    const adder = (a) => {
         return a + b
     }
     return adder
@@ -66,15 +95,22 @@ const addSeven = makeAdder(7)
 8
 >>> addSeven(6)
 13</pre></code>
+
+    <h2>Implementing dicts</h2>
     <p>Now let's make something slightly more useful:</p>
-    <pre><code>const makeDict = (l)=>{
-    const getter = (getk)=>{
+    <pre><code>const makeDict = (l) => {
+    const getter = (getk) => {
+
+        // for each [key, value] tuple in our dict,
+        // if the key matches getK, we return the value
+
         for (const kv of l){
             if (kv[0] === getk){
                 return kv[1]
             }
         }
     }
+
     return getter
 }
 
@@ -87,13 +123,14 @@ const d = makeDict([
 >>> d("bar")
 "2"</pre></code>
     <p>
-        OK, looks familiar, now let's imagine that we are going to use this <code>makeDict(...)</code> construct again and again. The program that runs our javascript (the interpreter) is going to transform a cuter bit of syntax (shown below) into our <code>makeDict(...)</code> code before it runs it (syntactic sugar):
+        OK, looks familiar, now let's imagine that we are going to use this <code>makeDict(...)</code> construct again and again. The program that runs our javascript (the interpreter) is going to transform a cuter bit of syntax (shown below) into our <code>makeDict(...)</code> code (shown above) before it runs it (syntactic sugar):
     </p>
     <pre><code>const d = {
     "foo": "1",
     "bar": "2",
     "baz": "3",
 }
+
 >>> d["bar"]
 "2"</pre></code>
     <p>
@@ -104,78 +141,124 @@ const d = makeDict([
     bar: "2",
     baz: "3",
 }
+
 >>> d.bar
 "2"</pre></code>
-    <p>
-        Remember, when we run our program containing <code>const a = {b: "c"}</code>, <code>a.b</code>, our interpereter will transform it into <code>const a = makeDict([["b", "c"]])</code>, <code>a("b")</code> before it runs it.
-    </p>
-    <p>
-        I'm going to cheat a bit here and allow us to assign to these dicts too:
-    </p>
+    <p>When our interpereter sees:</p>
+    <pre><code>const a = {b: "c"}
+a.b</code></pre>
+    <p>Before it runs it, it will transform it into:</p>
+    <pre><code>const a = makeDict([["b", "c"]])
+a("b")</code></pre>
+    <em>
+        I'm going to cheat a bit here and allow us to assign to these dicts too, you'll have to imagine how this might be implemented.
+    </em>
     <pre><code>d["qux"] = "4"</pre></code>
     <p>
-        The interpereter would transform this in a similar way to the sugar we've invented for getting dict values.
-    </p>
-    <p>
-        Also, we're going to introduce a way to get all the keys of an object as an array:
+        Now for one last bit of built-in language, we're going to introduce a way to get all the keys of an object as an array:
     </p>
     <pre><code>>>> Object.keys({a: "1", b: "2"})
 ["a", "b"]</pre></code>
+    <h2>Implementing classes</h2>
     <p>
         Now, for the tough bit, we want to make an interface that looks pretty similar to python-style classes:
     </p>
-    <pre><code>>>> const daisy = Animal("Daisy", "32")
+    <pre id="js-aim"><code>>>> const Animal = ClassMaker({
+    __init__: (self, name, age) => {
+        self.name = name
+        self.age = age
+    },
+    greet: (self) => {
+        return "My name is " + self.name + " and I am " + self.age + " years old"
+    },
+})
+
+>>> const daisy = Animal("Daisy", "32")
 >>> daisy.age
 "32"
 >>> daisy.greet()
 "My name is Daisy and I am 32 years old"</pre></code>
     <p>
-        We want to be able to define our class, again similar to python, like:
+        It should be easy to imagine how the interpereter would translate our <a href="#aim">original form</a> into the above, similar to how it translates <code>foo = {a: "43"}</code> into <code>foo = makeDict([["a", "43"]])</code>.
     </p>
-    <pre><code>const Animal = ClassMaker({
-    __init__: (self, name, age)=>{
+    <p>
+        Let's start by demonstrating how we can attach some functions to an instance (in this case called <code>someInstance</code>) using closures:
+    </p>
+    <pre><code>// cls is a dict of str -> function
+
+const cls = {
+    __init__: (self, name, age) => {
         self.name = name
         self.age = age
     },
-    greet: (self)=>{
+    greet: (self) => {
         return "My name is " + self.name + " and I am " + self.age + " years old"
     },
-})</pre></code>
-    <p>
-        So we write our class maker as such:
-    </p>
-    <pre><code>const ClassMaker = (cls)=>{
-    // returns a function that will take arguments that
-    // we then pass to __init__
-    return (...initArgs)=>{
-        // create the instance's self to store any
-        // data/methods on
-        const self = {}
+}
 
-        // for each method on the class
+// someInstance starts as an empty dict
+
+const someInstance = {}
+
+// we populate someInstance with the functions in cls,
+// but we use closures to attach someInstance to the
+// first argument of each function
+
+for (const k of Object.keys(cls)){
+
+    const f = cls[k]
+
+    const appliedF = (...args) => {
+        return f(someInstance, ...args)
+    }
+
+    someInstance[k] = appliedF
+}</pre></code>
+    <p>
+        Now we can initialise <code>someInstance</code> and call <code>.greet()</code>.
+    </p>
+    <pre><code>>>> someInstance.__init__("Rodney", "63")
+>>> someInstance.greet()
+"My name is Rodney and I am 63 years old"</code></pre>
+    <p>
+        Nearly there, now we wrap up the loop and the <code>__init__</code> into <code>ClassMaker</code> such that <code>someInstance</code> (in this case named <code>self</code>) isn't in the global scope:
+    </p>
+    <pre><code>const ClassMaker = (cls) => {
+
+    // it will returns a function that takes arguments that
+    // we pass to __init__
+
+    return (...initArgs) => {
+
+        // create the self and attach the functions as above
+
+        const self = {}
         for (const k of Object.keys(cls)){
-            // we take cls.f(self, a, b) and make
-            // self.f(a, b) by partially applying
-            // f with self=self
-            self[k] = (...args)=>{
-                return cls[k](self, ...args)
+            const f = cls[k]
+            const appliedF = (...args) => {
+                return f(self, ...args)
             }
+            self[k] = appliedF
         }
 
         // call __init__ and then return the instance
+
         self.__init__(...initArgs)
         return self
     }
 }</pre></code>
     <p>
-        Test it in the console, wahoo, it works!
+        That's it, OO enlightenment, closures ≈ objects! Test <a href="#js-aim">Daisy</a> in the console to make sure it works.
     </p>
+    <br>
+    <br>
+    <br>
 
-    <h3>Bonus section</h3>
+    <h2>Bonus section - inheritance</h2>
     <p>
-        Now, just for good measure, let's add inheritance:
+        Just for good measure, let's add inheritance:
     </p>
-    <pre><code>const ClassMaker = (parent, cls)=>{
+    <pre><code>const ClassMaker = (parent, cls) => {
     const combined = {}
     for (const k of Object.keys(parent)){
         combined[k] = parent[k]
@@ -186,11 +269,11 @@ const d = makeDict([
         }
     }
 
-    const init = (...initArgs)=>{
+    const init = (...initArgs) => {
         const self = {}
 
         for (const k of Object.keys(combined)){
-            self[k] = (...args)=>{
+            self[k] = (...args) => {
                 return combined[k](self, ...args)
             }
         }
@@ -207,37 +290,20 @@ const d = makeDict([
     return init
 }</pre></code>
     <p>
-        It shouldn't be too much of a stretch to imagine how the interpereter might transform the python-like class:
+        Now we can do:
     </p>
-    <pre><code>class Animal(Object){
-    const __init__ = (self, name, age)=>{
-        self.name = name
-        self.age = age
-    }
-    const greet = (self)=>{
-        return "My name is " + self.name + " and I am " + self.age + " years old"
-    }
-}
-
-class Dog(Animal){
-    const bark = (self, owner)=>{
-        return self.name + ": Hullo " + owner
-    }
-}</pre></code>
-
-    <p>Into:</p>
     <pre><code>const Animal = ClassMaker(Object(), {
-    __init__: (self, name, age)=>{
+    __init__: (self, name, age) => {
         self.name = name
         self.age = age
     },
-    greet: (self)=>{
+    greet: (self) => {
         return "My name is " + self.name + " and I am " + self.age + " years old"
     },
 })
 
 const Dog = ClassMaker(Animal, {
-    bark: (self, owner)=>{
+    bark: (self, owner) => {
         return self.name + ": Hullo " + owner
     }
 })</pre></code>
