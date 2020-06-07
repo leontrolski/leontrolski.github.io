@@ -101,7 +101,7 @@ const addSeven = makeAdder(7)
     <pre><code>const makeDict = (l) => {
     const getter = (getk) => {
 
-        // for each [key, value] tuple in our dict,
+        // for each [key, value] tuple in l,
         // if the key matches getK, we return the value
 
         for (const kv of l){
@@ -163,7 +163,7 @@ a("b")</code></pre>
     <p>
         Now, for the tough bit, we want to make an interface that looks pretty similar to python-style classes:
     </p>
-    <pre id="js-aim"><code>>>> const Animal = ClassMaker({
+    <pre id="js-aim"><code>const Animal = ClassMaker({
     __init__: (self, name, age) => {
         self.name = name
         self.age = age
@@ -179,7 +179,7 @@ a("b")</code></pre>
 >>> daisy.greet()
 "My name is Daisy and I am 32 years old"</pre></code>
     <p>
-        It should be easy to imagine how the interpereter would translate our <a href="#aim">original form</a> into the above, similar to how it translates <code>foo = {a: "43"}</code> into <code>foo = makeDict([["a", "43"]])</code>.
+        It should be easy to imagine how the interpereter would translate our <a href="#aim">original form</a> into the above, similar to how it translates <code>a = {b: "c"}</code> into <code>a = makeDict([["b", "c"]])</code>.
     </p>
     <p>
         Let's start by demonstrating how we can attach some functions to an instance (in this case called <code>someInstance</code>) using closures:
