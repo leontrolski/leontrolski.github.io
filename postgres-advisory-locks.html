@@ -1,0 +1,93 @@
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<head>
+    <title>leontrolski - Postgres advisory locks</title>
+    <style>
+        body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 63%;}
+        @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+        pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
+        a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none;text-shadow: 0 1px 0 #ffffff;}
+        a:hover {border-bottom: 0;}
+    </style>
+    <link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</head>
+<body class="language-python">
+    <a href="index.html"><img style="height:2em" src="pic.png"/>⇦</a>
+    <h1>Postgres advisory locks for <code>python</code> developers.</h1>
+    <p>
+        <small><em>Postgres docs for <a href="https://www.postgresql.org/docs/current/explicit-locking.html">locking in general</a>, <a href="https://www.postgresql.org/docs/current/functions-admin.html#FUNCTIONS-ADVISORY-LOCKS">advisory locks in specific</a>.</em></small>
+    </p>
+    <p>
+        Everyone should use postgres' advisory locks, they're great!
+    </p>
+    <p>
+        <em>Why? What are they? Who cares?</em>
+    </p>
+    <p>
+        With an advisory lock, you can get a lock on an <em>arbitrary integer</em> for the duration of a transaction. This is very useful as you can:
+        <ul>
+            <li>Get a lock on, for example, a hash of the tuple <code>("SIGNUP-EMAIL", "foo@bar.com")</code>.</li>
+            <li>Do whatever you want to do (create/update an account for example), knowing that <b>anyone else trying to acquire a lock on the same integer will be prevented from proceeding</b>.</li>
+            <li><code>COMMIT</code>, thereby releasing the lock.</li>
+        </ul>
+    </p>
+    <p>
+        Let's implemement advisory locks in <code>python</code> with <code>SQLAlchemy</code>.
+    </p>
+    <pre><code>def acquire_advisory_lock(session: Session, *ids: Any) -> None:
+    # make an integer key
+    key_str = "-".join([str(id_) for id_ in ids])
+    key_bytes: bytes = key_str.encode("utf-8")
+    m = hashlib.sha256()
+    m.update(key_bytes)
+    # pg_try_advisory_xact_lock is limited to an 8-byte signed integer
+    key = int.from_bytes(m.digest()[:8], byteorder="big", signed=True)
+
+    # get a lock on the db with the key
+    rows = session.execute(sql.select([func.pg_try_advisory_xact_lock(key)]))
+    locked = not next(rows)[0]
+
+    # if it is already locked by another transaction, raise an error
+    if locked:
+        raise AdvisoryLockNotAvailable(key)
+
+    logger.debug("Acquired lock on key: %s", key)</code></pre>
+
+    <p>
+        For good measure, here's an example of the kind of test one would write against said function:
+    </p>
+    <pre><code>@pytest.fixture
+def two_sessions(engine):
+    Base.metadata.create_all(bind=engine)
+    session_1 = sessionmaker(bind=engine)()
+    session_2 = sessionmaker(bind=engine)()
+    yield session_1, session_2
+    # make sure we're cleaned up
+    session_1.close()
+    session_2.close()
+
+
+def test_acquire_advisory_lock(two_sessions):
+    session_1, session_2 = two_sessions
+
+    # lock with session_1
+    acquire_advisory_lock(session_1, 123)
+    # show that we can lock it again in the same session and it doesn't blow up
+    acquire_advisory_lock(session_1, 123)
+
+    # try and fail to lock with session_2
+    with pytest.raises(AdvisoryLockNotAvailable):
+        acquire_advisory_lock(session_2, 123)
+
+    # commit session_1
+    session_1.commit()
+
+    # now we should be able to acquire the lock with session_2
+    acquire_advisory_lock(session_2, 123)</code></pre>
+
+    <p>
+        Easy!
+    </p>
+</body>

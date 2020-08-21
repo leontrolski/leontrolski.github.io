@@ -1266,8 +1266,92 @@ const Dog = ClassMaker(Animal, {
             </description>
         </item>
         <item>
-            <title>Recursing with &lt;code&gt;yield&lt;/code&gt;</title>
+            <title>Postgres advisory locks for &lt;code&gt;python&lt;/code&gt; developers.</title>
             <pubDate></pubDate>
+            <link>https://leontrolski.github.io/postgres-advisory-locks.html</link>
+            <guid>https://leontrolski.github.io/postgres-advisory-locks.html</guid>
+            <description>
+    &lt;h1&gt;Postgres advisory locks for &lt;code&gt;python&lt;/code&gt; developers.&lt;/h1&gt;
+    &lt;p&gt;
+        &lt;small&gt;&lt;em&gt;Postgres docs for &lt;a href="https://www.postgresql.org/docs/current/explicit-locking.html"&gt;locking in general&lt;/a&gt;, &lt;a href="https://www.postgresql.org/docs/current/functions-admin.html#FUNCTIONS-ADVISORY-LOCKS"&gt;advisory locks in specific&lt;/a&gt;.&lt;/em&gt;&lt;/small&gt;
+    &lt;/p&gt;
+    &lt;p&gt;
+        Everyone should use postgres' advisory locks, they're great!
+    &lt;/p&gt;
+    &lt;p&gt;
+        &lt;em&gt;Why? What are they? Who cares?&lt;/em&gt;
+    &lt;/p&gt;
+    &lt;p&gt;
+        With an advisory lock, you can get a lock on an &lt;em&gt;arbitrary integer&lt;/em&gt; for the duration of a transaction. This is very useful as you can:
+        &lt;ul&gt;
+            &lt;li&gt;Get a lock on, for example, a hash of the tuple &lt;code&gt;("SIGNUP-EMAIL", "foo@bar.com")&lt;/code&gt;.&lt;/li&gt;
+            &lt;li&gt;Do whatever you want to do (create/update an account for example), knowing that &lt;b&gt;anyone else trying to acquire a lock on the same integer will be prevented from proceeding&lt;/b&gt;.&lt;/li&gt;
+            &lt;li&gt;&lt;code&gt;COMMIT&lt;/code&gt;, thereby releasing the lock.&lt;/li&gt;
+        &lt;/ul&gt;
+    &lt;/p&gt;
+    &lt;p&gt;
+        Let's implemement advisory locks in &lt;code&gt;python&lt;/code&gt; with &lt;code&gt;SQLAlchemy&lt;/code&gt;.
+    &lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;def acquire_advisory_lock(session: Session, *ids: Any) -&gt; None:
+    # make an integer key
+    key_str = "-".join([str(id_) for id_ in ids])
+    key_bytes: bytes = key_str.encode("utf-8")
+    m = hashlib.sha256()
+    m.update(key_bytes)
+    # pg_try_advisory_xact_lock is limited to an 8-byte signed integer
+    key = int.from_bytes(m.digest()[:8], byteorder="big", signed=True)
+
+    # get a lock on the db with the key
+    rows = session.execute(sql.select([func.pg_try_advisory_xact_lock(key)]))
+    locked = not next(rows)[0]
+
+    # if it is already locked by another transaction, raise an error
+    if locked:
+        raise AdvisoryLockNotAvailable(key)
+
+    logger.debug("Acquired lock on key: %s", key)&lt;/code&gt;&lt;/pre&gt;
+
+    &lt;p&gt;
+        For good measure, here's an example of the kind of test one would write against said function:
+    &lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;@pytest.fixture
+def two_sessions(engine):
+    Base.metadata.create_all(bind=engine)
+    session_1 = sessionmaker(bind=engine)()
+    session_2 = sessionmaker(bind=engine)()
+    yield session_1, session_2
+    # make sure we're cleaned up
+    session_1.close()
+    session_2.close()
+
+
+def test_acquire_advisory_lock(two_sessions):
+    session_1, session_2 = two_sessions
+
+    # lock with session_1
+    acquire_advisory_lock(session_1, 123)
+    # show that we can lock it again in the same session and it doesn't blow up
+    acquire_advisory_lock(session_1, 123)
+
+    # try and fail to lock with session_2
+    with pytest.raises(AdvisoryLockNotAvailable):
+        acquire_advisory_lock(session_2, 123)
+
+    # commit session_1
+    session_1.commit()
+
+    # now we should be able to acquire the lock with session_2
+    acquire_advisory_lock(session_2, 123)&lt;/code&gt;&lt;/pre&gt;
+
+    &lt;p&gt;
+        Easy!
+    &lt;/p&gt;
+&lt;/body&gt;
+            </description>
+        </item>
+        <item>
+            <title>Recursing with &lt;code&gt;yield&lt;/code&gt;</title>
+            <pubDate>Fri, 21 Aug 2020 14:32:58 +0100</pubDate>
             <link>https://leontrolski.github.io/recursing-with-yield.html</link>
             <guid>https://leontrolski.github.io/recursing-with-yield.html</guid>
             <description>
