@@ -965,7 +965,7 @@ VALUES
         </item>
         <item>
             <title>Make python-style classes from not much javascript</title>
-            <pubDate>Mon, 27 Apr 2020 22:56:54 +0100</pubDate>
+            <pubDate>Sun, 7 Jun 2020 09:55:49 +0100</pubDate>
             <link>https://leontrolski.github.io/poor-mans-object.html</link>
             <guid>https://leontrolski.github.io/poor-mans-object.html</guid>
             <description>
@@ -1056,7 +1056,7 @@ const addSeven = makeAdder(7)
     &lt;pre&gt;&lt;code&gt;const makeDict = (l) =&gt; {
     const getter = (getk) =&gt; {
 
-        // for each [key, value] tuple in our dict,
+        // for each [key, value] tuple in l,
         // if the key matches getK, we return the value
 
         for (const kv of l){
@@ -1118,7 +1118,7 @@ a("b")&lt;/code&gt;&lt;/pre&gt;
     &lt;p&gt;
         Now, for the tough bit, we want to make an interface that looks pretty similar to python-style classes:
     &lt;/p&gt;
-    &lt;pre id="js-aim"&gt;&lt;code&gt;&gt;&gt;&gt; const Animal = ClassMaker({
+    &lt;pre id="js-aim"&gt;&lt;code&gt;const Animal = ClassMaker({
     __init__: (self, name, age) =&gt; {
         self.name = name
         self.age = age
@@ -1134,7 +1134,7 @@ a("b")&lt;/code&gt;&lt;/pre&gt;
 &gt;&gt;&gt; daisy.greet()
 "My name is Daisy and I am 32 years old"&lt;/pre&gt;&lt;/code&gt;
     &lt;p&gt;
-        It should be easy to imagine how the interpereter would translate our &lt;a href="#aim"&gt;original form&lt;/a&gt; into the above, similar to how it translates &lt;code&gt;foo = {a: "43"}&lt;/code&gt; into &lt;code&gt;foo = makeDict([["a", "43"]])&lt;/code&gt;.
+        It should be easy to imagine how the interpereter would translate our &lt;a href="#aim"&gt;original form&lt;/a&gt; into the above, similar to how it translates &lt;code&gt;a = {b: "c"}&lt;/code&gt; into &lt;code&gt;a = makeDict([["b", "c"]])&lt;/code&gt;.
     &lt;/p&gt;
     &lt;p&gt;
         Let's start by demonstrating how we can attach some functions to an instance (in this case called &lt;code&gt;someInstance&lt;/code&gt;) using closures:
@@ -1262,6 +1262,82 @@ const Dog = ClassMaker(Animal, {
         return self.name + ": Hullo " + owner
     }
 })&lt;/pre&gt;&lt;/code&gt;
+&lt;/body&gt;
+            </description>
+        </item>
+        <item>
+            <title>Recursing with &lt;code&gt;yield&lt;/code&gt;</title>
+            <pubDate></pubDate>
+            <link>https://leontrolski.github.io/recursing-with-yield.html</link>
+            <guid>https://leontrolski.github.io/recursing-with-yield.html</guid>
+            <description>
+    &lt;h1&gt;Recursing with &lt;code&gt;yield&lt;/code&gt;&lt;/h1&gt;
+    &lt;p&gt;
+        This post shows a simple &lt;code&gt;python&lt;/code&gt;/&lt;code&gt;js&lt;/code&gt; pattern for recursing through code that probably should get a bit more usage.
+    &lt;/p&gt;
+    &lt;p&gt;
+        Say you have the following data:
+    &lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;tree = {
+    "a": 4,
+    "children": [
+        {
+            "a": 3,
+            "children": []
+        },
+        {
+            "a": 2,
+            "children": [
+                {
+                    "a": 6,
+                    "children": []
+                }
+            ]
+        },
+    ]
+}&lt;/code&gt;&lt;/pre&gt;
+    &lt;p&gt;
+        And you want to get all the &lt;code&gt;a&lt;/code&gt; values greater than 2.
+    &lt;/p&gt;
+    &lt;p&gt;
+        In &lt;code&gt;python&lt;/code&gt;, the "classic" way would be to do:
+    &lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;def greater_than_2(t):
+    a, children =  t["a"], t["children"]
+    accumulated = ()
+    if a &gt; 2:
+        accumulated += (a, )
+    for child in children:
+        accumulated += greater_than_2(child)
+    return accumulated
+
+greater_than_2(tree)&lt;/code&gt;&lt;/pre&gt;
+    &lt;p&gt;
+        That will give you: &lt;code&gt;(4, 3, 6)&lt;/code&gt;.
+    &lt;/p&gt;
+    &lt;p&gt;
+        I find it is often more natural to use &lt;code&gt;yield&lt;/code&gt;:
+    &lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;def greater_than_2(t):
+    a, children =  t["a"], t["children"]
+    if a &gt; 2:
+        yield a
+    for child in children:
+        yield from greater_than_2(child)
+
+tuple(greater_than_2(tree))&lt;/code&gt;&lt;/pre&gt;
+    &lt;p&gt;
+        A near identical solution can be achieved with modern &lt;code&gt;js&lt;/code&gt; (this may surprise any &lt;code&gt;python&lt;/code&gt; devs that haven't seen the language for a while 😊 ):
+    &lt;/p&gt;
+    &lt;pre&gt;&lt;code class="language-javascript"&gt;function* greater_than_2(t){
+    const {a, children} = t
+    if (a &gt; 2) yield a
+    for (const child of children) yield* greater_than_2(child)
+}
+
+[...greater_than_2(tree)]
+&lt;/code&gt;&lt;/pre&gt;
+
 &lt;/body&gt;
             </description>
         </item>

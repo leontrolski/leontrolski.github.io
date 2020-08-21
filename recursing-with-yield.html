@@ -1,0 +1,85 @@
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<head>
+    <title>leontrolski - Recursing with yield</title>
+    <style>
+        body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 63%;}
+        @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+        pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
+        a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none;text-shadow: 0 1px 0 #ffffff;}
+        a:hover {border-bottom: 0;}
+    </style>
+    <link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</head>
+<body class="language-python">
+    <a href="index.html"><img style="height:2em" src="pic.png"/>⇦</a>
+    <h1>Recursing with <code>yield</code></h1>
+    <p>
+        This post shows a simple <code>python</code>/<code>js</code> pattern for recursing through code that probably should get a bit more usage.
+    </p>
+    <p>
+        Say you have the following data:
+    </p>
+    <pre><code>tree = {
+    "a": 4,
+    "children": [
+        {
+            "a": 3,
+            "children": []
+        },
+        {
+            "a": 2,
+            "children": [
+                {
+                    "a": 6,
+                    "children": []
+                }
+            ]
+        },
+    ]
+}</code></pre>
+    <p>
+        And you want to get all the <code>a</code> values greater than 2.
+    </p>
+    <p>
+        In <code>python</code>, the "classic" way would be to do:
+    </p>
+    <pre><code>def greater_than_2(t):
+    a, children =  t["a"], t["children"]
+    accumulated = ()
+    if a > 2:
+        accumulated += (a, )
+    for child in children:
+        accumulated += greater_than_2(child)
+    return accumulated
+
+greater_than_2(tree)</code></pre>
+    <p>
+        That will give you: <code>(4, 3, 6)</code>.
+    </p>
+    <p>
+        I find it is often more natural to use <code>yield</code>:
+    </p>
+    <pre><code>def greater_than_2(t):
+    a, children =  t["a"], t["children"]
+    if a > 2:
+        yield a
+    for child in children:
+        yield from greater_than_2(child)
+
+tuple(greater_than_2(tree))</code></pre>
+    <p>
+        A near identical solution can be achieved with modern <code>js</code> (this may surprise any <code>python</code> devs that haven't seen the language for a while 😊 ):
+    </p>
+    <pre><code class="language-javascript">function* greater_than_2(t){
+    const {a, children} = t
+    if (a > 2) yield a
+    for (const child of children) yield* greater_than_2(child)
+}
+
+[...greater_than_2(tree)]
+</code></pre>
+
+</body>
