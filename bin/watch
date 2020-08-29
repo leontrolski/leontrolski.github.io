@@ -1,0 +1,5 @@
+#!/bin/bash
+cd "$(dirname "$0")/.."
+
+bin/compile
+find src -name '*.dn.js' | entr bin/compile

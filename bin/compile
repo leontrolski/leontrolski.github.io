@@ -1,0 +1,7 @@
+#!/bin/bash
+cd "$(dirname "$0")/.."
+
+FILENAME=$(dnjs src/semi-isomorphic.dn.js --raw --name filename)
+dnjs src/semi-isomorphic.dn.js --html --compact > .tmp.html
+mv .tmp.html $FILENAME
+echo "generated $FILENAME"
