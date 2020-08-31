@@ -1267,7 +1267,7 @@ const Dog = ClassMaker(Animal, {
         </item>
         <item>
             <title>Postgres advisory locks for &lt;code&gt;python&lt;/code&gt; developers.</title>
-            <pubDate></pubDate>
+            <pubDate>Fri, 21 Aug 2020 15:11:15 +0100</pubDate>
             <link>https://leontrolski.github.io/postgres-advisory-locks.html</link>
             <guid>https://leontrolski.github.io/postgres-advisory-locks.html</guid>
             <description>
@@ -1423,6 +1423,165 @@ tuple(greater_than_2(tree))&lt;/code&gt;&lt;/pre&gt;
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;/body&gt;
+            </description>
+        </item>
+        <item>
+            <title>Evolving backend → frontend rendered &lt;code class="inline"&gt;Python&lt;/code&gt;/&lt;code class="inline"&gt;JS&lt;/code&gt; apps with &lt;code class="inline"&gt;dnjs&lt;/code&gt;</title>
+            <pubDate>Sat, 29 Aug 2020 08:29:37 +0100</pubDate>
+            <link>https://leontrolski.github.io/semi-isomorphic.html</link>
+            <guid>https://leontrolski.github.io/semi-isomorphic.html</guid>
+            <description>
+&amp;#x26a0;&amp;#xfe0f; This article contains JS code. It might not work properly in your feed reader.
+You might want to visit the &lt;a href="https://leontrolski.github.io/semi-isomorphic.html"&gt;original article&lt;/a&gt;.
+        &lt;/style&gt;&lt;link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet"&gt;&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js"&gt;&lt;/script&gt;&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js"&gt;&lt;/script&gt;&lt;/head&gt;&lt;body&gt;&lt;a href="index.html"&gt;&lt;img src="pic.png" style="height:2em"&gt;⇦&lt;/a&gt;&lt;h1&gt;Evolving backend → frontend rendered &lt;code class="inline"&gt;Python&lt;/code&gt;/&lt;code class="inline"&gt;JS&lt;/code&gt; apps with &lt;code class="inline"&gt;dnjs&lt;/code&gt;&lt;/h1&gt;&lt;p&gt;With very little ceremony  or surprise, &lt;a href="https://github.com/leontrolski/dnjs#dnjs"&gt;dnjs&lt;/a&gt; lets you &lt;b&gt;specify configuration&lt;/b&gt;, generate &lt;b&gt;static html/css&lt;/b&gt;, and &lt;b&gt;render html on the backend/frontend&lt;/b&gt; across languages. &lt;a href="https://github.com/leontrolski/leontrolski.github.io/tree/master/src/semi-isomorphic.dn.js"&gt;This page&lt;/a&gt; is even written with it. &lt;em&gt;A word of warning: the project is still in its development stages.&lt;/em&gt;&lt;/p&gt;&lt;h2&gt;What&amp;#x27;s the problem?&lt;/h2&gt;&lt;p&gt;In most worlds, when you&amp;#x27;re building a web app, there is a very clear divide between:&lt;/p&gt;&lt;ol&gt;&lt;li&gt;&amp;quot;Let&amp;#x27;s build a backend-rendered page in &lt;code class="inline"&gt;Python&lt;/code&gt;/&lt;code class="inline"&gt;JS&lt;/code&gt;/... rendering the html with some funky templating language. We can sprinkle in some ad-hoc &lt;code class="inline"&gt;JS&lt;/code&gt; as we get there.&amp;quot;&lt;/li&gt;&lt;li&gt;&amp;quot;Let&amp;#x27;s build a fully frontend-rendered app with &lt;code class="inline"&gt;React&lt;/code&gt;/&lt;code class="inline"&gt;Vue&lt;/code&gt;/...&amp;quot;&lt;/li&gt;&lt;/ol&gt;&lt;p&gt;A lot of the time, teams plump for option 2, even when the user experience might be worse (slow loading times, lack of hyperlinking, etc), and the developer experience might be worse (lots of client state, hard to test, etc).&lt;/p&gt;&lt;p&gt;&lt;code class="inline"&gt;dnjs&lt;/code&gt; takes the following positions:&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Most backend templating languages are clunky, often difficult to compose and missing tooling (eg. linters) available for fully-fledged languages.&lt;/li&gt;&lt;li&gt;There is a UI-complexity threshold at which one might choose to make part of the app frontend-rendered, this is OK.&lt;/li&gt;&lt;li&gt;The default ways of constructing DOM nodes in the browser are &lt;a href="dom-syntax.html"&gt;inelegant&lt;/a&gt;.&lt;/li&gt;&lt;li&gt;Build chains and compile steps may eventually become necessary, but we&amp;#x27;ll start with browser-compatible code.&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;It attempts to resolve these with a &lt;a href="https://github.com/leontrolski/dnjs#how-exactly-does-dnjs-extend-json"&gt;pure subset of &lt;code class="inline"&gt;JS&lt;/code&gt;&lt;/a&gt; that is &lt;b&gt;reasonable to implement in host languages&lt;/b&gt; and &lt;b&gt;has a standardised way of describing DOM nodes&lt;/b&gt;. Being able to share things across the backend and the frontend means we can evolve our app over time. We can start with simple html forms, then progress to frontend-rendering as the complexity requires - &lt;em&gt;while reusing previously written components&lt;/em&gt;.&lt;/p&gt;&lt;p&gt;Let&amp;#x27;s walk through an example where we span this transition.&lt;/p&gt;&lt;h2&gt;An example app&lt;/h2&gt;&lt;p&gt;In this post, we will build the following simple web app, where we can add todos and check them if they&amp;#x27;re done. The data will be persisted on the backend:&lt;/p&gt;&lt;video src="videos/basic.webm" controls style="
+        margin: auto;
+        display: block;
+        max-width: calc(min(20em, 100%));
+        box-shadow: 0px 0px 6px 2px #0000002b;
+        margin-top: 2em;
+        margin-bottom: 2em;
+    "&gt;&lt;/video&gt;&lt;h2&gt;The 3 ways we will build it are:&lt;/h2&gt;&lt;ul&gt;&lt;li&gt;Using just backend rendering and &lt;code class="inline"&gt;&amp;lt;form&amp;gt;&lt;/code&gt; elements à la 1995. This we&amp;#x27;ll refer to as &lt;code class="inline"&gt;backend&lt;/code&gt;.&lt;/li&gt;&lt;li&gt;Using a sprinkling of imperative&lt;code class="inline"&gt;JS&lt;/code&gt; to dynamically add the new comment without reloading the page. This we&amp;#x27;ll refer to as &lt;code class="inline"&gt;classic&lt;/code&gt;.&lt;/li&gt;&lt;li&gt;Rendering the entire comment list with a&lt;code class="inline"&gt;JS&lt;/code&gt; library (in this case &lt;a href="https://mithril.js.org/"&gt;mithril&lt;/a&gt;). This we&amp;#x27;ll refer to as &lt;code class="inline"&gt;declarative&lt;/code&gt; because we specify the DOM as a pure function of state.&lt;/li&gt;&lt;/ul&gt;&lt;h2&gt;Aside: running the examples&lt;/h2&gt;&lt;p&gt;The source for the above can be found in the &lt;a href="https://github.com/leontrolski/dnjs/tree/master/examples/todo"&gt;&lt;code class="inline"&gt;examples/todo&lt;/code&gt;&lt;/a&gt; directory of the &lt;code class="inline"&gt;dnjs&lt;/code&gt; repo. It has the following structure:&lt;/p&gt;&lt;pre class="language-bash"&gt;&lt;code&gt;├── app.py
+├── shared
+│   ├── components.dn.js
+│   └── style.dn.js
+├── static
+│   ├── backend.js
+│   ├── classic.js
+│   ├── declarative.js
+│   └── style.css
+└── templates
+    └── page.dn.js&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;You should be able to run the server with:&lt;/p&gt;&lt;pre class="language-bash"&gt;&lt;code&gt;git clone git@github.com:leontrolski/dnjs.git
+cd dnjs; python3 -m venv .env; source .env/bin/activate
+pip install dnjs fastapi uvicorn aiofiles python-multipart
+
+examples/todo/bin/serve
+open &amp;#x27;http://localhost:8000/backend&amp;#x27;&lt;/code&gt;&lt;/pre&gt;&lt;h2&gt;Building the app with &lt;code class="inline"&gt;backend&lt;/code&gt;&lt;/h2&gt;&lt;p&gt;We&amp;#x27;re going to use the &lt;code class="inline"&gt;Python&lt;/code&gt; library &lt;a href="https://fastapi.tiangolo.com/"&gt;FastAPI&lt;/a&gt; for our backend. Let&amp;#x27;s start by looking at the body of the html we want to end up with:&lt;/p&gt;&lt;pre class="language-html"&gt;&lt;code&gt;&amp;lt;h1 class=&amp;quot;todo-bold todo-red&amp;quot;&amp;gt;Hello Ms Backend&amp;lt;/h1&amp;gt;
+&amp;lt;div id=&amp;quot;todo-list&amp;quot;&amp;gt;
+    &amp;lt;form id=&amp;quot;todoListForm&amp;quot; method=&amp;quot;POST&amp;quot;&amp;gt;
+        &amp;lt;ul&amp;gt;
+            &amp;lt;li class=&amp;quot;todo-todo&amp;quot;&amp;gt;
+                hullo
+                &amp;lt;input class=&amp;quot;doneCheckbox&amp;quot; name=&amp;quot;doneCheckbox&amp;quot; value=&amp;quot;0&amp;quot; type=&amp;quot;checkbox&amp;quot; /&amp;gt;
+            &amp;lt;/li&amp;gt;
+            &amp;lt;li class=&amp;quot;todo-todo&amp;quot;&amp;gt;
+                goodbye
+                &amp;lt;input class=&amp;quot;doneCheckbox&amp;quot; name=&amp;quot;doneCheckbox&amp;quot; value=&amp;quot;1&amp;quot; type=&amp;quot;checkbox&amp;quot; checked /&amp;gt;
+            &amp;lt;/li&amp;gt;
+        &amp;lt;/ul&amp;gt;
+        &amp;lt;input name=&amp;quot;newMessage&amp;quot; value=&amp;quot;&amp;quot; placeholder=&amp;quot;message&amp;quot; autocomplete=&amp;quot;off&amp;quot; /&amp;gt;
+        &amp;lt;button&amp;gt;add todo&amp;lt;/button&amp;gt;
+    &amp;lt;/form&amp;gt;
+&amp;lt;/div&amp;gt;&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;As you can see, we&amp;#x27;re going to render just a normal html &lt;code class="inline"&gt;&amp;lt;form&amp;gt;&lt;/code&gt;. When we submit the form, it will POST one &lt;code class="inline"&gt;newMessage&lt;/code&gt; with &lt;code class="inline"&gt;value=&amp;quot;some message&amp;quot;&lt;/code&gt; and many &lt;code class="inline"&gt;doneCheckbox&lt;/code&gt;s, each with &lt;code class="inline"&gt;value=&amp;quot;index&amp;quot;&lt;/code&gt; - the indexes of todos that are checked.&lt;/p&gt;&lt;h3&gt;An aside on html forms&lt;/h3&gt;&lt;p&gt;Html forms are really not a thing of beauty, they map poorly to json structures, you can&amp;#x27;t nest them, they can only convey strings, etc. Lots of frontend devs in particular seem to have forgotten the weirdo ins and outs of how they work, for example: that &lt;code class="inline"&gt;&amp;lt;button&amp;gt;&lt;/code&gt;s and &lt;code class="inline"&gt;&amp;lt;input type=&amp;quot;checkbox&amp;quot;&amp;gt;&lt;/code&gt;s have &lt;code class="inline"&gt;(name, value)&lt;/code&gt;s &lt;em&gt;that are only are POSTed when they are clicked/checked.&lt;/em&gt;&lt;/p&gt;&lt;p&gt;&lt;em&gt;Despite&lt;/em&gt; these shortcomings, they are well worth using for simple forms (that is to say - most forms). Not using any &lt;code class="inline"&gt;JS&lt;/code&gt; means having basically zero state in the browser, and that makes reasoning about/testing the app way easier. Like way way easier.&lt;/p&gt;&lt;h3&gt;Back to the app&lt;/h3&gt;&lt;p&gt;Let&amp;#x27;s have a look at the &lt;code class="inline"&gt;dnjs&lt;/code&gt; templating code we use to render the page from&lt;code class="inline"&gt;Python&lt;/code&gt;, the base page is in &lt;a href="https://github.com/leontrolski/dnjs/tree/master/examples/todo/templates/page.dn.js"&gt;&lt;code class="inline"&gt;examples/todo/templates/page.dn.js&lt;/code&gt;&lt;/a&gt; and looks like:&lt;/p&gt;&lt;pre class="language-javascript"&gt;&lt;code&gt;import { TodoList } from &amp;quot;../shared/components.dn.js&amp;quot;
+
+const title = [classes.bold, classes.red]
+
+export default (data) =&amp;gt; (
+    ...
+    m(&amp;quot;h1&amp;quot;, {class: title}, &amp;quot;Hello &amp;quot;, data.username),
+    m(&amp;quot;#todo-list&amp;quot;, TodoList(data.state)),
+    ...
+)&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;The components for the form itself can be found in &lt;a href="https://github.com/leontrolski/dnjs/tree/master/examples/todo/shared/components.dn.js"&gt;&lt;code class="inline"&gt;examples/todo/shared/components.dn.js&lt;/code&gt;&lt;/a&gt; and look a bit like:&lt;/p&gt;&lt;pre class="language-javascript"&gt;&lt;code&gt;export const Todo = (todo) =&amp;gt; m(&amp;quot;li&amp;quot;,
+    todo.message,
+    m(&amp;quot;input.doneCheckbox&amp;quot;, {name: &amp;quot;doneCheckbox&amp;quot;, value: todo.i, checked: todo.done, type: &amp;quot;checkbox&amp;quot;}),
+)
+
+export const TodoList = (state) =&amp;gt; m(&amp;quot;form#todoListForm&amp;quot;,
+    {method: &amp;quot;POST&amp;quot;},
+    m(&amp;quot;ul&amp;quot;, state.todos.map((todo, i) =&amp;gt;Todo({...todo, i: i}))),
+    m(&amp;quot;input&amp;quot;, {name: &amp;quot;newMessage&amp;quot;, value: state.new}),
+    m(&amp;quot;button&amp;quot;, &amp;quot;add todo&amp;quot;),
+)&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;We will render the page in &lt;a href="https://github.com/leontrolski/dnjs/tree/master/examples/todo/app.py"&gt;&lt;code class="inline"&gt;examples/todo/app.py&lt;/code&gt;&lt;/a&gt; with:&lt;/p&gt;&lt;pre class="language-python"&gt;&lt;code&gt;@app.get(&amp;quot;/backend&amp;quot;, response_class=HTMLResponse)
+def get_backend() -&amp;gt; str:
+    return dnjs.render(
+        templates / &amp;quot;page.dn.js&amp;quot;,
+        PageData(
+            username=&amp;quot;Ms Backend&amp;quot;,
+            state=State(todos=_todos.todos, new=&amp;quot;&amp;quot;),
+        )
+    )&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;We&amp;#x27;re rendering the &lt;code class="inline"&gt;dnjs&lt;/code&gt; (a subset of &lt;code class="inline"&gt;JS&lt;/code&gt;) with &lt;code class="inline"&gt;Python&lt;/code&gt; ... 🤯&lt;/p&gt;&lt;p&gt;In the same file, we handle &lt;code class="inline"&gt;POST&lt;/code&gt;s with:&lt;/p&gt;&lt;pre class="language-python"&gt;&lt;code&gt;@app.post(&amp;quot;/backend&amp;quot;, response_class=HTMLResponse)
+def post_backend(newMessage: str, doneCheckbox: List[int]) -&amp;gt; str:
+    if newMessage:
+        _todos.todos.append(Todo(message=newMessage, done=False))
+
+    for i, todo in enumerate(_todos.todos):
+        todo.done = i in doneCheckbox
+
+    return render(...)&lt;/code&gt;&lt;/pre&gt;&lt;em&gt;Note, for demo purposes, we are storing the todos serverside with an in-memory structure &lt;code class="inline"&gt;_todos&lt;/code&gt;.&lt;/em&gt;&lt;p&gt;In case you can&amp;#x27;t be bothered to run the example application, here&amp;#x27;s a video of me clicking around the &lt;code class="inline"&gt;backend&lt;/code&gt; app with the console on.&lt;/p&gt;&lt;video src="videos/backend.webm" controls style="
+        margin: auto;
+        display: block;
+        max-width: calc(min(20em, 100%));
+        box-shadow: 0px 0px 6px 2px #0000002b;
+        margin-top: 2em;
+        margin-bottom: 2em;
+    "&gt;&lt;/video&gt;&lt;h2&gt;Adding some frontend rendering with &lt;code class="inline"&gt;classic&lt;/code&gt;&lt;/h2&gt;&lt;p&gt;The users of our app were posting lots of frequent comments, we decided it wasn&amp;#x27;t acceptable to have a page reload every time it happened. This means we had to add a sprinkling (23 lines) of&lt;code class="inline"&gt;JS&lt;/code&gt;to:&lt;/p&gt;&lt;ul&gt;&lt;li&gt;POST the data to the backed using &lt;code class="inline"&gt;XHR&lt;/code&gt;.&lt;/li&gt;&lt;li&gt;Construct a new &lt;code class="inline"&gt;&amp;lt;li&amp;gt;&lt;/code&gt; element from the data.&lt;/li&gt;&lt;li&gt;Append that element to the existing &lt;code class="inline"&gt;&amp;lt;ul&amp;gt;&lt;/code&gt; in the DOM.&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;The bulk of this - &lt;a href="https://github.com/leontrolski/dnjs/tree/master/examples/todo/static/classic.js"&gt;&lt;code class="inline"&gt;examples/todo/static/classic.js&lt;/code&gt;&lt;/a&gt; - is as follows:&lt;/p&gt;&lt;pre class="language-javascript"&gt;&lt;code&gt;import { Todo } from &amp;quot;../shared/components.dn.js&amp;quot;
+
+...
+
+todoListFormEl.onsubmit = async e =&amp;gt; {
+    // prevent the &amp;lt;form&amp;gt; from actually submitting
+    e.preventDefault()
+
+    ...
+
+    // construct the todo data and send to the backend
+    const data = {
+        message: newMessageEl.value,
+        done: false
+    }
+    await fetch(
+        &amp;quot;/classic/todos&amp;quot;,
+        {method: &amp;#x27;POST&amp;#x27;, body: JSON.stringify(data)}
+    )
+
+    // make the Todo DOM node and append it to the DOM
+    const newTodo = Todo(data, null)
+    todoListUlEl.appendChild(m.makeEl(newTodo))
+
+    ...
+}&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;The important thing here is that &lt;b&gt; we were able to reuse the same &lt;code class="inline"&gt;Todo&lt;/code&gt; component that we used on the backend on the frontend&lt;/b&gt;. Cool huh!&lt;/p&gt;&lt;h3&gt;dnjs2dom&lt;/h3&gt;&lt;p&gt;In the &lt;code class="inline"&gt;classic&lt;/code&gt; app, we use the teeny &lt;a href="https://github.com/leontrolski/dnjs2dom#dnjs-client-helper"&gt;dnjs2dom&lt;/a&gt; library to turn the &lt;code class="inline"&gt;m(...)&lt;/code&gt; components into actual DOM nodes. This library enables the line &lt;code class="inline"&gt;todoListUlEl.appendChild(m.makeEl(newTodo))&lt;/code&gt;.&lt;/p&gt;&lt;p&gt;Let&amp;#x27;s show a video of this in action:&lt;/p&gt;&lt;video src="videos/classic.webm" controls style="
+        margin: auto;
+        display: block;
+        max-width: calc(min(20em, 100%));
+        box-shadow: 0px 0px 6px 2px #0000002b;
+        margin-top: 2em;
+        margin-bottom: 2em;
+    "&gt;&lt;/video&gt;&lt;h2&gt;Going whole-hog frontend rendering with &lt;code class="inline"&gt;declarative&lt;/code&gt;&lt;/h2&gt;&lt;p&gt;It&amp;#x27;s a bit contrived with this simple app, but let&amp;#x27;s imagine our UI&amp;#x27;s complexity has tipped over to the point where we want everything super dynamic. To achieve this, we will use the (excellent) &lt;a href="https://mithril.js.org/"&gt;mithril&lt;/a&gt; - which &lt;code class="inline"&gt;dnjs&lt;/code&gt; is handily compatible with.&lt;/p&gt;&lt;p&gt;Here&amp;#x27;s the line from &lt;a href="https://github.com/leontrolski/dnjs/tree/master/examples/todo/static/declarative.js"&gt;&lt;code class="inline"&gt;examples/todo/static/declarative.js&lt;/code&gt;&lt;/a&gt; where we mount our components to the DOM with mithirl:&lt;/p&gt;&lt;pre class="language-javascript"&gt;&lt;code&gt;m.mount(todoListEl, {view: () =&amp;gt; TodoList(state, actions)})&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Note again - &lt;b&gt; we were able to reuse the same &lt;code class="inline"&gt;TodoList&lt;/code&gt; component that we used on the backend on the frontend.&lt;/b&gt;&lt;/p&gt;&lt;p&gt;&lt;a href="https://mithril.js.org/"&gt;mithril&lt;/a&gt; wraps any &lt;code class="inline"&gt;{onclick: f, onsubmit: g, ...}&lt;/code&gt; functions and rerenders the DOM as necessary in similar way to &lt;code class="inline"&gt;React&lt;/code&gt;. Below is an example of one of the functions we pass via &lt;code class="inline"&gt;m(&amp;quot;form&amp;quot;, {onsubmit: add}, ...)&lt;/code&gt;.&lt;/p&gt;&lt;pre class="language-javascript"&gt;&lt;code&gt;const add = (e) =&amp;gt; {
+    e.preventDefault()
+    if (!state.new) return
+    state.todos.push({message: state.new, done: false})
+    state.new = &amp;quot;&amp;quot;
+    m.request({
+        url: &amp;quot;/declarative/todos&amp;quot;,
+        method: &amp;quot;PUT&amp;quot;,
+        body: {todos: state.todos}
+    })
+}&lt;/code&gt;&lt;/pre&gt;&lt;em&gt;Note that if we want to render the same component from the backend, we just pass in &lt;code class="inline"&gt;{onsubmit: None}&lt;/code&gt; and it is ignored by &lt;code class="inline"&gt;dnjs&lt;/code&gt;.&lt;/em&gt;&lt;p&gt;Let&amp;#x27;s show a video of our declaratively rendered app in action:&lt;/p&gt;&lt;video src="videos/declarative.webm" controls style="
+        margin: auto;
+        display: block;
+        max-width: calc(min(20em, 100%));
+        box-shadow: 0px 0px 6px 2px #0000002b;
+        margin-top: 2em;
+        margin-bottom: 2em;
+    "&gt;&lt;/video&gt;&lt;h1&gt;Bonus css &lt;code class="inline"&gt;section&lt;/code&gt;&lt;/h1&gt;&lt;p&gt;Our app has many pages, so we&amp;#x27;d like to share/compose/namespace our css. Handily &lt;code class="inline"&gt;dnjs&lt;/code&gt; can convert from &lt;a href="https://github.com/leontrolski/dnjs/tree/master/examples/todo/shared/style.dn.js"&gt;&lt;code class="inline"&gt;examples/todo/shared/style.dn.js&lt;/code&gt;&lt;/a&gt;:&lt;/p&gt;&lt;pre class="language-javascript"&gt;&lt;code&gt;const _classes = {
+    bold: {
+        &amp;quot;font-weight&amp;quot;: &amp;quot;bold&amp;quot;,
+    },
+    red: {
+        &amp;quot;color&amp;quot;: &amp;quot;red&amp;quot;,
+    },
+    ...
+}
+
+// namespace
+export default Object.fromEntries(
+    Object.entries(_classes)
+    .map(([k, v], _) =&amp;gt; [&amp;quot;.{namespace}-{k}&amp;quot;, v])
+)&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Via:&lt;/p&gt;&lt;pre class="language-bash"&gt;&lt;code&gt;dnjs shared/style.dn.js --css &amp;gt; static/style.css&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;To:&lt;/p&gt;&lt;pre class="language-css"&gt;&lt;code&gt;.todo-bold {
+    font-weight: bold;
+}
+.todo-red {
+    color: red;
+}&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;In &lt;a href="https://github.com/leontrolski/dnjs/tree/master/examples/todo/shared/style.dn.js"&gt;&lt;code class="inline"&gt;examples/todo/shared/style.dn.js&lt;/code&gt;&lt;/a&gt; we also export the names themselves of the css classes, so in the rendering code, we can refer to eg: &lt;code class="inline"&gt;style.classes.bold&lt;/code&gt; and it will resolve to the name: &lt;code class="inline"&gt;&amp;quot;todo-bold&amp;quot;&lt;/code&gt;.&lt;/p&gt;&lt;p&gt;Similar to the advantages in html-rendering land, having your css as &amp;quot;just data&amp;quot; means you can easily compose/transform it, again without resorting to a whole new DSL like &lt;code class="inline"&gt;Sass&lt;/code&gt;.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;
             </description>
         </item>
     </channel>

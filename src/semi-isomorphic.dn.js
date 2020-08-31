@@ -43,7 +43,7 @@ export default page(title, h1, [
         m("li", "The default ways of constructing DOM nodes in the browser are ", m("a", {href: "dom-syntax.html"}, "inelegant"), "."),
         m("li", "Build chains and compile steps may eventually become necessary, but we'll start with browser-compatible code."),
     ),
-    m("p", "It attempts to resolve these with a pure subset of ", js_, " that is reasonable to implement in host languages and has a standardised way of describing DOM nodes. Being able to share things across the backend and the frontend means we can evolve our app over time. We can start with simple html forms, then progress to frontend-rendering as the complexity requires - while reusing previously written components."),
+    m("p", "It attempts to resolve these with a ", m("a", {href: "https://github.com/leontrolski/dnjs#how-exactly-does-dnjs-extend-json"},  "pure subset of ", js_), " that is ", m("b", "reasonable to implement in host languages"), " and ", m("b", "has a standardised way of describing DOM nodes"), ". Being able to share things across the backend and the frontend means we can evolve our app over time. We can start with simple html forms, then progress to frontend-rendering as the complexity requires - ", m("em", "while reusing previously written components"),  "."),
     m("p", "Let's walk through an example where we span this transition."),
 
 
@@ -121,7 +121,7 @@ export default page(title, h1, [
         export default (data) => (
             ...
             m("h1", {class: title}, "Hello ", data.username),
-            m("#todo-list", TodoList(data.state, data.actions)),
+            m("#todo-list", TodoList(data.state)),
             ...
         )
     `),
@@ -132,7 +132,7 @@ export default page(title, h1, [
             m("input.doneCheckbox", {name: "doneCheckbox", value: todo.i, checked: todo.done, type: "checkbox"}),
         )
 
-        export const TodoList = (state, actions) => m("form#todoListForm",
+        export const TodoList = (state) => m("form#todoListForm",
             {method: "POST"},
             m("ul", state.todos.map((todo, i) =>Todo({...todo, i: i}))),
             m("input", {name: "newMessage", value: state.new}),
@@ -170,7 +170,13 @@ export default page(title, h1, [
 
 
     m("h2", "Adding some frontend rendering with ", classic),
-    m("p", "The users of our app were posting lots of frequent comments, we decided it wasn't acceptable to have a page reload every time it happened. This means we had to add a sprinkling (23 lines) of", js_, ", the bulk of this - ", file("examples/todo/static/classic.js"), " - is as follows:"),
+    m("p", "The users of our app were posting lots of frequent comments, we decided it wasn't acceptable to have a page reload every time it happened. This means we had to add a sprinkling (23 lines) of", js_, "to:"),
+    m("ul",
+        m("li", "POST the data to the backed using ", inline("XHR"), "."),
+        m("li", "Construct a new ", inline("<li>"), " element from the data."),
+        m("li", "Append that element to the existing ", inline("<ul>"), " in the DOM."),
+    ),
+    m("p", "The bulk of this - ", file("examples/todo/static/classic.js"), " - is as follows:"),
     js(`
         import { Todo } from "../shared/components.dn.js"
 
@@ -199,7 +205,7 @@ export default page(title, h1, [
             ...
         }
     `),
-    m("p", "The interesting thing here is that we use ", m("em", "the same "), inline("Todo"), " component that we used on the backend ", m("em", "on the frontend"), ". Cool huh!"),
+    m("p", "The important thing here is that ", m("b", " we were able to reuse the same ", inline("Todo"), " component that we used on the backend on the frontend"), ". Cool huh!"),
     m("h3", "dnjs2dom"),
     m("p", "In the ", classic, " app, we use the teeny ", m("a", {href: "https://github.com/leontrolski/dnjs2dom#dnjs-client-helper"}, "dnjs2dom"), " library to turn the ", inline("m(...)"), " components into actual DOM nodes. This library enables the line ", inline("todoListUlEl.appendChild(m.makeEl(newTodo))"), "."),
     m("p", "Let's show a video of this in action:"),
@@ -209,8 +215,8 @@ export default page(title, h1, [
     m("p", "It's a bit contrived with this simple app, but let's imagine our UI's complexity has tipped over to the point where we want everything super dynamic. To achieve this, we will use the (excellent) ", m("a", {href: "https://mithril.js.org/"}, "mithril"), " - which ", dnjs, " is handily compatible with."),
     m("p", "Here's the line from ", file("examples/todo/static/declarative.js"), " where we mount our components to the DOM with mithirl:"),
     js(`m.mount(todoListEl, {view: () => TodoList(state, actions)})`),
-    m("p", m("a", {href: "https://mithril.js.org/"}, "mithril"), " wraps any ", inline("{onclick: f, onsubmit: g, ...}"), " functions and rerenders the DOM as necessary in similar way to ", inline("React"), "."),
-    m("p", "Below is an example of one of the functions we pass via ", inline(`m("form", {onsubmit: add}, ...)`), "."),
+    m("p", "Note again - ", m("b", " we were able to reuse the same ", inline("TodoList"), " component that we used on the backend on the frontend.")),
+    m("p", m("a", {href: "https://mithril.js.org/"}, "mithril"), " wraps any ", inline("{onclick: f, onsubmit: g, ...}"), " functions and rerenders the DOM as necessary in similar way to ", inline("React"), ". Below is an example of one of the functions we pass via ", inline(`m("form", {onsubmit: add}, ...)`), "."),
     js(`
         const add = (e) => {
             e.preventDefault()
@@ -259,7 +265,7 @@ export default page(title, h1, [
         }
     `),
     m("p", "In ", file("examples/todo/shared/style.dn.js"), " we also export the names themselves of the css classes, so in the rendering code, we can refer to eg: ", inline("style.classes.bold"), " and it will resolve to the name: ", inline(`"todo-bold"`), "."),
-    m("p", `Similar to the advantages in html-rendering land, having your css as "just data" means you can easily compose/transform it, again without resorting to a whole new DSL like `, inline("SASS"), "."),
+    m("p", `Similar to the advantages in html-rendering land, having your css as "just data" means you can easily compose/transform it, again without resorting to a whole new DSL like `, inline("Sass"), "."),
 
     // Bonus section - css, tachyons
 ])
