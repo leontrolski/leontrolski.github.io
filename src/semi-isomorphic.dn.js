@@ -139,6 +139,23 @@ export default page(title, h1, [
             m("button", "add todo"),
         )
     `),
+    m("details", m("summary", "The equivalent handlebars code would look something like this."), html(`
+        <h1 class="{{classes.bold}} {{classes.red}}">Hello {{data.username}}</h1>
+        <div id="todo-list">
+            <form id="todoListForm" method="POST">
+                <ul>
+                    {{#each state.todos}}
+                        <li>
+                            {{message}}
+                            <input class="doneCheckbox" name="doneCheckbox" value="{{@index}}" {{#if done}}checked{{/if}} type="checkbox" />
+                        </li>
+                    {{/each}}
+                </ul>
+                <input name="newMessage" value="{{state.new}}" />
+                <button>add todo</button>
+            </form>
+        </div>
+    `)),
     m("p", "We will render the page in ", file("examples/todo/app.py"), " with:"),
     python(`
         @app.get("/backend", response_class=HTMLResponse)

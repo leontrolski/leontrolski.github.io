@@ -63,7 +63,21 @@ export const TodoList = (state) =&gt; m(&quot;form#todoListForm&quot;,
     m(&quot;ul&quot;, state.todos.map((todo, i) =&gt;Todo({...todo, i: i}))),
     m(&quot;input&quot;, {name: &quot;newMessage&quot;, value: state.new}),
     m(&quot;button&quot;, &quot;add todo&quot;),
-)</code></pre><p>We will render the page in <a href="https://github.com/leontrolski/dnjs/tree/master/examples/todo/app.py"><code class="inline">examples/todo/app.py</code></a> with:</p><pre class="language-python"><code>@app.get(&quot;/backend&quot;, response_class=HTMLResponse)
+)</code></pre><details><summary>The equivalent handlebars code would look something like this.</summary><pre class="language-html"><code>&lt;h1 class=&quot;{{classes.bold}} {{classes.red}}&quot;&gt;Hello {{data.username}}&lt;/h1&gt;
+&lt;div id=&quot;todo-list&quot;&gt;
+    &lt;form id=&quot;todoListForm&quot; method=&quot;POST&quot;&gt;
+        &lt;ul&gt;
+            {{#each state.todos}}
+                &lt;li&gt;
+                    {{message}}
+                    &lt;input class=&quot;doneCheckbox&quot; name=&quot;doneCheckbox&quot; value=&quot;{{@index}}&quot; {{#if done}}checked{{/if}} type=&quot;checkbox&quot; /&gt;
+                &lt;/li&gt;
+            {{/each}}
+        &lt;/ul&gt;
+        &lt;input name=&quot;newMessage&quot; value=&quot;{{state.new}}&quot; /&gt;
+        &lt;button&gt;add todo&lt;/button&gt;
+    &lt;/form&gt;
+&lt;/div&gt;</code></pre></details><p>We will render the page in <a href="https://github.com/leontrolski/dnjs/tree/master/examples/todo/app.py"><code class="inline">examples/todo/app.py</code></a> with:</p><pre class="language-python"><code>@app.get(&quot;/backend&quot;, response_class=HTMLResponse)
 def get_backend() -&gt; str:
     return dnjs.render(
         templates / &quot;page.dn.js&quot;,
