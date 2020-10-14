@@ -101,7 +101,7 @@
 
     <h2 id="performance">Performance</h2>
     <p>
-        I had a very unscientific play around with this neat <a href="https://localvoid.github.io/uibench/">benchmarking tool</a>, you can use the "Custom URL"s <code>http://leontrolski.github.io</code> <code>/benchmark</code> and <code>/benchmark/mithril.html</code> to compare yourself. I'm going to keep the performance figures intentionally vague - I was comparing Vanilla JS, React 16, mithril and 33-line.
+        I had a very unscientific play around with this neat <a href="https://localvoid.github.io/uibench/">benchmarking tool</a>, you can use the "Custom URL"s <code>http://leontrolski.github.io</code> <code>/benchmark</code>, <code>/benchmark/mithril.html</code>, <code>/benchmark/lit-html.html</code> to compare yourself. I'm going to keep the performance figures intentionally vague - I was comparing Vanilla JS, React 16, mithril and 33-line.
         <ul>
             <li>React and mithril performed very similarly.</li>
             <li>React tended to be faster than 33-line by a factor of 2 to 10.</li>
@@ -110,6 +110,7 @@
             <li>The <a href="https://localvoid.github.io/uibench-react/16/main.js">React code</a> was (gzipped + minified) 40kb, the <a href="https://leontrolski.github.io/benchmark/main.js">33-line code</a> was (gzipped, not minified) 1.8kb, mithril was (gzipped + minified) 9kb.</li>
             <li>The "JS Init Time" of react would be 2 to 10+ times slower than both 33-line and mithril, think in the order of +100ms.</li>
             <li>The performance of 33-line got proportially worse as the number of divs increased, this makes sense, given the diff algorithm is <em>basic</em>.</li>
+            <li><a href="https://lit-html.polymer-project.org/">lit-html</a> performs a weenie bit quicker than mithril in some benchmarks, but has a longer "JS Init Time" time. Admittedly, <a href="https://github.com/leontrolski/leontrolski.github.io/blob/master/benchmark/lit-html.html">my implementation</a> is a naive translation of the mithril code, so may be missing some tricks.</li>
         </ul>
     </p>
     <h3>Performance - Notes</h3>
