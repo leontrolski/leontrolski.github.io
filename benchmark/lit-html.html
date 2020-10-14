@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link href="https://localvoid.github.io/uibench-base/0.1.0/styles.css" rel="stylesheet" />
+  <title>UI Benchmark: Vanilla [innerHTML]</title>
+</head>
+<body>
+    <div id="App"></div>
+    <script src="https://localvoid.github.io/uibench-base/0.1.0/uibench.js"></script>
+    <script type="module">
+        import {html, render, nothing} from 'https://unpkg.com/lit-html?module';
+        // UI
+        function tableCellClick(e, prop){
+            console.log(`Click${prop}`)
+            e.preventDefault()
+            e.stopPropagation()
+        }
+        const TableCell = prop=>html`<td
+            class="TableCell"
+            data-text=${prop}
+            @click=${e=>tableCellClick(e, prop)}
+        >${prop}</td>`
+        const TableRow = data=>html`<tr
+            class="TableRow ${data.active? 'active' : ''}"
+            data-id=${data.id}
+        >${TableCell(`#${data.id}`)} ${data.props.map(TableCell)}</tr>`
+        const Table = data=>html`<table class="Table"><tbody>${data.table.items.map(TableRow)}</tbody></table>`
+        const animBoxStyle = time=>`
+            border-radius:${time % 10}px;
+            background:rgba(0,0,0,${0.5 + ((time % 10) / 10)});
+        `
+        const AnimBox = props=>html`<div class="AnimBox" style=${animBoxStyle(props.time)} data-id=${props.id}></div>`
+        const Anim =data=>html`<div class="Anim">${data.anim.items.map(AnimBox)}</div>`
+        const TreeLeaf = props=>html`<li class="TreeLeaf">${props.id}</li>`
+        const TreeNode = data=>html`<ul class="TreeNode">${data.children.map(n=>n.container? TreeNode(n) : TreeLeaf(n))}</ul>`
+        const Tree = data=>html`<div class="Tree">${TreeNode(data.tree.root)}</div>`
+
+        // test
+        // uibench.init in the html (one per framework)
+        function renderState(container, state){
+            const location = state && state.location
+            const fs = {
+                table: Table,
+                anim: Anim,
+                tree: Tree,
+            }
+            render(html`<div class="Main">${fs[location](state)}</div>`, container)
+        }
+        function renderSamples(samples){
+            document.body.innerHTML = "<pre>" + JSON.stringify(samples, null, " ") + "</pre>"
+        }
+
+        let container
+        document.addEventListener("DOMContentLoaded", (e) => {
+            container = document.querySelector("#App")
+            uibench.run(state=>renderState(container, state), renderSamples)
+        })
+    </script>
+    <script>uibench.init("lit-html", "0.0.1")</script>
+</body>
+</html>
