@@ -5,7 +5,7 @@ const title = "stop doing mad config"
 const h1 = ["Stop doing mad config"]
 
 export default page(title, h1, [
-    m("p", "People do all sorts of wild and wonderful things in Python to get configuration from files/the environment, then even stranger attaching said config  to applications."),
+    m("p", "People do all sorts of wild and wonderful things in Python to get configuration from files/the environment, then even stranger things attaching said config to applications."),
     m("p", "Here's how everyone should do it, in a way that's (in vague order of importance):"),
     m("ul",
         m("li", "Easy to test."),
