@@ -1,0 +1,38 @@
+<html><meta name="viewport" content="width=device-width, initial-scale=1.0"><head><title>leontrolski - stop doing mad config</title><style>
+            body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 63%;}
+            @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+            pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
+            a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
+            a:hover {border-bottom: 0;}
+            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em;}
+            blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
+        </style><link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet"><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js"></script></head><body><a href="index.html"><img src="pic.png" style="height:2em">⇦</a><h1>Stop doing mad config</h1><p>People do all sorts of wild and wonderful things in Python to get configuration from files/the environment, then even stranger attaching said config  to applications.</p><p>Here&#x27;s how everyone should do it, in a way that&#x27;s (in vague order of importance):</p><ul><li>Easy to test.</li><li>Can be used from web apps, cron jobs, message processors, you name it.</li><li>Well typed.</li><li>Simple and well-understood.</li><li>Quick.</li></ul><pre class="language-python"><code>from dataclasses import dataclass
+from functools import lru_cache
+import os
+from pathlib import Path
+
+
+@dataclass
+class Config:
+    DB_URL: str
+    NUMBER_OF_WORKERS: int
+    COMPLICATED_THING: dict
+
+
+@lru_cache(None)
+def get_config() -&gt; Config:
+    complicated_path = Path(__file__).parent / &quot;some-file.json&quot;
+    return Config(
+        DB_URL=os.environ[&quot;DB_URL&quot;],
+        NUMBER_OF_WORKERS=int(os.environ.get(&quot;N_WORKERS&quot;, 4)),
+        COMPLICATED_THING=json.loads(complicated_path.read_bytes()),
+    )</code></pre><p>When you want to use it, do:</p><pre class="language-python"><code>from my_service import config
+
+def create_application():
+    engine = Engine(url=config.get_config().DB_URL)
+    ...</code></pre><p>When you want to test it, do:</p><pre class="language-python"><code>@pytest.fixture
+def dummy_config(monkeypatch):
+    monkeypatch.setattr(config, &quot;get_config&quot;, lambda: Config(...))
+
+def test_thingie(dummy_config):
+    ...</code></pre><p>Now no more funny stuff OK.</p></body></html>

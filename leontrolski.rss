@@ -11,7 +11,7 @@
         </image>
         <item>
             <title>33 line React - thoughts</title>
-            <pubDate>Mon, 11 May 2020 09:12:10 +0100</pubDate>
+            <pubDate>Wed, 14 Oct 2020 09:19:37 +0100</pubDate>
             <link>https://leontrolski.github.io/33-line-react-thoughts.html</link>
             <guid>https://leontrolski.github.io/33-line-react-thoughts.html</guid>
             <description>
@@ -101,7 +101,7 @@
 
     &lt;h2 id="performance"&gt;Performance&lt;/h2&gt;
     &lt;p&gt;
-        I had a very unscientific play around with this neat &lt;a href="https://localvoid.github.io/uibench/"&gt;benchmarking tool&lt;/a&gt;, you can use the "Custom URL"s &lt;code&gt;http://leontrolski.github.io&lt;/code&gt; &lt;code&gt;/benchmark&lt;/code&gt; and &lt;code&gt;/benchmark/mithril.html&lt;/code&gt; to compare yourself. I'm going to keep the performance figures intentionally vague - I was comparing Vanilla JS, React 16, mithril and 33-line.
+        I had a very unscientific play around with this neat &lt;a href="https://localvoid.github.io/uibench/"&gt;benchmarking tool&lt;/a&gt;, you can use the "Custom URL"s &lt;code&gt;http://leontrolski.github.io&lt;/code&gt; &lt;code&gt;/benchmark&lt;/code&gt;, &lt;code&gt;/benchmark/mithril.html&lt;/code&gt;, &lt;code&gt;/benchmark/lit-html.html&lt;/code&gt; to compare yourself. I'm going to keep the performance figures intentionally vague - I was comparing Vanilla JS, React 16, mithril and 33-line.
         &lt;ul&gt;
             &lt;li&gt;React and mithril performed very similarly.&lt;/li&gt;
             &lt;li&gt;React tended to be faster than 33-line by a factor of 2 to 10.&lt;/li&gt;
@@ -110,6 +110,7 @@
             &lt;li&gt;The &lt;a href="https://localvoid.github.io/uibench-react/16/main.js"&gt;React code&lt;/a&gt; was (gzipped + minified) 40kb, the &lt;a href="https://leontrolski.github.io/benchmark/main.js"&gt;33-line code&lt;/a&gt; was (gzipped, not minified) 1.8kb, mithril was (gzipped + minified) 9kb.&lt;/li&gt;
             &lt;li&gt;The "JS Init Time" of react would be 2 to 10+ times slower than both 33-line and mithril, think in the order of +100ms.&lt;/li&gt;
             &lt;li&gt;The performance of 33-line got proportially worse as the number of divs increased, this makes sense, given the diff algorithm is &lt;em&gt;basic&lt;/em&gt;.&lt;/li&gt;
+            &lt;li&gt;&lt;a href="https://lit-html.polymer-project.org/"&gt;lit-html&lt;/a&gt; performs a weenie bit quicker than mithril in some benchmarks, but has a longer "JS Init Time" time. Admittedly, &lt;a href="https://github.com/leontrolski/leontrolski.github.io/blob/master/benchmark/lit-html.html"&gt;my implementation&lt;/a&gt; is a naive translation of the mithril code, so may be missing some tricks.&lt;/li&gt;
         &lt;/ul&gt;
     &lt;/p&gt;
     &lt;h3&gt;Performance - Notes&lt;/h3&gt;
@@ -1426,8 +1427,48 @@ tuple(greater_than_2(tree))&lt;/code&gt;&lt;/pre&gt;
             </description>
         </item>
         <item>
+            <title>Stop doing mad config</title>
+            <pubDate></pubDate>
+            <link>https://leontrolski.github.io/sane-config.html</link>
+            <guid>https://leontrolski.github.io/sane-config.html</guid>
+            <description>
+&amp;#x26a0;&amp;#xfe0f; This article contains JS code. It might not work properly in your feed reader.
+You might want to visit the &lt;a href="https://leontrolski.github.io/sane-config.html"&gt;original article&lt;/a&gt;.
+        &lt;/style&gt;&lt;link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet"&gt;&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js"&gt;&lt;/script&gt;&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js"&gt;&lt;/script&gt;&lt;/head&gt;&lt;body&gt;&lt;a href="index.html"&gt;&lt;img src="pic.png" style="height:2em"&gt;⇦&lt;/a&gt;&lt;h1&gt;Stop doing mad config&lt;/h1&gt;&lt;p&gt;People do all sorts of wild and wonderful things in Python to get configuration from files/the environment, then even stranger attaching said config  to applications.&lt;/p&gt;&lt;p&gt;Here&amp;#x27;s how everyone should do it, in a way that&amp;#x27;s (in vague order of importance):&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Easy to test.&lt;/li&gt;&lt;li&gt;Can be used from web apps, cron jobs, message processors, you name it.&lt;/li&gt;&lt;li&gt;Well typed.&lt;/li&gt;&lt;li&gt;Simple and well-understood.&lt;/li&gt;&lt;li&gt;Quick.&lt;/li&gt;&lt;/ul&gt;&lt;pre class="language-python"&gt;&lt;code&gt;from dataclasses import dataclass
+from functools import lru_cache
+import os
+from pathlib import Path
+
+
+@dataclass
+class Config:
+    DB_URL: str
+    NUMBER_OF_WORKERS: int
+    COMPLICATED_THING: dict
+
+
+@lru_cache(None)
+def get_config() -&amp;gt; Config:
+    complicated_path = Path(__file__).parent / &amp;quot;some-file.json&amp;quot;
+    return Config(
+        DB_URL=os.environ[&amp;quot;DB_URL&amp;quot;],
+        NUMBER_OF_WORKERS=int(os.environ.get(&amp;quot;N_WORKERS&amp;quot;, 4)),
+        COMPLICATED_THING=json.loads(complicated_path.read_bytes()),
+    )&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;When you want to use it, do:&lt;/p&gt;&lt;pre class="language-python"&gt;&lt;code&gt;from my_service import config
+
+def create_application():
+    engine = Engine(url=config.get_config().DB_URL)
+    ...&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;When you want to test it, do:&lt;/p&gt;&lt;pre class="language-python"&gt;&lt;code&gt;@pytest.fixture
+def dummy_config(monkeypatch):
+    monkeypatch.setattr(config, &amp;quot;get_config&amp;quot;, lambda: Config(...))
+
+def test_thingie(dummy_config):
+    ...&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Now no more funny stuff OK.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;
+            </description>
+        </item>
+        <item>
             <title>Evolving backend → frontend rendered &lt;code class="inline"&gt;Python&lt;/code&gt;/&lt;code class="inline"&gt;JS&lt;/code&gt; apps with &lt;code class="inline"&gt;dnjs&lt;/code&gt;</title>
-            <pubDate>Sat, 29 Aug 2020 08:29:37 +0100</pubDate>
+            <pubDate>Fri, 11 Sep 2020 17:09:37 +0100</pubDate>
             <link>https://leontrolski.github.io/semi-isomorphic.html</link>
             <guid>https://leontrolski.github.io/semi-isomorphic.html</guid>
             <description>
@@ -1490,7 +1531,21 @@ export const TodoList = (state) =&amp;gt; m(&amp;quot;form#todoListForm&amp;quot
     m(&amp;quot;ul&amp;quot;, state.todos.map((todo, i) =&amp;gt;Todo({...todo, i: i}))),
     m(&amp;quot;input&amp;quot;, {name: &amp;quot;newMessage&amp;quot;, value: state.new}),
     m(&amp;quot;button&amp;quot;, &amp;quot;add todo&amp;quot;),
-)&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;We will render the page in &lt;a href="https://github.com/leontrolski/dnjs/tree/master/examples/todo/app.py"&gt;&lt;code class="inline"&gt;examples/todo/app.py&lt;/code&gt;&lt;/a&gt; with:&lt;/p&gt;&lt;pre class="language-python"&gt;&lt;code&gt;@app.get(&amp;quot;/backend&amp;quot;, response_class=HTMLResponse)
+)&lt;/code&gt;&lt;/pre&gt;&lt;details&gt;&lt;summary&gt;The equivalent handlebars code would look something like this.&lt;/summary&gt;&lt;pre class="language-html"&gt;&lt;code&gt;&amp;lt;h1 class=&amp;quot;{{classes.bold}} {{classes.red}}&amp;quot;&amp;gt;Hello {{data.username}}&amp;lt;/h1&amp;gt;
+&amp;lt;div id=&amp;quot;todo-list&amp;quot;&amp;gt;
+    &amp;lt;form id=&amp;quot;todoListForm&amp;quot; method=&amp;quot;POST&amp;quot;&amp;gt;
+        &amp;lt;ul&amp;gt;
+            {{#each state.todos}}
+                &amp;lt;li&amp;gt;
+                    {{message}}
+                    &amp;lt;input class=&amp;quot;doneCheckbox&amp;quot; name=&amp;quot;doneCheckbox&amp;quot; value=&amp;quot;{{@index}}&amp;quot; {{#if done}}checked{{/if}} type=&amp;quot;checkbox&amp;quot; /&amp;gt;
+                &amp;lt;/li&amp;gt;
+            {{/each}}
+        &amp;lt;/ul&amp;gt;
+        &amp;lt;input name=&amp;quot;newMessage&amp;quot; value=&amp;quot;{{state.new}}&amp;quot; /&amp;gt;
+        &amp;lt;button&amp;gt;add todo&amp;lt;/button&amp;gt;
+    &amp;lt;/form&amp;gt;
+&amp;lt;/div&amp;gt;&lt;/code&gt;&lt;/pre&gt;&lt;/details&gt;&lt;p&gt;We will render the page in &lt;a href="https://github.com/leontrolski/dnjs/tree/master/examples/todo/app.py"&gt;&lt;code class="inline"&gt;examples/todo/app.py&lt;/code&gt;&lt;/a&gt; with:&lt;/p&gt;&lt;pre class="language-python"&gt;&lt;code&gt;@app.get(&amp;quot;/backend&amp;quot;, response_class=HTMLResponse)
 def get_backend() -&amp;gt; str:
     return dnjs.render(
         templates / &amp;quot;page.dn.js&amp;quot;,
