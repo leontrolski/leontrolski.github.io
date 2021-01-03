@@ -1428,13 +1428,13 @@ tuple(greater_than_2(tree))&lt;/code&gt;&lt;/pre&gt;
         </item>
         <item>
             <title>Stop doing mad config</title>
-            <pubDate></pubDate>
+            <pubDate>Thu, 17 Dec 2020 21:47:13 +0000</pubDate>
             <link>https://leontrolski.github.io/sane-config.html</link>
             <guid>https://leontrolski.github.io/sane-config.html</guid>
             <description>
 &amp;#x26a0;&amp;#xfe0f; This article contains JS code. It might not work properly in your feed reader.
 You might want to visit the &lt;a href="https://leontrolski.github.io/sane-config.html"&gt;original article&lt;/a&gt;.
-        &lt;/style&gt;&lt;link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet"&gt;&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js"&gt;&lt;/script&gt;&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js"&gt;&lt;/script&gt;&lt;/head&gt;&lt;body&gt;&lt;a href="index.html"&gt;&lt;img src="pic.png" style="height:2em"&gt;⇦&lt;/a&gt;&lt;h1&gt;Stop doing mad config&lt;/h1&gt;&lt;p&gt;People do all sorts of wild and wonderful things in Python to get configuration from files/the environment, then even stranger attaching said config  to applications.&lt;/p&gt;&lt;p&gt;Here&amp;#x27;s how everyone should do it, in a way that&amp;#x27;s (in vague order of importance):&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Easy to test.&lt;/li&gt;&lt;li&gt;Can be used from web apps, cron jobs, message processors, you name it.&lt;/li&gt;&lt;li&gt;Well typed.&lt;/li&gt;&lt;li&gt;Simple and well-understood.&lt;/li&gt;&lt;li&gt;Quick.&lt;/li&gt;&lt;/ul&gt;&lt;pre class="language-python"&gt;&lt;code&gt;from dataclasses import dataclass
+        &lt;/style&gt;&lt;link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet"&gt;&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js"&gt;&lt;/script&gt;&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js"&gt;&lt;/script&gt;&lt;/head&gt;&lt;body&gt;&lt;a href="index.html"&gt;&lt;img src="pic.png" style="height:2em"&gt;⇦&lt;/a&gt;&lt;h1&gt;Stop doing mad config&lt;/h1&gt;&lt;p&gt;People do all sorts of wild and wonderful things in Python to get configuration from files/the environment, then even stranger things attaching said config to applications.&lt;/p&gt;&lt;p&gt;Here&amp;#x27;s how everyone should do it, in a way that&amp;#x27;s (in vague order of importance):&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Easy to test.&lt;/li&gt;&lt;li&gt;Can be used from web apps, cron jobs, message processors, you name it.&lt;/li&gt;&lt;li&gt;Well typed.&lt;/li&gt;&lt;li&gt;Simple and well-understood.&lt;/li&gt;&lt;li&gt;Quick.&lt;/li&gt;&lt;/ul&gt;&lt;pre class="language-python"&gt;&lt;code&gt;from dataclasses import dataclass
 from functools import lru_cache
 import os
 from pathlib import Path
@@ -1637,6 +1637,67 @@ export default Object.fromEntries(
 .todo-red {
     color: red;
 }&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;In &lt;a href="https://github.com/leontrolski/dnjs/tree/master/examples/todo/shared/style.dn.js"&gt;&lt;code class="inline"&gt;examples/todo/shared/style.dn.js&lt;/code&gt;&lt;/a&gt; we also export the names themselves of the css classes, so in the rendering code, we can refer to eg: &lt;code class="inline"&gt;style.classes.bold&lt;/code&gt; and it will resolve to the name: &lt;code class="inline"&gt;&amp;quot;todo-bold&amp;quot;&lt;/code&gt;.&lt;/p&gt;&lt;p&gt;Similar to the advantages in html-rendering land, having your css as &amp;quot;just data&amp;quot; means you can easily compose/transform it, again without resorting to a whole new DSL like &lt;code class="inline"&gt;Sass&lt;/code&gt;.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;
+            </description>
+        </item>
+        <item>
+            <title>Python &lt;code class="inline"&gt;virtualenv&lt;/code&gt;s for Node devs</title>
+            <pubDate></pubDate>
+            <link>https://leontrolski.github.io/virtualenvs-for-node-devs.html</link>
+            <guid>https://leontrolski.github.io/virtualenvs-for-node-devs.html</guid>
+            <description>
+&amp;#x26a0;&amp;#xfe0f; This article contains JS code. It might not work properly in your feed reader.
+You might want to visit the &lt;a href="https://leontrolski.github.io/virtualenvs-for-node-devs.html"&gt;original article&lt;/a&gt;.
+        &lt;/style&gt;&lt;link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet"&gt;&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js"&gt;&lt;/script&gt;&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js"&gt;&lt;/script&gt;&lt;/head&gt;&lt;body&gt;&lt;a href="index.html"&gt;&lt;img src="pic.png" style="height:2em"&gt;⇦&lt;/a&gt;&lt;h1&gt;Python &lt;code class="inline"&gt;virtualenv&lt;/code&gt;s for Node devs&lt;/h1&gt;&lt;p&gt;You&amp;#x27;ve started doing some python while working with another team, and they&amp;#x27;ve told you to do everything in &lt;code class="inline"&gt;virtualenv&lt;/code&gt;s as it&amp;#x27;s the &amp;quot;right way&amp;quot;. You&amp;#x27;ve also been told Python&amp;#x27;s packaging system is a bit of a mess, let&amp;#x27;s try tame it somewhat.&lt;/p&gt;&lt;p&gt;We&amp;#x27;re going to compare &lt;code class="inline"&gt;npm&lt;/code&gt; to the &amp;quot;modern classic&amp;quot; Python equivalent. I&amp;#x27;m going to ignore more recent developments like &lt;a href="https://python-poetry.org/"&gt;poetry&lt;/a&gt; and friends.&lt;/p&gt;&lt;p&gt;First, do you have the right Python version installed? Check with &lt;code class="inline"&gt;python3 --version&lt;/code&gt;, you may need to &lt;code class="inline"&gt;brew&lt;/code&gt; install a specific version (if you&amp;#x27;re on linux/windows you&amp;#x27;re on you own here). The command to install a specific Python is eg: &lt;code class="inline"&gt;brew install python@3.9&lt;/code&gt;. The executable will get plonked somewhere like &lt;code class="inline"&gt;/usr/local/opt/python/bin&lt;/code&gt; or &lt;code class="inline"&gt;/usr/local/Cellar/python@3.9/3.9.1/bin&lt;/code&gt;. &lt;em&gt;I&amp;#x27;m not going to touch on &lt;a href="https://www.google.com/search?q=update%20my%20PATH"&gt;updating your PATH&lt;/a&gt; - &lt;code class="inline"&gt;brew&lt;/code&gt; should give you some pointers in its output - instead, we&amp;#x27;re going to set up everything mega explicitly.&lt;/em&gt;&lt;/p&gt;&lt;p&gt;OK, so we&amp;#x27;ve got a Python version that seems sane, let&amp;#x27;s set up a &lt;code class="inline"&gt;virtualenv&lt;/code&gt; with the equivalent of &lt;code class="inline"&gt;npm init&lt;/code&gt;.&lt;/p&gt;&lt;pre class="language-bash"&gt;&lt;code&gt;/usr/local/Cellar/python@3.9/3.9.1/bin/python3 -m venv .env&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;We now have a new folder in our current directory called &lt;code class="inline"&gt;.env&lt;/code&gt; that contains symlinks to the Python that we just ran:&lt;/p&gt;&lt;pre class="language-bash"&gt;&lt;code&gt;.env
+├── bin
+│   ├── Activate.ps1
+│   ├── activate
+│   ├── activate.csh
+│   ├── activate.fish
+│   ├── easy_install
+│   ├── easy_install-3.9
+│   ├── pip
+│   ├── pip3
+│   ├── pip3.9
+│   ├── python -&amp;gt; python3
+│   ├── python3 -&amp;gt; /usr/local/Cellar/python@3.9/3.9.1/bin/python3
+│   └── python3.9 -&amp;gt; python3
+├── include
+├── lib
+│   └── python3.9
+│       └── site-packages
+│           ├── __pycache__
+│           ├── easy_install.py
+│           ├── pip
+│           ├── pip-20.2.3.dist-info
+│           ├── pkg_resources
+│           ├── setuptools
+│           └── setuptools-49.2.1.dist-info
+└── pyvenv.cfg&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;We could always run &lt;code class="inline"&gt;.env/bin/python&lt;/code&gt; or &lt;code class="inline"&gt;.env/bin/pip install flask&lt;/code&gt; or whatever, but &lt;code class="inline"&gt;virtualenv&lt;/code&gt;s come with a special trick file to add &lt;code class="inline"&gt;.env/bin&lt;/code&gt; to &lt;code class="inline"&gt;bash&lt;/code&gt;&amp;#x27;s PATH. Let&amp;#x27;s run it:&lt;/p&gt;&lt;pre class="language-bash"&gt;&lt;code&gt;source .env/bin/activate&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Now everything should be set up. Let&amp;#x27;s try:&lt;/p&gt;&lt;pre class="language-bash"&gt;&lt;code&gt;(.env) ➜ echo $PATH
+/Users/user/src/my-special-project/.env/bin:/usr/local/bin:/usr/bin:/bin
+(.env) ➜ which python
+/Users/user/src/my-special-project/.env/bin/python
+(.env) ➜ which pip
+/Users/user/src/my-special-project/.env/bin/pip
+(.env) ➜ python --version
+Python 3.9.1&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;The main difference from &lt;code class="inline"&gt;npm&lt;/code&gt; here is we don&amp;#x27;t have to run anything with &lt;code class="inline"&gt;npm run ...&lt;/code&gt; as we&amp;#x27;ve hacked with the PATH.&lt;/p&gt;&lt;h2 id="installing-stuff"&gt;Installing stuff&lt;/h2&gt;&lt;p&gt;Let&amp;#x27;s install &lt;code class="inline"&gt;flask&lt;/code&gt;:&lt;/p&gt;&lt;pre class="language-bash"&gt;&lt;code&gt;pip install flask&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Now our directory should look like:&lt;/p&gt;&lt;pre class="language-bash"&gt;&lt;code&gt;.env
+├── bin
+│   ├── python -&amp;gt; python3
+│   ├── flask
+│   └── ...
+├── lib
+│   └── python3.9
+│       └── site-packages
+│           ├── click
+│           ├── flask
+│           └── ...&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;As you can see, &lt;code class="inline"&gt;.env/lib/python3.9/site-packages&lt;/code&gt; is a lot like &lt;code class="inline"&gt;node_modules&lt;/code&gt;. We can see all the library&amp;#x27;s files:&lt;/p&gt;&lt;pre class="language-bash"&gt;&lt;code&gt;(.env) ➜ ls .env/lib/python3.9/site-packages/flask
+__init__.py     _compat.py      cli.py          debughelpers.py json            signals.py      views.py
+__main__.py     app.py          config.py       globals.py      logging.py      templating.py   wrappers.py
+__pycache__     blueprints.py   ctx.py          helpers.py      sessions.py     testing.py&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Now, what is the equivalent to the following in a &lt;code class="inline"&gt;package.json&lt;/code&gt;?&lt;/p&gt;&lt;pre class="language-javascript"&gt;&lt;code&gt;{
+    ...
+    &amp;quot;dependencies&amp;quot;: {
+      &amp;quot;express&amp;quot;: &amp;quot;^4.17.1&amp;quot;
+    }
+}&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Python is a fair bit different from Node in that only one version of a package can be installed in a &lt;code class="inline"&gt;virtualenv&lt;/code&gt; at a time. This means you tend to have abstract requirements (that is to say with very limited version pinning) listed in &lt;code class="inline"&gt;setup.py|requirements.in|pyproject.toml&lt;/code&gt; and pinned requirements (for testing/deployent if you&amp;#x27;re working on a service) in a &lt;code class="inline"&gt;requirements.txt&lt;/code&gt;.&lt;/p&gt;&lt;p&gt;You can install a set of requirements with:&lt;/p&gt;&lt;pre class="language-bash"&gt;&lt;code&gt;pip install -r requirements.txt&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Or whatever file it is you want to install from. This is the equivalent of &lt;code class="inline"&gt;npm install&lt;/code&gt;.&lt;/p&gt;&lt;p&gt;In terms of pinning requirements in your own project, I&amp;#x27;ve always been a fan of &lt;a href="https://github.com/jazzband/pip-tools"&gt;pip-tools&lt;/a&gt; - using this means you can safely ignore the last few years of Python packaging excitement and get on with your life.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;
             </description>
         </item>
     </channel>
