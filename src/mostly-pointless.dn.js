@@ -90,7 +90,7 @@ save_items(client_a, session_cls, "bars")`),
     m("p", "Just try writing without them, I promise it's going to be OK. ", m("em", "(To be fair, it's only the introduction of type hints to Python that has made the ", m("b", "bag-of-functions"), " style so pleasant).")),
 
     m("h2", "What about impure things?"),
-    m("p", "If you've taken the pure-FP/hexagonal-architecture pill, you want to write pure classes that take impure 'adapter' instances for ", inline("getting-the-current-datetime/API-calls/talking-to-the-db/other-impure-stuff"), ". The idea is nice in principal - should be good for testing right? - in practice, you can just use ", m("a", {href: "https://github.com/spulec/freezegun"}, "freezegun"), " / use ", m("a", {href: "https://github.com/getsentry/responses"}, "responses"), " / ", m("a", {href: "https://dhh.dk/2014/slow-database-test-fallacy.html"}, "test with the db"), " (the ", inline("other-impure-stuff"), " tends to not actually exist) and save yourself a lot of hassle."),
+    m("p", "If you've taken the pure-FP/hexagonal-architecture pill, you want to write pure classes that take impure 'adapter' instances for ", inline("getting-the-current-datetime/API-calls/talking-to-the-db/other-impure-stuff"), ". The idea is nice in principle - should be good for testing right? - in practice, you can just use ", m("a", {href: "https://github.com/spulec/freezegun"}, "freezegun"), " / use ", m("a", {href: "https://github.com/getsentry/responses"}, "responses"), " / ", m("a", {href: "https://dhh.dk/2014/slow-database-test-fallacy.html"}, "test with the db"), " (the ", inline("other-impure-stuff"), " tends to not actually exist) and save yourself a lot of hassle."),
 
     m("h2", "Exceptions:"),
     m("p", "I'd like to make exceptions for the following:"),
@@ -106,7 +106,7 @@ save_items(client_a, session_cls, "bars")`),
     m("ul",
         m("li", "It encourages you to mutate. Bag-of-functions makes it feel icky to mutate arguments - as it should feel. (Feel free to mutate within the confines of your function BTW, let's not go mad FP)."),
         m("li", "It's somewhat just the return of global variables. Not being able to share data between functions with ", inline("self"), " forces you to write functions with a smaller state-space that are easier to test."),
-        m("li", "Smooshing in functions in with yor data makes it harder to serialise anything - in a world of REST APIs, serialisability is super useful."),
+        m("li", "Smooshing functions in with yor data makes it harder to serialise anything - in a world of REST APIs, serialisability is super useful."),
         m("li", "It encourages mad inheritance heirarchies - this has been talked about at length elsewhere."),
         m("li", "Most importantly though, it adds nothing, it's just noise that distracts from the problem at hand and makes it harder to navigate/comprehend your code.")),
 
