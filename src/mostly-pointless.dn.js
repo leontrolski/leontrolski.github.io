@@ -5,6 +5,7 @@ const title = "OO in Python is mostly pointless"
 const h1 = ["OO in Python is mostly pointless"]
 
 export default page(title, h1, [
+    m("p", m("em", "Discussion ", m("a", {href: "https://news.ycombinator.com/item?id=25933121"}, "here"), " and ", m("a", {href: "https://lobste.rs/s/ldzfsw/oo_python_is_mostly_pointless"}, "here"), ". Call to arms for idiomatic OO code ", m("a", {href: "https://github.com/leontrolski/call-to-arms"}, "here"), ".")),
     m("p", "People bash OO a lot these days, I'm increasingly coming to the opinion they're right, at least in Python. My point here is not to argue that OO is bad per se, more that its introduction is simply unnecessary, AKA not useful."),
 
     m("h2", "Oli's Conjecture"),
@@ -106,8 +107,8 @@ save_items(client_a, session_cls, "bars")`),
     m("ul",
         m("li", "It encourages you to mutate. Bag-of-functions makes it feel icky to mutate arguments - as it should feel. (Feel free to mutate within the confines of your function BTW, let's not go mad FP)."),
         m("li", "It's somewhat just the return of global variables. Not being able to share data between functions with ", inline("self"), " forces you to write functions with a smaller state-space that are easier to test."),
-        m("li", "Smooshing functions in with yor data makes it harder to serialise anything - in a world of REST APIs, serialisability is super useful."),
-        m("li", "It encourages mad inheritance heirarchies - this has been talked about at length elsewhere."),
+        m("li", "Smooshing functions in with your data makes it harder to serialise anything - in a world of REST APIs, serialisability is super useful."),
+        m("li", "It encourages mad inheritance hierarchies - this has been talked about at length elsewhere."),
         m("li", "Most importantly though, it adds nothing, it's just noise that distracts from the problem at hand and makes it harder to navigate/comprehend your code.")),
 
     m("h2", "Notes"),
