@@ -1,0 +1,21 @@
+<html><meta name="viewport" content="width=device-width, initial-scale=1.0"><head><title>leontrolski - succinct git bisect</title><style>
+            body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 63%;}
+            @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+            pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
+            a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
+            a:hover {border-bottom: 0;}
+            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em;}
+            blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
+        </style><link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet"><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js"></script></head><body><a href="index.html"><img src="pic.png" style="height:2em">⇦</a><h1><code class="inline">git bisect</code> succinctly</h1><p>I can never remember how to <code class="inline">git bisect</code>, it&#x27;s occasionally super-useful and there are extensive posts about it elsewhere, but I&#x27;ve never needed more than:</p><pre class="language-bash"><code>cd ../top-of-repo
+
+#                sad  happy
+git bisect start HEAD HEAD~200 --
+
+# run the test you wrote
+git bisect run sh -c &#x27;cd somewhere; pytest something&#x27;
+
+# tests run
+# then you see like:
+# abcd123... is the first bad commit
+# then to clean up
+git bisect reset</code></pre></body></html>
