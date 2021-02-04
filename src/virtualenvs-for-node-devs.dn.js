@@ -6,14 +6,20 @@ const title = "virtualenvs for Node devs"
 const h1 = ["Python ", virtualenv, "s for Node devs"]
 
 export default page(title, h1, [
-    m("p", `You've started doing some python while working with another team, and they've told you to do everything in `, virtualenv,`s as it's the "right way". You've also been told Python's packaging system is a bit of a mess, let's try tame it somewhat.`),
+    m("p", `You've started doing some Python while working with another team, and they've told you to do everything in `, virtualenv,`s as it's the right way. You've also been told Python's packaging system is a bit of a mess, let's try tame it somewhat.`),
     m("p", "We're going to compare ", inline("npm"), ` to the "modern classic" Python equivalent. I'm going to ignore more recent developments like `, m("a", {href: "https://python-poetry.org/"}, "poetry"), " and friends."),
 
-    m("p", "First, do you have the right Python version installed? Check with ", inline("python3 --version"), ", you may need to ", inline("brew"), " install a specific version (if you're on linux/windows you're on you own here). The command to install a specific Python is eg: ", inline("brew install python@3.9"), ". The executable will get plonked somewhere like ", inline("/usr/local/opt/python/bin"), " or ", inline("/usr/local/Cellar/python@3.9/3.9.1/bin"), ". ", m("em", "I'm not going to touch on ", m("a", {href: "https://www.google.com/search?q=update%20my%20PATH"}, "updating your PATH"), " - ", inline("brew"), " should give you some pointers in its output - instead, we're going to set up everything mega explicitly.")),
-
+    m("p", "First, do you have the right Python version installed? We're going to use ", m("a", {href: "https://asdf-vm.com"}, "asdf"), " which supports Node, Ruby, Python, etc. Steps to install for me were:"),
+    bash(`brew install asdf
+echo -e "\\n. $(brew --prefix asdf)/asdf.sh" >> ~/.zshrc
+# switch to a new shell window at this point
+asdf plugin-add python
+asdf install python 3.9.1
+asdf global python 3.9.1
+which python3  # should give you ~/.asdf/shims/python3
+python3 --version # should give you 3.9.1`),
     m("p", "OK, so we've got a Python version that seems sane, let's set up a ", virtualenv, " with the equivalent of ", inline("npm init"), "."),
-    bash("/usr/local/Cellar/python@3.9/3.9.1/bin/python3 -m venv .env"),
-
+    bash("python3 -m venv .env"),
     m("p", "We now have a new folder in our current directory called ", inline(".env"), " that contains symlinks to the Python that we just ran:"),
     bash(`.env
 ├── bin
@@ -27,7 +33,7 @@ export default page(title, h1, [
 │   ├── pip3
 │   ├── pip3.9
 │   ├── python -> python3
-│   ├── python3 -> /usr/local/Cellar/python@3.9/3.9.1/bin/python3
+│   ├── python3 -> ~/.asdf/installs/python/3.9.1/bin/python3
 │   └── python3.9 -> python3
 ├── include
 ├── lib
@@ -87,5 +93,5 @@ __pycache__     blueprints.py   ctx.py          helpers.py      sessions.py     
     m("p", "You can install a set of requirements with:"),
     bash("pip install -r requirements.txt"),
     m("p", "Or whatever file it is you want to install from. This is the equivalent of ", inline("npm install"), "."),
-    m("p", "In terms of pinning requirements in your own project, I've always been a fan of ", m("a", {href: "https://github.com/jazzband/pip-tools"}, "pip-tools"), " - using this means you can safely ignore the last few years of Python packaging excitement and get on with your life."),
+    m("p", "In terms of pinning requirements in your own project a la ", inline("yarn lock"), " or whatever the flavour of the month is, I've always been a fan of ", m("a", {href: "https://github.com/jazzband/pip-tools"}, "pip-tools"), " - using this means you can safely ignore the last few years of Python packaging excitement and get on with your life."),
 ])
