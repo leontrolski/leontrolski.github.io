@@ -133,7 +133,7 @@ m("details",
     m("summary", "Aside on semantics of updating deeply nested values in FP languages."),
     m("p", "Clojure has the concept of ", m("a", {href: "https://clojure.org/reference/transients"}, "transients"), " that feel somewhat similar to ", inline("alter"), ", I should play around with these more."),
     m("p", "Haskellers (often it seems) use the ", m("a", {href: "https://hackage.haskell.org/package/lens"}, "lens"), " library for making deep changes to objects. I've seen the Python equivalent used and the resulting code has always been reverted back to a \"native\" style at some point as it can be tricksy to read and doesn't play well with modern typed Python. An open question for me is:"),
-    m("quote", "Is there a pure-FP-ish way to doing deep updates that's always as \"natural\" as the classic mutational way?"),
+    m("blockquote", "Is there a pure-FP-ish way to doing deep updates that's always as \"natural\" as the classic mutational way?"),
     m("p", "Here's a contrived example of something that to me \"feels natural\" in an imperative style, but it could just be my unfamiliarity with FP stuff."),
     js(`const stateAfter = alter (state) {
     const unflagged = []
