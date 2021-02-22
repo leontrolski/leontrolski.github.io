@@ -10,6 +10,7 @@ export const page = (title, h1, content) => m("html",
             a:hover {border-bottom: 0;}
             .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em;}
             blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
+            details {border-bottom:solid 5px gray;}
         `)),
         m("link", {href: "https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css", rel: "stylesheet"}),
         m("script", {src: "https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js"}),
