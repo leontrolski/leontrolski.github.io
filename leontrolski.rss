@@ -310,6 +310,66 @@ const g = [['', '', ''], ['', '', ''], ['', '', '']]  // grid&lt;/code&gt;&lt;/p
             </description>
         </item>
         <item>
+            <title>Can we contain mutable data in imperative languages?</title>
+            <pubDate>Sun, 21 Feb 2021 20:19:52 +0000</pubDate>
+            <link>https://leontrolski.github.io/alter.html</link>
+            <guid>https://leontrolski.github.io/alter.html</guid>
+            <description>
+&amp;#x26a0;&amp;#xfe0f; This article contains JS code. It might not work properly in your feed reader.
+You might want to visit the &lt;a href="https://leontrolski.github.io/alter.html"&gt;original article&lt;/a&gt;.
+        &lt;/style&gt;&lt;link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet"&gt;&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js"&gt;&lt;/script&gt;&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js"&gt;&lt;/script&gt;&lt;/head&gt;&lt;body&gt;&lt;a href="index.html"&gt;&lt;img src="pic.png" style="height:2em"&gt;⇦&lt;/a&gt;&lt;h1&gt;Can we contain mutable data in imperative languages?&lt;/h1&gt;&lt;p&gt;Using immutable data confers all sorts of advantages, in practice, the main ones are:&lt;/p&gt;&lt;ul&gt;&lt;li&gt;It removes nasty &amp;quot;action at a distance&amp;quot; bugs.&lt;/li&gt;&lt;li&gt;It opens the door for easy comparison of values.&lt;/li&gt;&lt;li&gt;It can make concurrent programming easier.&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;This post briefly surveys the territory, then proposes a small syntactic addition to Javascript that would help constrain mutability, while having a clear transition path from existing code (no funky FP stuff). The examples are in Javascript, but the same concept could be ported to Python and other high level languages with mutable data.&lt;/p&gt;&lt;em&gt;If you&amp;#x27;re already familiar with immutable libraries in Javascript, feel free to jump to the &lt;a href="#proposal"&gt;proposal&lt;/a&gt;.&lt;/em&gt;&lt;h2&gt;What do we have now?&lt;/h2&gt;&lt;p&gt;The most well known &lt;a href="https://github.com/immutable-js/immutable-js"&gt;immutable library&lt;/a&gt; gives us a smorgasbord of new data structures, using them in practice can be a bit clunky:&lt;/p&gt;&lt;pre class="language-javascript"&gt;&lt;code&gt;const map1 = Map({a: 1, b: 2, c: 3})
+const map2 = map1.set(&amp;#x27;b&amp;#x27;, 50)&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Once you start updating large data nested structures, more gnarliness ensues. In introducing a non-native data-type we lose a number of syntactic/typing niceties - it seems that for most people, using new exotic data-types is not worth this hassle.&lt;/p&gt;&lt;p&gt;A more recent library that aims to solve these problems is &lt;a href="https://immerjs.github.io/immer/docs/introduction"&gt;immer&lt;/a&gt;, immer is really neat as it sidesteps the need for new data-types. &lt;em&gt;I even wrote a &lt;a href="https://github.com/leontrolski/immerframe"&gt;half baked Python port&lt;/a&gt; of it&lt;/em&gt;.&lt;/p&gt;&lt;p&gt;The example above becomes:&lt;/p&gt;&lt;pre class="language-javascript"&gt;&lt;code&gt;const map1 = { a: 1, b: 2, c: 3 }
+const map2 = produce(map1, draft =&amp;gt; {
+    draft.b = 50
+})&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Immer is a really cool idea and is designed well to work with contemporary frontend patterns, but suffers from two flaws:&lt;/p&gt;&lt;ul&gt;&lt;li&gt;&lt;code class="inline"&gt;draft&lt;/code&gt;is a mega magicy proxy object, its website lists a number of &lt;a href="https://immerjs.github.io/immer/docs/pitfalls"&gt;pitfalls&lt;/a&gt; resulting from this.&lt;/li&gt;&lt;li&gt;Immer can only go so far with structural sharing of data.&lt;/li&gt;&lt;/ul&gt;&lt;details&gt;&lt;summary&gt;Some detail on that second point.&lt;/summary&gt;&lt;p&gt;With a library that deals in built-in data types, it&amp;#x27;s only possible to structurally share data that&amp;#x27;s passed around by reference (basically objects and arrays, not strings or numbers). If we do:&lt;/p&gt;&lt;pre class="language-javascript"&gt;&lt;code&gt;const foo = { some massive nested object }
+const array1 = [foo]
+const array2 = produce(array1, draft =&amp;gt; {
+    array1.push(42)
+})&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Then &lt;code class="inline"&gt;array2[0]&lt;/code&gt;&lt;em&gt; is &lt;/em&gt;&lt;code class="inline"&gt;foo&lt;/code&gt;, we didn&amp;#x27;t have to duplicate anything in memory. Under the hood, &lt;code class="inline"&gt;array2&lt;/code&gt; is: some reference to &lt;code class="inline"&gt;foo&lt;/code&gt;, and the atomic value &lt;code class="inline"&gt;42&lt;/code&gt;.&lt;/p&gt;&lt;p&gt;However, if we did:&lt;/p&gt;&lt;pre class="language-javascript"&gt;&lt;code&gt;const array1 = [1, 2, 3, etc, 9999999]
+const array2 = produce(array1, draft =&amp;gt; {
+    array1.push(42)
+})&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Then under the hood &lt;code class="inline"&gt;array2&lt;/code&gt; is &lt;em&gt;not&lt;/em&gt; a reference to &lt;code class="inline"&gt;array2&lt;/code&gt; with &lt;code class="inline"&gt;42&lt;/code&gt; tacked on the end, it is a whole new array &lt;code class="inline"&gt;[1, 2, 3, etc, 9999999, 42]&lt;/code&gt;.&lt;/p&gt;&lt;p&gt;With the kind of data used in most frontend applications, this is not so much of a problem. If however we were writing a library that did involve mucking around with rather long arrays, this is a big problem vis-a-vis memory usage.&lt;/p&gt;&lt;/details&gt;&lt;p&gt;As a thought experiment, let&amp;#x27;s imagine what would happen if we baked the immer concept into the language...&lt;/p&gt;&lt;h2 id="proposal"&gt;Syntax proposal&lt;/h2&gt;&lt;p&gt;The proposed syntax consists of one new keyword, &lt;code class="inline"&gt;alter&lt;/code&gt;:&lt;/p&gt;&lt;pre class="language-javascript"&gt;&lt;code&gt;const map1 = { a: 1, b: 2, c: 3 }
+const map2 = alter (map1) {
+    map1.b = 50
+}&lt;/code&gt;&lt;/pre&gt;&lt;h2&gt;The rules&lt;/h2&gt;&lt;ul&gt;&lt;li&gt;Everything we do to mutate &lt;code class="inline"&gt;map1&lt;/code&gt; within the &lt;code class="inline"&gt;alter&lt;/code&gt; block applies only within the lexical scope of that block.&lt;/li&gt;&lt;li&gt;The block evaluates to the final value of &lt;code class="inline"&gt;map1&lt;/code&gt;.&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;The first rule is important, let&amp;#x27;s imagine we&amp;#x27;ve added a &lt;code class="inline"&gt;--disallow-mutating&lt;/code&gt; flag to node and attempted to run the following:&lt;/p&gt;&lt;pre class="language-javascript"&gt;&lt;code&gt;function nastyMutator(m){
+    m.b += 1
+}
+const map1 = { a: 1, b: 2, c: 3 }
+const map2 = alter (map1) {
+    nastyMutator(map1)
+}&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;The interpreter would raise an error for the second line at parse time.&lt;/p&gt;&lt;em&gt;Note that we&amp;#x27;re still allowing reassignment, so the following is permissable:&lt;/em&gt;&lt;pre class="language-javascript"&gt;&lt;code&gt;let map1 = { a: 1, b: 2, c: 3 }
+map1 = alter (map1) {
+    map1.b = 50
+}&lt;/code&gt;&lt;/pre&gt;&lt;h3&gt;Other syntax&lt;/h3&gt;&lt;p&gt;The block can just be the next single statement, as with &lt;code class="inline"&gt;if&lt;/code&gt; and &lt;code class="inline"&gt;for&lt;/code&gt;:&lt;/p&gt;&lt;pre class="language-javascript"&gt;&lt;code&gt;map1 = alter (map1) map1.b = 50&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Standard unpacking syntax would enable doing many things at once:&lt;/p&gt;&lt;pre class="language-javascript"&gt;&lt;code&gt;[c, d] = alter ([a, b]) {
+    c.foo = 1
+    b.bar = 2
+}&lt;/code&gt;&lt;/pre&gt;&lt;h1&gt;What do we win?&lt;/h1&gt;&lt;p&gt;We solve the problems we had with using specialist data types and with immer:&lt;/p&gt;&lt;ul&gt;&lt;li&gt;We can stick to boring objects and arrays and keep all our typing.&lt;/li&gt;&lt;li&gt;Within the &lt;code class="inline"&gt;alter&lt;/code&gt; block, the variable we specified at the beginning is just a plain &amp;#x27;ol value - no pitfalls resulting from proxy magic.&lt;/li&gt;&lt;li&gt;A clever interpreter would be able to do lots of structural sharing, so the following would be memory efficient:&lt;pre class="language-javascript"&gt;&lt;code&gt;const array1 = [1, 2, 3, etc, 9999999]
+const array2 = alter (array1) {
+    array1.push(42)
+}&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;Now let&amp;#x27;s think long term, let&amp;#x27;s imagine uptake is high - there&amp;#x27;s no need to install any libraries and converting existing code is easy, so why not - what happens then?&lt;/p&gt;&lt;p&gt;We can reach the stage where all the mutating in our codebase is contained within &lt;code class="inline"&gt;alter&lt;/code&gt; blocks - we can check this by running with our &lt;code class="inline"&gt;--disallow-mutating&lt;/code&gt; flag from earlier. (Maybe we add a &lt;code class="inline"&gt;mutate&lt;/code&gt; keyword for specific circumstances so we can do eg: &lt;code class="inline"&gt;mutate this.linepos += 1&lt;/code&gt;).&lt;/p&gt;&lt;p&gt;Now all our data outside of &lt;code class="inline"&gt;alter&lt;/code&gt; blocks is immutable, we can:&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Reason more easily about the code - no mutation at a distance.&lt;/li&gt;&lt;li&gt;Do efficient comparisons on stuff, this opens the door for objects in sets and as keys in maps.&lt;/li&gt;&lt;li&gt;The interpreter can now do various performance tricks.&lt;/li&gt;&lt;/ul&gt;&lt;h2&gt;Application to global-state-styley frontends&lt;/h2&gt;&lt;p&gt;As the syntax is lifted straight from immer, we can trivially update &lt;a href="https://immerjs.github.io/immer/docs/example-reducer"&gt;their reducer pattern example&lt;/a&gt;:&lt;/p&gt;&lt;pre class="language-javascript"&gt;&lt;code&gt;const byId = (state, action) =&amp;gt; alter (state) {
+    switch (action.type) {
+        case RECEIVE_PRODUCTS:
+            action.products.forEach(product =&amp;gt; {
+                state[product.id] = product
+            })
+    }
+}&lt;/code&gt;&lt;/pre&gt;&lt;h2&gt;Python equivalent&lt;/h2&gt;&lt;p&gt;The Python version would look the same, just with Python&amp;#x27;s block syntax:&lt;/p&gt;&lt;pre class="language-python"&gt;&lt;code&gt;const array1 = [1, 2, 3, etc, 9999999]
+const array2 = alter array1:
+    array1.push(42)&lt;/code&gt;&lt;/pre&gt;&lt;details&gt;&lt;summary&gt;Aside on semantics of updating deeply nested values in FP languages.&lt;/summary&gt;&lt;p&gt;Clojure has the concept of &lt;a href="https://clojure.org/reference/transients"&gt;transients&lt;/a&gt; that feel somewhat similar to &lt;code class="inline"&gt;alter&lt;/code&gt;, I should play around with these more.&lt;/p&gt;&lt;p&gt;Haskellers (often it seems) use the &lt;a href="https://hackage.haskell.org/package/lens"&gt;lens&lt;/a&gt; library for making deep changes to objects. I&amp;#x27;ve seen the Python equivalent used and the resulting code has always been reverted back to a &amp;quot;native&amp;quot; style at some point as it can be tricksy to read and doesn&amp;#x27;t play well with modern typed Python. An open question for me is:&lt;/p&gt;&lt;blockquote&gt;Is there a pure-FP-ish way to doing deep updates that&amp;#x27;s always as &amp;quot;natural&amp;quot; as the classic mutational way?&lt;/blockquote&gt;&lt;p&gt;Here&amp;#x27;s a contrived example of something that to me &amp;quot;feels natural&amp;quot; in an imperative style, but it could just be my unfamiliarity with FP stuff.&lt;/p&gt;&lt;pre class="language-javascript"&gt;&lt;code&gt;const stateAfter = alter (state) {
+    const unflagged = []
+    for (const message of state.messages){
+        if (message.flagged){
+            state.flaggedMessages.push(message)
+            state.totalCount -= 1
+            delete state.visibleUserIds[message.userId]
+        }
+        else unflagged.push(message)
+    }
+    state.messages = unflagged
+}&lt;/code&gt;&lt;/pre&gt;&lt;/details&gt;&lt;/body&gt;&lt;/html&gt;
+            </description>
+        </item>
+        <item>
             <title>A developer's summary of Consciousness and the Social Brain&lt;/em&gt;</title>
             <pubDate>Thu, 4 Jun 2020 17:30:42 +0100</pubDate>
             <link>https://leontrolski.github.io/consciousness.html</link>
@@ -872,7 +932,7 @@ app.get('/', (req, res) =&gt; res.send(myUl().asHTMLStr())&lt;/code&gt;&lt;/pre&
         </item>
         <item>
             <title>&lt;code class="inline"&gt;git bisect&lt;/code&gt; succinctly</title>
-            <pubDate></pubDate>
+            <pubDate>Tue, 2 Feb 2021 15:45:41 +0000</pubDate>
             <link>https://leontrolski.github.io/git-bisect.html</link>
             <guid>https://leontrolski.github.io/git-bisect.html</guid>
             <description>
@@ -895,7 +955,7 @@ git bisect reset&lt;/code&gt;&lt;/pre&gt;&lt;/body&gt;&lt;/html&gt;
         </item>
         <item>
             <title>OO in Python is mostly pointless</title>
-            <pubDate>Fri, 29 Jan 2021 10:57:24 +0000</pubDate>
+            <pubDate>Tue, 2 Feb 2021 15:45:41 +0000</pubDate>
             <link>https://leontrolski.github.io/mostly-pointless.html</link>
             <guid>https://leontrolski.github.io/mostly-pointless.html</guid>
             <description>
@@ -1061,7 +1121,7 @@ VALUES
         </item>
         <item>
             <title>Make python-style classes from not much javascript</title>
-            <pubDate>Sun, 7 Jun 2020 09:55:49 +0100</pubDate>
+            <pubDate>Tue, 2 Feb 2021 15:59:23 +0000</pubDate>
             <link>https://leontrolski.github.io/poor-mans-object.html</link>
             <guid>https://leontrolski.github.io/poor-mans-object.html</guid>
             <description>
@@ -1076,9 +1136,9 @@ VALUES
             &lt;li&gt;In a bonus section, implement inheritance.&lt;/li&gt;
         &lt;/ul&gt;
     &lt;/p&gt;
-    &lt;em&gt;
+    &lt;b&gt;
         You'll have the best time with this post if you play around with the more complicated code snippets in the &lt;a href="https://javascript.info/devtools"&gt;developer tools console &lt;code&gt;Cmd + Opt + J or F12&lt;/code&gt;&lt;/a&gt;.
-    &lt;/em&gt;
+    &lt;/b&gt;
 
     &lt;h2&gt;Our aim&lt;/h2&gt;
     &lt;p&gt;
@@ -1104,15 +1164,17 @@ VALUES
     &lt;p&gt;
         We're going to pick a small bit of javascript to use, this bit may seem obvious, but we're just demonstrating how little stuff we need to get to OO. Feel free to go quickly through this bit.
     &lt;/p&gt;
-    &lt;p&gt;Values are strings or arrays of values:&lt;/p&gt;
-    &lt;pre&gt;&lt;code&gt;"string", [value]&lt;/pre&gt;&lt;/code&gt;
+    &lt;p&gt;Values are numbers, strings or arrays of values:&lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;3.14 "string" [value]&lt;/pre&gt;&lt;/code&gt;
     &lt;p&gt;We can assign values to names:&lt;/p&gt;
         &lt;pre&gt;&lt;code&gt;const a = "foo"&lt;/pre&gt;&lt;/code&gt;
     &lt;p&gt;We can get the nth element of an array with:&lt;/p&gt;
     &lt;pre&gt;&lt;code&gt;array[n]&lt;/pre&gt;&lt;/code&gt;
-    &lt;p&gt;We can concatenate strings:&lt;/p&gt;
+    &lt;p&gt;We can concatenate strings/add numbers:&lt;/p&gt;
     &lt;pre&gt;&lt;code&gt;&gt;&gt;&gt; "hello " + "oli"
-"hello oli"&lt;/pre&gt;&lt;/code&gt;
+"hello oli"
+&gt;&gt;&gt; 2 + 3
+5&lt;/pre&gt;&lt;/code&gt;
     &lt;p&gt;We can loop over arrays:&lt;/p&gt;
     &lt;pre&gt;&lt;code&gt;for (const n of l){do something}&lt;/pre&gt;&lt;/code&gt;
     &lt;p&gt;If two strings are equal, we can do something:&lt;/p&gt;
@@ -1736,13 +1798,20 @@ export default Object.fromEntries(
         </item>
         <item>
             <title>Python &lt;code class="inline"&gt;virtualenv&lt;/code&gt;s for Node devs</title>
-            <pubDate>Sun, 3 Jan 2021 12:10:31 +0000</pubDate>
+            <pubDate>Thu, 4 Feb 2021 09:07:05 +0000</pubDate>
             <link>https://leontrolski.github.io/virtualenvs-for-node-devs.html</link>
             <guid>https://leontrolski.github.io/virtualenvs-for-node-devs.html</guid>
             <description>
 &amp;#x26a0;&amp;#xfe0f; This article contains JS code. It might not work properly in your feed reader.
 You might want to visit the &lt;a href="https://leontrolski.github.io/virtualenvs-for-node-devs.html"&gt;original article&lt;/a&gt;.
-        &lt;/style&gt;&lt;link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet"&gt;&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js"&gt;&lt;/script&gt;&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js"&gt;&lt;/script&gt;&lt;/head&gt;&lt;body&gt;&lt;a href="index.html"&gt;&lt;img src="pic.png" style="height:2em"&gt;⇦&lt;/a&gt;&lt;h1&gt;Python &lt;code class="inline"&gt;virtualenv&lt;/code&gt;s for Node devs&lt;/h1&gt;&lt;p&gt;You&amp;#x27;ve started doing some python while working with another team, and they&amp;#x27;ve told you to do everything in &lt;code class="inline"&gt;virtualenv&lt;/code&gt;s as it&amp;#x27;s the &amp;quot;right way&amp;quot;. You&amp;#x27;ve also been told Python&amp;#x27;s packaging system is a bit of a mess, let&amp;#x27;s try tame it somewhat.&lt;/p&gt;&lt;p&gt;We&amp;#x27;re going to compare &lt;code class="inline"&gt;npm&lt;/code&gt; to the &amp;quot;modern classic&amp;quot; Python equivalent. I&amp;#x27;m going to ignore more recent developments like &lt;a href="https://python-poetry.org/"&gt;poetry&lt;/a&gt; and friends.&lt;/p&gt;&lt;p&gt;First, do you have the right Python version installed? Check with &lt;code class="inline"&gt;python3 --version&lt;/code&gt;, you may need to &lt;code class="inline"&gt;brew&lt;/code&gt; install a specific version (if you&amp;#x27;re on linux/windows you&amp;#x27;re on you own here). The command to install a specific Python is eg: &lt;code class="inline"&gt;brew install python@3.9&lt;/code&gt;. The executable will get plonked somewhere like &lt;code class="inline"&gt;/usr/local/opt/python/bin&lt;/code&gt; or &lt;code class="inline"&gt;/usr/local/Cellar/python@3.9/3.9.1/bin&lt;/code&gt;. &lt;em&gt;I&amp;#x27;m not going to touch on &lt;a href="https://www.google.com/search?q=update%20my%20PATH"&gt;updating your PATH&lt;/a&gt; - &lt;code class="inline"&gt;brew&lt;/code&gt; should give you some pointers in its output - instead, we&amp;#x27;re going to set up everything mega explicitly.&lt;/em&gt;&lt;/p&gt;&lt;p&gt;OK, so we&amp;#x27;ve got a Python version that seems sane, let&amp;#x27;s set up a &lt;code class="inline"&gt;virtualenv&lt;/code&gt; with the equivalent of &lt;code class="inline"&gt;npm init&lt;/code&gt;.&lt;/p&gt;&lt;pre class="language-bash"&gt;&lt;code&gt;/usr/local/Cellar/python@3.9/3.9.1/bin/python3 -m venv .env&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;We now have a new folder in our current directory called &lt;code class="inline"&gt;.env&lt;/code&gt; that contains symlinks to the Python that we just ran:&lt;/p&gt;&lt;pre class="language-bash"&gt;&lt;code&gt;.env
+        &lt;/style&gt;&lt;link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet"&gt;&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js"&gt;&lt;/script&gt;&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js"&gt;&lt;/script&gt;&lt;/head&gt;&lt;body&gt;&lt;a href="index.html"&gt;&lt;img src="pic.png" style="height:2em"&gt;⇦&lt;/a&gt;&lt;h1&gt;Python &lt;code class="inline"&gt;virtualenv&lt;/code&gt;s for Node devs&lt;/h1&gt;&lt;p&gt;You&amp;#x27;ve started doing some Python while working with another team, and they&amp;#x27;ve told you to do everything in &lt;code class="inline"&gt;virtualenv&lt;/code&gt;s as it&amp;#x27;s the right way. You&amp;#x27;ve also been told Python&amp;#x27;s packaging system is a bit of a mess, let&amp;#x27;s try tame it somewhat.&lt;/p&gt;&lt;p&gt;We&amp;#x27;re going to compare &lt;code class="inline"&gt;npm&lt;/code&gt; to the &amp;quot;modern classic&amp;quot; Python equivalent. I&amp;#x27;m going to ignore more recent developments like &lt;a href="https://python-poetry.org/"&gt;poetry&lt;/a&gt; and friends.&lt;/p&gt;&lt;p&gt;First, do you have the right Python version installed? We&amp;#x27;re going to use &lt;a href="https://asdf-vm.com"&gt;asdf&lt;/a&gt; which supports Node, Ruby, Python, etc. Steps to install for me were:&lt;/p&gt;&lt;pre class="language-bash"&gt;&lt;code&gt;brew install asdf
+echo -e &amp;quot;\n. $(brew --prefix asdf)/asdf.sh&amp;quot; &amp;gt;&amp;gt; ~/.zshrc
+# switch to a new shell window at this point
+asdf plugin-add python
+asdf install python 3.9.1
+asdf global python 3.9.1
+which python3  # should give you ~/.asdf/shims/python3
+python3 --version # should give you 3.9.1&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;OK, so we&amp;#x27;ve got a Python version that seems sane, let&amp;#x27;s set up a &lt;code class="inline"&gt;virtualenv&lt;/code&gt; with the equivalent of &lt;code class="inline"&gt;npm init&lt;/code&gt;.&lt;/p&gt;&lt;pre class="language-bash"&gt;&lt;code&gt;python3 -m venv .env&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;We now have a new folder in our current directory called &lt;code class="inline"&gt;.env&lt;/code&gt; that contains symlinks to the Python that we just ran:&lt;/p&gt;&lt;pre class="language-bash"&gt;&lt;code&gt;.env
 ├── bin
 │   ├── Activate.ps1
 │   ├── activate
@@ -1754,7 +1823,7 @@ You might want to visit the &lt;a href="https://leontrolski.github.io/virtualenv
 │   ├── pip3
 │   ├── pip3.9
 │   ├── python -&amp;gt; python3
-│   ├── python3 -&amp;gt; /usr/local/Cellar/python@3.9/3.9.1/bin/python3
+│   ├── python3 -&amp;gt; ~/.asdf/installs/python/3.9.1/bin/python3
 │   └── python3.9 -&amp;gt; python3
 ├── include
 ├── lib
@@ -1792,7 +1861,7 @@ __pycache__     blueprints.py   ctx.py          helpers.py      sessions.py     
     &amp;quot;dependencies&amp;quot;: {
       &amp;quot;express&amp;quot;: &amp;quot;^4.17.1&amp;quot;
     }
-}&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Python is a fair bit different from Node in that only one version of a package can be installed in a &lt;code class="inline"&gt;virtualenv&lt;/code&gt; at a time. This means you tend to have abstract requirements (that is to say with very limited version pinning) listed in &lt;code class="inline"&gt;setup.py|requirements.in|pyproject.toml&lt;/code&gt; and pinned requirements (for testing/deployent if you&amp;#x27;re working on a service) in a &lt;code class="inline"&gt;requirements.txt&lt;/code&gt;.&lt;/p&gt;&lt;p&gt;You can install a set of requirements with:&lt;/p&gt;&lt;pre class="language-bash"&gt;&lt;code&gt;pip install -r requirements.txt&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Or whatever file it is you want to install from. This is the equivalent of &lt;code class="inline"&gt;npm install&lt;/code&gt;.&lt;/p&gt;&lt;p&gt;In terms of pinning requirements in your own project, I&amp;#x27;ve always been a fan of &lt;a href="https://github.com/jazzband/pip-tools"&gt;pip-tools&lt;/a&gt; - using this means you can safely ignore the last few years of Python packaging excitement and get on with your life.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;
+}&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Python is a fair bit different from Node in that only one version of a package can be installed in a &lt;code class="inline"&gt;virtualenv&lt;/code&gt; at a time. This means you tend to have abstract requirements (that is to say with very limited version pinning) listed in &lt;code class="inline"&gt;setup.py|requirements.in|pyproject.toml&lt;/code&gt; and pinned requirements (for testing/deployent if you&amp;#x27;re working on a service) in a &lt;code class="inline"&gt;requirements.txt&lt;/code&gt;.&lt;/p&gt;&lt;p&gt;You can install a set of requirements with:&lt;/p&gt;&lt;pre class="language-bash"&gt;&lt;code&gt;pip install -r requirements.txt&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Or whatever file it is you want to install from. This is the equivalent of &lt;code class="inline"&gt;npm install&lt;/code&gt;.&lt;/p&gt;&lt;p&gt;In terms of pinning requirements in your own project a la &lt;code class="inline"&gt;yarn lock&lt;/code&gt; or whatever the flavour of the month is, I&amp;#x27;ve always been a fan of &lt;a href="https://github.com/jazzband/pip-tools"&gt;pip-tools&lt;/a&gt; - using this means you can safely ignore the last few years of Python packaging excitement and get on with your life.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;
             </description>
         </item>
     </channel>
