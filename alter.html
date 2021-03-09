@@ -1,4 +1,11 @@
-<html><meta name="viewport" content="width=device-width, initial-scale=1.0"><head><title>leontrolski - containing mutable data</title><style>
+<html>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <head>
+        <title>
+            leontrolski -             containing mutable data
+        </title>
+        <style>
+
             body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 63%;}
             @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
             pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
@@ -6,46 +13,320 @@
             a:hover {border-bottom: 0;}
             .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em;}
             blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
-            details {border-bottom:solid 5px gray;}
-        </style><link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet"><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js"></script></head><body><a href="index.html"><img src="pic.png" style="height:2em">⇦</a><h1>Can we contain mutable data in imperative languages?</h1><p>Using immutable data confers all sorts of advantages, in practice, the main ones are:</p><ul><li>It removes nasty &quot;action at a distance&quot; bugs.</li><li>It opens the door for easy comparison of values.</li><li>It can make concurrent programming easier.</li></ul><p>This post briefly surveys the territory, then proposes a small syntactic addition to Javascript that would help constrain mutability, while having a clear transition path from existing code (no funky FP stuff). The examples are in Javascript, but the same concept could be ported to Python and other high level languages with mutable data.</p><em>If you&#x27;re already familiar with immutable libraries in Javascript, feel free to jump to the <a href="#proposal">proposal</a>.</em><h2>What do we have now?</h2><p>The most well known <a href="https://github.com/immutable-js/immutable-js">immutable library</a> gives us a smorgasbord of new data structures, using them in practice can be a bit clunky:</p><pre class="language-javascript"><code>const map1 = Map({a: 1, b: 2, c: 3})
-const map2 = map1.set(&#x27;b&#x27;, 50)</code></pre><p>Once you start updating large data nested structures, more gnarliness ensues. In introducing a non-native data-type we lose a number of syntactic/typing niceties - it seems that for most people, using new exotic data-types is not worth this hassle.</p><p>A more recent library that aims to solve these problems is <a href="https://immerjs.github.io/immer/docs/introduction">immer</a>, immer is really neat as it sidesteps the need for new data-types. <em>I even wrote a <a href="https://github.com/leontrolski/immerframe">half baked Python port</a> of it</em>.</p><p>The example above becomes:</p><pre class="language-javascript"><code>const map1 = { a: 1, b: 2, c: 3 }
+
+        </style>
+        <link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js">
+
+        </script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js">
+
+        </script>
+
+    </head>
+    <body>
+        <a href="index.html">
+            <img src="pic.png" style="height:2em">
+            ⇦
+        </a>
+        <h1>
+            Can we contain mutable data in imperative languages?
+        </h1>
+        <p>
+            Using immutable data confers all sorts of advantages, in practice, the main ones are:
+        </p>
+        <ul>
+            <li>
+                It removes nasty &quot;action at a distance&quot; bugs.
+            </li>
+            <li>
+                It opens the door for easy comparison of values.
+            </li>
+            <li>
+                It can make concurrent programming easier.
+            </li>
+
+        </ul>
+        <p>
+            This post briefly surveys the territory, then proposes a small syntactic addition to Javascript that would help constrain mutability, while having a clear transition path from existing code (no funky FP stuff). The examples are in Javascript, but the same concept could be ported to Python and other high level languages with mutable data.
+        </p>
+        <em>
+            If you&#x27;re already familiar with immutable libraries in Javascript, feel free to jump to the             <a href="#proposal">
+                proposal
+            </a>
+            .
+        </em>
+        <h2>
+            What do we have now?
+        </h2>
+        <p>
+            The most well known             <a href="https://github.com/immutable-js/immutable-js">
+                immutable library
+            </a>
+             gives us a smorgasbord of new data structures, using them in practice can be a bit clunky:
+        </p>
+        <pre class="language-javascript"><code>const map1 = Map({a: 1, b: 2, c: 3})
+const map2 = map1.set(&#x27;b&#x27;, 50)</code>
+</pre>
+        <p>
+            Once you start updating large data nested structures, more gnarliness ensues. In introducing a non-native data-type we lose a number of syntactic/typing niceties - it seems that for most people, using new exotic data-types is not worth this hassle.
+        </p>
+        <p>
+            A more recent library that aims to solve these problems is             <a href="https://immerjs.github.io/immer/docs/introduction">
+                immer
+            </a>
+            , immer is really neat as it sidesteps the need for new data-types.             <em>
+                I even wrote a                 <a href="https://github.com/leontrolski/immerframe">
+                    half baked Python port
+                </a>
+                 of it
+            </em>
+            .
+        </p>
+        <p>
+            The example above becomes:
+        </p>
+        <pre class="language-javascript"><code>const map1 = { a: 1, b: 2, c: 3 }
 const map2 = produce(map1, draft =&gt; {
     draft.b = 50
-})</code></pre><p>Immer is a really cool idea and is designed well to work with contemporary frontend patterns, but suffers from two flaws:</p><ul><li><code class="inline">draft</code>is a mega magicy proxy object, its website lists a number of <a href="https://immerjs.github.io/immer/docs/pitfalls">pitfalls</a> resulting from this.</li><li>Immer can only go so far with structural sharing of data.</li></ul><details><summary>Some detail on that second point.</summary><p>With a library that deals in built-in data types, it&#x27;s only possible to structurally share data that&#x27;s passed around by reference (basically objects and arrays, not strings or numbers). If we do:</p><pre class="language-javascript"><code>const foo = { some massive nested object }
+})</code>
+</pre>
+        <p>
+            Immer is a really cool idea and is designed well to work with contemporary frontend patterns, but suffers from two flaws:
+        </p>
+        <ul>
+            <li>
+                <code class="inline">draft</code>
+                is a mega magicy proxy object, its website lists a number of                 <a href="https://immerjs.github.io/immer/docs/pitfalls">
+                    pitfalls
+                </a>
+                 resulting from this.
+            </li>
+            <li>
+                Immer can only go so far with structural sharing of data.
+            </li>
+
+        </ul>
+        <details>
+            <summary>
+                Some detail on that second point.
+            </summary>
+            <p>
+                With a library that deals in built-in data types, it&#x27;s only possible to structurally share data that&#x27;s passed around by reference (basically objects and arrays, not strings or numbers). If we do:
+            </p>
+            <pre class="language-javascript"><code>const foo = { some massive nested object }
 const array1 = [foo]
 const array2 = produce(array1, draft =&gt; {
     array1.push(42)
-})</code></pre><p>Then <code class="inline">array2[0]</code><em> is </em><code class="inline">foo</code>, we didn&#x27;t have to duplicate anything in memory. Under the hood, <code class="inline">array2</code> is: some reference to <code class="inline">foo</code>, and the atomic value <code class="inline">42</code>.</p><p>However, if we did:</p><pre class="language-javascript"><code>const array1 = [1, 2, 3, etc, 9999999]
+})</code>
+</pre>
+            <p>
+                Then                 <code class="inline">array2[0]</code>
+                <em>
+                     is
+                </em>
+                <code class="inline">foo</code>
+                , we didn&#x27;t have to duplicate anything in memory. Under the hood,                 <code class="inline">array2</code>
+                 is: some reference to                 <code class="inline">foo</code>
+                , and the atomic value                 <code class="inline">42</code>
+                .
+            </p>
+            <p>
+                However, if we did:
+            </p>
+            <pre class="language-javascript"><code>const array1 = [1, 2, 3, etc, 9999999]
 const array2 = produce(array1, draft =&gt; {
     array1.push(42)
-})</code></pre><p>Then under the hood <code class="inline">array2</code> is <em>not</em> a reference to <code class="inline">array2</code> with <code class="inline">42</code> tacked on the end, it is a whole new array <code class="inline">[1, 2, 3, etc, 9999999, 42]</code>.</p><p>With the kind of data used in most frontend applications, this is not so much of a problem. If however we were writing a library that did involve mucking around with rather long arrays, this is a big problem vis-a-vis memory usage.</p></details><p>As a thought experiment, let&#x27;s imagine what would happen if we baked the immer concept into the language...</p><h2 id="proposal">Syntax proposal</h2><p>The proposed syntax consists of one new keyword, <code class="inline">alter</code>:</p><pre class="language-javascript"><code>const map1 = { a: 1, b: 2, c: 3 }
+})</code>
+</pre>
+            <p>
+                Then under the hood                 <code class="inline">array2</code>
+                 is                 <em>
+                    not
+                </em>
+                 a reference to                 <code class="inline">array2</code>
+                 with                 <code class="inline">42</code>
+                 tacked on the end, it is a whole new array                 <code class="inline">[1, 2, 3, etc, 9999999, 42]</code>
+                .
+            </p>
+            <p>
+                With the kind of data used in most frontend applications, this is not so much of a problem. If however we were writing a library that did involve mucking around with rather long arrays, this is a big problem vis-a-vis memory usage.
+            </p>
+
+        </details>
+        <p>
+            As a thought experiment, let&#x27;s imagine what would happen if we baked the immer concept into the language...
+        </p>
+        <h2 id="proposal">
+            Syntax proposal
+        </h2>
+        <p>
+            The proposed syntax consists of one new keyword,             <code class="inline">alter</code>
+            :
+        </p>
+        <pre class="language-javascript"><code>const map1 = { a: 1, b: 2, c: 3 }
 const map2 = alter (map1) {
     map1.b = 50
-}</code></pre><h2>The rules</h2><ul><li>Everything we do to mutate <code class="inline">map1</code> within the <code class="inline">alter</code> block applies only within the lexical scope of that block.</li><li>The block evaluates to the final value of <code class="inline">map1</code>.</li></ul><p>The first rule is important, let&#x27;s imagine we&#x27;ve added a <code class="inline">--disallow-mutating</code> flag to node and attempted to run the following:</p><pre class="language-javascript"><code>function nastyMutator(m){
+}</code>
+</pre>
+        <h2>
+            The rules
+        </h2>
+        <ul>
+            <li>
+                Everything we do to mutate                 <code class="inline">map1</code>
+                 within the                 <code class="inline">alter</code>
+                 block applies only within the lexical scope of that block.
+            </li>
+            <li>
+                The block evaluates to the final value of                 <code class="inline">map1</code>
+                .
+            </li>
+
+        </ul>
+        <p>
+            The first rule is important, let&#x27;s imagine we&#x27;ve added a             <code class="inline">--disallow-mutating</code>
+             flag to node and attempted to run the following:
+        </p>
+        <pre class="language-javascript"><code>function nastyMutator(m){
     m.b += 1
 }
 const map1 = { a: 1, b: 2, c: 3 }
 const map2 = alter (map1) {
     nastyMutator(map1)
-}</code></pre><p>The interpreter would raise an error for the second line at parse time.</p><em>Note that we&#x27;re still allowing reassignment, so the following is permissable:</em><pre class="language-javascript"><code>let map1 = { a: 1, b: 2, c: 3 }
+}</code>
+</pre>
+        <p>
+            The interpreter would raise an error for the second line at parse time.
+        </p>
+        <em>
+            Note that we&#x27;re still allowing reassignment, so the following is permissable:
+        </em>
+        <pre class="language-javascript"><code>let map1 = { a: 1, b: 2, c: 3 }
 map1 = alter (map1) {
     map1.b = 50
-}</code></pre><h3>Other syntax</h3><p>The block can just be the next single statement, as with <code class="inline">if</code> and <code class="inline">for</code>:</p><pre class="language-javascript"><code>map1 = alter (map1) map1.b = 50</code></pre><p>Standard unpacking syntax would enable doing many things at once:</p><pre class="language-javascript"><code>[c, d] = alter ([a, b]) {
+}</code>
+</pre>
+        <h3>
+            Other syntax
+        </h3>
+        <p>
+            The block can just be the next single statement, as with             <code class="inline">if</code>
+             and             <code class="inline">for</code>
+            :
+        </p>
+        <pre class="language-javascript"><code>map1 = alter (map1) map1.b = 50</code>
+</pre>
+        <p>
+            Standard unpacking syntax would enable doing many things at once:
+        </p>
+        <pre class="language-javascript"><code>[c, d] = alter ([a, b]) {
     c.foo = 1
     b.bar = 2
-}</code></pre><h1>What do we win?</h1><p>We solve the problems we had with using specialist data types and with immer:</p><ul><li>We can stick to boring objects and arrays and keep all our typing.</li><li>Within the <code class="inline">alter</code> block, the variable we specified at the beginning is just a plain &#x27;ol value - no pitfalls resulting from proxy magic.</li><li>A clever interpreter would be able to do lots of structural sharing, so the following would be memory efficient:<pre class="language-javascript"><code>const array1 = [1, 2, 3, etc, 9999999]
+}</code>
+</pre>
+        <h1>
+            What do we win?
+        </h1>
+        <p>
+            We solve the problems we had with using specialist data types and with immer:
+        </p>
+        <ul>
+            <li>
+                We can stick to boring objects and arrays and keep all our typing.
+            </li>
+            <li>
+                Within the                 <code class="inline">alter</code>
+                 block, the variable we specified at the beginning is just a plain &#x27;ol value - no pitfalls resulting from proxy magic.
+            </li>
+            <li>
+                A clever interpreter would be able to do lots of structural sharing, so the following would be memory efficient:                <pre class="language-javascript"><code>const array1 = [1, 2, 3, etc, 9999999]
 const array2 = alter (array1) {
     array1.push(42)
-}</code></pre></li></ul><p>Now let&#x27;s think long term, let&#x27;s imagine uptake is high - there&#x27;s no need to install any libraries and converting existing code is easy, so why not - what happens then?</p><p>We can reach the stage where all the mutating in our codebase is contained within <code class="inline">alter</code> blocks - we can check this by running with our <code class="inline">--disallow-mutating</code> flag from earlier. (Maybe we add a <code class="inline">mutate</code> keyword for specific circumstances so we can do eg: <code class="inline">mutate this.linepos += 1</code>).</p><p>Now all our data outside of <code class="inline">alter</code> blocks is immutable, we can:</p><ul><li>Reason more easily about the code - no mutation at a distance.</li><li>Do efficient comparisons on stuff, this opens the door for objects in sets and as keys in maps.</li><li>The interpreter can now do various performance tricks.</li></ul><h2>Application to global-state-styley frontends</h2><p>As the syntax is lifted straight from immer, we can trivially update <a href="https://immerjs.github.io/immer/docs/example-reducer">their reducer pattern example</a>:</p><pre class="language-javascript"><code>const byId = (state, action) =&gt; alter (state) {
+}</code>
+</pre>
+
+            </li>
+
+        </ul>
+        <p>
+            Now let&#x27;s think long term, let&#x27;s imagine uptake is high - there&#x27;s no need to install any libraries and converting existing code is easy, so why not - what happens then?
+        </p>
+        <p>
+            We can reach the stage where all the mutating in our codebase is contained within             <code class="inline">alter</code>
+             blocks - we can check this by running with our             <code class="inline">--disallow-mutating</code>
+             flag from earlier. (Maybe we add a             <code class="inline">mutate</code>
+             keyword for specific circumstances so we can do eg:             <code class="inline">mutate this.linepos += 1</code>
+            ).
+        </p>
+        <p>
+            Now all our data outside of             <code class="inline">alter</code>
+             blocks is immutable, we can:
+        </p>
+        <ul>
+            <li>
+                Reason more easily about the code - no mutation at a distance.
+            </li>
+            <li>
+                Do efficient comparisons on stuff, this opens the door for objects in sets and as keys in maps.
+            </li>
+            <li>
+                The interpreter can now do various performance tricks.
+            </li>
+
+        </ul>
+        <h2>
+            Application to global-state-styley frontends
+        </h2>
+        <p>
+            As the syntax is lifted straight from immer, we can trivially update             <a href="https://immerjs.github.io/immer/docs/example-reducer">
+                their reducer pattern example
+            </a>
+            :
+        </p>
+        <pre class="language-javascript"><code>const byId = (state, action) =&gt; alter (state) {
     switch (action.type) {
         case RECEIVE_PRODUCTS:
             action.products.forEach(product =&gt; {
                 state[product.id] = product
             })
     }
-}</code></pre><h2>Python equivalent</h2><p>The Python version would look the same, just with Python&#x27;s block syntax:</p><pre class="language-python"><code>const array1 = [1, 2, 3, etc, 9999999]
+}</code>
+</pre>
+        <h2>
+            Python equivalent
+        </h2>
+        <p>
+            The Python version would look the same, just with Python&#x27;s block syntax:
+        </p>
+        <pre class="language-python"><code>const array1 = [1, 2, 3, etc, 9999999]
 const array2 = alter array1:
-    array1.push(42)</code></pre><details><summary>Aside on semantics of updating deeply nested values in FP languages.</summary><p>Clojure has the concept of <a href="https://clojure.org/reference/transients">transients</a> that feel somewhat similar to <code class="inline">alter</code>, I should play around with these more.</p><p>Haskellers (often it seems) use the <a href="https://hackage.haskell.org/package/lens">lens</a> library for making deep changes to objects. I&#x27;ve seen the Python equivalent used and the resulting code has always been reverted back to a &quot;native&quot; style at some point as it can be tricksy to read and doesn&#x27;t play well with modern typed Python. An open question for me is:</p><blockquote>Is there a pure-FP-ish way to doing deep updates that&#x27;s always as &quot;natural&quot; as the classic mutational way?</blockquote><p>Here&#x27;s a contrived example of something that to me &quot;feels natural&quot; in an imperative style, but it could just be my unfamiliarity with FP stuff.</p><pre class="language-javascript"><code>const stateAfter = alter (state) {
+    array1.push(42)</code>
+</pre>
+        <details>
+            <summary>
+                Aside on semantics of updating deeply nested values in FP languages.
+            </summary>
+            <p>
+                Clojure has the concept of                 <a href="https://clojure.org/reference/transients">
+                    transients
+                </a>
+                 that feel somewhat similar to                 <code class="inline">alter</code>
+                , I should play around with these more.
+            </p>
+            <p>
+                Haskellers (often it seems) use the                 <a href="https://hackage.haskell.org/package/lens">
+                    lens
+                </a>
+                 library for making deep changes to objects. I&#x27;ve seen the Python equivalent used and the resulting code has always been reverted back to a &quot;native&quot; style at some point as it can be tricksy to read and doesn&#x27;t play well with modern typed Python. An open question for me is:
+            </p>
+            <blockquote>
+                Is there a pure-FP-ish way to doing deep updates that&#x27;s always as &quot;natural&quot; as the classic mutational way?
+            </blockquote>
+            <p>
+                Here&#x27;s a contrived example of something that to me &quot;feels natural&quot; in an imperative style, but it could just be my unfamiliarity with FP stuff.
+            </p>
+            <pre class="language-javascript"><code>const stateAfter = alter (state) {
     const unflagged = []
     for (const message of state.messages){
         if (message.flagged){
@@ -56,4 +337,12 @@ const array2 = alter array1:
         else unflagged.push(message)
     }
     state.messages = unflagged
-}</code></pre></details></body></html>
+}</code>
+</pre>
+
+        </details>
+
+    </body>
+
+</html>
+

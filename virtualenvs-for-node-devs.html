@@ -1,4 +1,11 @@
-<html><meta name="viewport" content="width=device-width, initial-scale=1.0"><head><title>leontrolski - virtualenvs for Node devs</title><style>
+<html>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <head>
+        <title>
+            leontrolski -             virtualenvs for Node devs
+        </title>
+        <style>
+            
             body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 63%;}
             @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
             pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
@@ -6,14 +13,65 @@
             a:hover {border-bottom: 0;}
             .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em;}
             blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
-        </style><link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet"><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js"></script></head><body><a href="index.html"><img src="pic.png" style="height:2em">⇦</a><h1>Python <code class="inline">virtualenv</code>s for Node devs</h1><p>You&#x27;ve started doing some Python while working with another team, and they&#x27;ve told you to do everything in <code class="inline">virtualenv</code>s as it&#x27;s the right way. You&#x27;ve also been told Python&#x27;s packaging system is a bit of a mess, let&#x27;s try tame it somewhat.</p><p>We&#x27;re going to compare <code class="inline">npm</code> to the &quot;modern classic&quot; Python equivalent. I&#x27;m going to ignore more recent developments like <a href="https://python-poetry.org/">poetry</a> and friends.</p><p>First, do you have the right Python version installed? We&#x27;re going to use <a href="https://asdf-vm.com">asdf</a> which supports Node, Ruby, Python, etc. Steps to install for me were:</p><pre class="language-bash"><code>brew install asdf
-echo -e &quot;\n. $(brew --prefix asdf)/asdf.sh&quot; &gt;&gt; ~/.zshrc
+        
+        </style>
+        <link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js">
+
+        </script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js">
+
+        </script>
+
+    </head>
+    <body>
+        <a href="index.html">
+            <img src="pic.png" style="height:2em">
+            ⇦
+        </a>
+        <h1>
+            Python             <code class="inline">virtualenv</code>
+            s for Node devs
+        </h1>
+        <p>
+            You&#x27;ve started doing some Python while working with another team, and they&#x27;ve told you to do everything in             <code class="inline">virtualenv</code>
+            s as it&#x27;s the right way. You&#x27;ve also been told Python&#x27;s packaging system is a bit of a mess, let&#x27;s try tame it somewhat.
+        </p>
+        <p>
+            We&#x27;re going to compare             <code class="inline">npm</code>
+             to the &quot;modern classic&quot; Python equivalent. I&#x27;m going to ignore more recent developments like             <a href="https://python-poetry.org/">
+                poetry
+            </a>
+             and friends.
+        </p>
+        <p>
+            First, do you have the right Python version installed? We&#x27;re going to use             <a href="https://asdf-vm.com">
+                asdf
+            </a>
+             which supports Node, Ruby, Python, etc. Steps to install for me were:
+        </p>
+        <pre class="language-bash"><code>brew install asdf
+echo -e &quot;
+. $(brew --prefix asdf)/asdf.sh&quot; &gt;&gt; ~/.zshrc
 # switch to a new shell window at this point
 asdf plugin-add python
 asdf install python 3.9.1
 asdf global python 3.9.1
 which python3  # should give you ~/.asdf/shims/python3
-python3 --version # should give you 3.9.1</code></pre><p>OK, so we&#x27;ve got a Python version that seems sane, let&#x27;s set up a <code class="inline">virtualenv</code> with the equivalent of <code class="inline">npm init</code>.</p><pre class="language-bash"><code>python3 -m venv .env</code></pre><p>We now have a new folder in our current directory called <code class="inline">.env</code> that contains symlinks to the Python that we just ran:</p><pre class="language-bash"><code>.env
+python3 --version # should give you 3.9.1</code>
+</pre>
+        <p>
+            OK, so we&#x27;ve got a Python version that seems sane, let&#x27;s set up a             <code class="inline">virtualenv</code>
+             with the equivalent of             <code class="inline">npm init</code>
+            .
+        </p>
+        <pre class="language-bash"><code>python3 -m venv .env</code>
+</pre>
+        <p>
+            We now have a new folder in our current directory called             <code class="inline">.env</code>
+             that contains symlinks to the Python that we just ran:
+        </p>
+        <pre class="language-bash"><code>.env
 ├── bin
 │   ├── Activate.ps1
 │   ├── activate
@@ -38,14 +96,48 @@ python3 --version # should give you 3.9.1</code></pre><p>OK, so we&#x27;ve got a
 │           ├── pkg_resources
 │           ├── setuptools
 │           └── setuptools-49.2.1.dist-info
-└── pyvenv.cfg</code></pre><p>We could always run <code class="inline">.env/bin/python</code> or <code class="inline">.env/bin/pip install flask</code> or whatever, but <code class="inline">virtualenv</code>s come with a special trick file to add <code class="inline">.env/bin</code> to <code class="inline">bash</code>&#x27;s PATH. Let&#x27;s run it:</p><pre class="language-bash"><code>source .env/bin/activate</code></pre><p>Now everything should be set up. Let&#x27;s try:</p><pre class="language-bash"><code>(.env) ➜ echo $PATH
+└── pyvenv.cfg</code>
+</pre>
+        <p>
+            We could always run             <code class="inline">.env/bin/python</code>
+             or             <code class="inline">.env/bin/pip install flask</code>
+             or whatever, but             <code class="inline">virtualenv</code>
+            s come with a special trick file to add             <code class="inline">.env/bin</code>
+             to             <code class="inline">bash</code>
+            &#x27;s PATH. Let&#x27;s run it:
+        </p>
+        <pre class="language-bash"><code>source .env/bin/activate</code>
+</pre>
+        <p>
+            Now everything should be set up. Let&#x27;s try:
+        </p>
+        <pre class="language-bash"><code>(.env) ➜ echo $PATH
 /Users/user/src/my-special-project/.env/bin:/usr/local/bin:/usr/bin:/bin
 (.env) ➜ which python
 /Users/user/src/my-special-project/.env/bin/python
 (.env) ➜ which pip
 /Users/user/src/my-special-project/.env/bin/pip
 (.env) ➜ python --version
-Python 3.9.1</code></pre><p>The main difference from <code class="inline">npm</code> here is we don&#x27;t have to run anything with <code class="inline">npm run ...</code> as we&#x27;ve hacked with the PATH.</p><h2 id="installing-stuff">Installing stuff</h2><p>Let&#x27;s install <code class="inline">flask</code>:</p><pre class="language-bash"><code>pip install flask</code></pre><p>Now our directory should look like:</p><pre class="language-bash"><code>.env
+Python 3.9.1</code>
+</pre>
+        <p>
+            The main difference from             <code class="inline">npm</code>
+             here is we don&#x27;t have to run anything with             <code class="inline">npm run ...</code>
+             as we&#x27;ve hacked with the PATH.
+        </p>
+        <h2 id="installing-stuff">
+            Installing stuff
+        </h2>
+        <p>
+            Let&#x27;s install             <code class="inline">flask</code>
+            :
+        </p>
+        <pre class="language-bash"><code>pip install flask</code>
+</pre>
+        <p>
+            Now our directory should look like:
+        </p>
+        <pre class="language-bash"><code>.env
 ├── bin
 │   ├── python -&gt; python3
 │   ├── flask
@@ -55,12 +147,53 @@ Python 3.9.1</code></pre><p>The main difference from <code class="inline">npm</c
 │       └── site-packages
 │           ├── click
 │           ├── flask
-│           └── ...</code></pre><p>As you can see, <code class="inline">.env/lib/python3.9/site-packages</code> is a lot like <code class="inline">node_modules</code>. We can see all the library&#x27;s files:</p><pre class="language-bash"><code>(.env) ➜ ls .env/lib/python3.9/site-packages/flask
+│           └── ...</code>
+</pre>
+        <p>
+            As you can see,             <code class="inline">.env/lib/python3.9/site-packages</code>
+             is a lot like             <code class="inline">node_modules</code>
+            . We can see all the library&#x27;s files:
+        </p>
+        <pre class="language-bash"><code>(.env) ➜ ls .env/lib/python3.9/site-packages/flask
 __init__.py     _compat.py      cli.py          debughelpers.py json            signals.py      views.py
 __main__.py     app.py          config.py       globals.py      logging.py      templating.py   wrappers.py
-__pycache__     blueprints.py   ctx.py          helpers.py      sessions.py     testing.py</code></pre><p>Now, what is the equivalent to the following in a <code class="inline">package.json</code>?</p><pre class="language-javascript"><code>{
+__pycache__     blueprints.py   ctx.py          helpers.py      sessions.py     testing.py</code>
+</pre>
+        <p>
+            Now, what is the equivalent to the following in a             <code class="inline">package.json</code>
+            ?
+        </p>
+        <pre class="language-javascript"><code>{
     ...
     &quot;dependencies&quot;: {
       &quot;express&quot;: &quot;^4.17.1&quot;
     }
-}</code></pre><p>Python is a fair bit different from Node in that only one version of a package can be installed in a <code class="inline">virtualenv</code> at a time. This means you tend to have abstract requirements (that is to say with very limited version pinning) listed in <code class="inline">setup.py|requirements.in|pyproject.toml</code> and pinned requirements (for testing/deployent if you&#x27;re working on a service) in a <code class="inline">requirements.txt</code>.</p><p>You can install a set of requirements with:</p><pre class="language-bash"><code>pip install -r requirements.txt</code></pre><p>Or whatever file it is you want to install from. This is the equivalent of <code class="inline">npm install</code>.</p><p>In terms of pinning requirements in your own project a la <code class="inline">yarn lock</code> or whatever the flavour of the month is, I&#x27;ve always been a fan of <a href="https://github.com/jazzband/pip-tools">pip-tools</a> - using this means you can safely ignore the last few years of Python packaging excitement and get on with your life.</p></body></html>
+}</code>
+</pre>
+        <p>
+            Python is a fair bit different from Node in that only one version of a package can be installed in a             <code class="inline">virtualenv</code>
+             at a time. This means you tend to have abstract requirements (that is to say with very limited version pinning) listed in             <code class="inline">setup.py|requirements.in|pyproject.toml</code>
+             and pinned requirements (for testing/deployent if you&#x27;re working on a service) in a             <code class="inline">requirements.txt</code>
+            .
+        </p>
+        <p>
+            You can install a set of requirements with:
+        </p>
+        <pre class="language-bash"><code>pip install -r requirements.txt</code>
+</pre>
+        <p>
+            Or whatever file it is you want to install from. This is the equivalent of             <code class="inline">npm install</code>
+            .
+        </p>
+        <p>
+            In terms of pinning requirements in your own project a la             <code class="inline">yarn lock</code>
+             or whatever the flavour of the month is, I&#x27;ve always been a fan of             <a href="https://github.com/jazzband/pip-tools">
+                pip-tools
+            </a>
+             - using this means you can safely ignore the last few years of Python packaging excitement and get on with your life.
+        </p>
+
+    </body>
+
+</html>
+
