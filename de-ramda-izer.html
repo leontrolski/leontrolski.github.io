@@ -85,7 +85,7 @@ const transformCompose = node => {
     let nextVar
     const firstVar = thisVar
     const body = []
-    for (const f of node.arguments.map(transform)){
+    for (const f of node.arguments.map(transform).reverse()){
         nextVar = newIdentifier()
         body.push(newVariableDeclaration(nextVar, newCallExpression(f, [thisVar])))
         thisVar = nextVar
@@ -242,7 +242,10 @@ const deRamda = () => {
 }
 deRamda()
 in_.oninput = () => {
-    try { deRamda() }
+    try {
+        deRamda()
+        errors.innerText = ""
+    }
     catch (error) { errors.innerText = error }
 }
 </script>
