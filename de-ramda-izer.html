@@ -1,0 +1,246 @@
+<script src="https://unpkg.com/prettier@2.3.0/standalone.js"></script>
+<script src="https://unpkg.com/prettier@2.3.0/parser-typescript.js"></script>
+<style>
+body{margin:0;}
+#top{grid-area:top;}#left{grid-area:left;}#right{grid-area:right;}#bottom{grid-area:bottom;}
+article{height:100%;width:100%;display:grid;grid-template:
+    "top    top"    6em
+    "left   right"  auto
+    "bottom bottom" 10em}
+textarea{border:solid black 2px;}
+section{padding:1rem;}
+</style>
+<article>
+    <section id="top">
+        Is your friend (or your <a href="https://github.com/leontrolski/fussball/commit/227774271b7fd9c46aac81a3c3c68f327ff53d12#diff-58417e0f781b6656949d37258c8b9052ed266e2eb7a5163cad7b0863e6b2916aR9">
+        previous self</a>) suffering from a bad case of Haskell envy?
+        <br>
+        Want to debug some intermediary values?
+        <br>
+        Just fancy just using some plain' ol' javascript again?
+        <br>
+        Enter the de-ramda-izer. See the page source for how it works.
+    </section>
+    <textarea id="left"></textarea>
+    <textarea id="right"></textarea>
+    <pre id="bottom"></section>
+</article>
+<script>
+const in_ = document.getElementById("left")
+const out_ = document.getElementById("right")
+const errors = document.getElementById("bottom")
+const sampleCode = `const groupCostBreakdownsByFromTimestamp = (
+    groupedCostBreakdown: {
+        [K: string]: BillCostBreakdown;
+    },
+    item: BillCostBreakdown,
+) =>
+    R.compose(
+        R.ifElse(
+            R.isNil,
+            () => R.assoc(item.fromTimestamp.toString(), item, groupedCostBreakdown),
+            (existing) =>
+                R.assoc(
+                    item.fromTimestamp.toString(),
+                    {
+                        ...existing,
+                        amount: item.amount + existing.amount,
+                        units: item.units + existing.units,
+                    },
+                    groupedCostBreakdown,
+                ),
+        ),
+        (groupedCostBreakdown: { [K: string]: BillCostBreakdown }) =>
+            groupedCostBreakdown[item.fromTimestamp.toString()],
+    )(groupedCostBreakdown)
+`
+in_.value = sampleCode
+
+const PREFIX = "_r"
+// from https://github.com/JamesHenry/typescript-estree/blob/500db9339ba798a0ab13fce321a7af54071e4c59/src/estree/spec.ts
+const KEYS_TO_CRAWL = ["alternate",  "argument",  "arguments",  "async",  "await",  "block",  "body",  "callee",  "cases",  "computed",  "consequent",  "declaration",  "declarations",  "delegate",  "directive",  "discriminant",  "elements",  "exported",  "expression",  "expressions",  "finalizer",  "generator",  "handler",  "id",  "imported",  "init",  "key",  "kind",  "label",  "left",  "local",  "meta",  "method",  "object",  "operator",  "param",  "params",  "prefix",  "properties",  "property",  "quasi",  "quasis",  "right",  "shorthand",  "source",  "sourceType",  "specifiers",  "static",  "superClass",  "tag",  "tail",  "test",  "type",  "update",  "value"]
+const isNode = o => o && o.type
+const clone = o => JSON.parse(JSON.stringify(o))
+
+let i = 1
+const newIdentifier = () => ({type: "Identifier", name: `${PREFIX}${i++}`})
+const looksLikeIdentifier = node => node.name && node.name.slice(0, PREFIX.length) === PREFIX
+const newVariableDeclaration = (id, init) => ({
+    type: "VariableDeclaration",
+    declarations: [{type: "VariableDeclarator", id, init}],
+    kind: "const"
+})
+const newCallExpression = (callee, arguments) => ({
+    type: "CallExpression",
+    callee,
+    arguments,
+})
+const looksLikeCompose = node => (
+    node.type === "CallExpression" &&
+    node.callee.type === "MemberExpression" &&
+    `${node.callee.object.name}.${node.callee.property.name}` === "R.compose"
+)
+const transformCompose = node => {
+    let thisVar = newIdentifier()
+    let nextVar
+    const firstVar = thisVar
+    const body = []
+    for (const f of node.arguments.map(transform)){
+        nextVar = newIdentifier()
+        body.push(newVariableDeclaration(nextVar, newCallExpression(f, [thisVar])))
+        thisVar = nextVar
+    }
+    body.push({
+        type: "ReturnStatement",
+        argument: nextVar
+    })
+    return {
+        type: "ArrowFunctionExpression",
+        params: [firstVar],
+        body: {type: "BlockStatement", body},
+        expression: true,
+    }
+}
+const looksLikeAssoc = node => (
+    node.type === "CallExpression" &&
+    node.callee.type === "MemberExpression" &&
+    `${node.callee.object.name}.${node.callee.property.name}` === "R.assoc"
+)
+const transformAssoc = node => {
+    const [key, value, argument] = node.arguments
+    return {
+        type: "ObjectExpression",
+        properties: [
+            {type: "SpreadElement", argument: transform(argument)},
+            {type: "Property", key: transform(key), value: transform(value), computed: true},
+        ]
+    }
+}
+const looksLikeIfElse = node => (
+    node.type === "CallExpression" &&
+    node.callee.type === "MemberExpression" &&
+    `${node.callee.object.name}.${node.callee.property.name}` === "R.ifElse"
+)
+const transformIfElse = node => {
+    const firstVar = newIdentifier()
+    const [test, consequent, alternate] = node.arguments
+    return {
+        type: "ArrowFunctionExpression",
+        params: [firstVar],
+        body: {
+            type: "ConditionalExpression",
+            test: newCallExpression(transform(test), [firstVar]),
+            consequent: newCallExpression(transform(consequent), [firstVar]),
+            alternate: newCallExpression(transform(alternate), [firstVar]),
+        },
+        expression: true,
+    }
+}
+const looksLikeInLineCall = node => (
+    node.type === "CallExpression" &&
+    node.arguments.length === 1 &&
+    node.callee.type === "ArrowFunctionExpression" &&
+    node.callee.body.type === "BlockStatement" &&
+    node.callee.body.body.length &&
+    node.callee.body.body[0].type === "VariableDeclaration" &&
+    node.callee.body.body[0].declarations[0].type === "VariableDeclarator" &&
+    node.callee.body.body[0].declarations[0].init.type === "CallExpression" &&
+    node.callee.body.body[0].declarations[0].init.arguments.length === 1 &&
+    looksLikeIdentifier(node.callee.body.body[0].declarations[0].init.arguments[0])
+)
+const transformInlineCall = node => {
+    node = clone(node)
+    node.callee.body.body[0].declarations[0].init.arguments[0] = node.arguments[0]
+    node.callee.body.wasInlined = true
+    return node.callee.body
+}
+const looksLikeInLineCall2 = node => (
+    node.type === "CallExpression" &&
+    node.arguments.length === 1 &&
+    node.callee.type === "ArrowFunctionExpression" &&
+    node.callee.body.type === "ConditionalExpression" &&
+    node.callee.body.test.type === "CallExpression" &&
+    node.callee.body.test.arguments.length === 1 &&
+    looksLikeIdentifier(node.callee.body.test.arguments[0]) &&
+    node.callee.body.consequent.type === "CallExpression" &&
+    node.callee.body.consequent.arguments.length === 1 &&
+    looksLikeIdentifier(node.callee.body.consequent.arguments[0]) &&
+    node.callee.body.alternate.type === "CallExpression" &&
+    node.callee.body.alternate.arguments.length === 1 &&
+    looksLikeIdentifier(node.callee.body.alternate.arguments[0])
+)
+const transformInlineCall2 = node => {
+    node = clone(node)
+    node.callee.body.test.arguments[0] = node.arguments[0]
+    node.callee.body.consequent.arguments[0] = node.arguments[0]
+    node.callee.body.alternate.arguments[0] = node.arguments[0]
+    return node.callee.body
+}
+const looksLikeWasInlined = node => (
+    node.type === "VariableDeclaration" &&
+    node.declarations.length === 1 &&
+    node.declarations[0].init.wasInlined
+)
+const transformInlined = function*(node){
+    blockBody = [...node.declarations[0].init.body]
+    returnStatement = blockBody.pop()
+    for (const v of blockBody) yield v
+    yield {...node, declarations: [{...node.declarations[0], init: returnStatement.argument}]}
+}
+const transform = node => {
+    if (!isNode(node)) return node
+    if (looksLikeCompose(node)) return transformCompose(node)
+    if (looksLikeAssoc(node)) return transformAssoc(node)
+    if (looksLikeIfElse(node)) return transformIfElse(node)
+    if (looksLikeInLineCall(node)) return transformInlineCall(node)
+    if (looksLikeInLineCall2(node)) return transformInlineCall2(node)
+    node = {...node}
+
+    if (Array.isArray(node.body)){
+        const body = []
+        for (const v of node.body){
+            if (looksLikeWasInlined(v)) for (const w of transformInlined(v)) body.push(w)
+            else body.push(v)
+        }
+        node.body = body
+    }
+
+    for (const k of KEYS_TO_CRAWL){
+        const v = node[k]
+        if (v === undefined) continue
+        if (Array.isArray(v)) node[k] = v.map(transform)
+        else node[k] = transform(v)
+    }
+    return node
+}
+const strip = o => {
+    if (Array.isArray(o)) o.map(strip)
+    else if (isNode(o)){
+        delete o.loc
+        delete o.range
+        delete o.tokens
+        for (const [_, v] of Object.entries(o)) strip(v)
+    }
+}
+const deRamda = () => {
+    const pretty = prettier.format(in_.value, {
+        plugins: prettierPlugins,
+        semi: false,
+        parser(text, args) {
+            let ast = prettierPlugins.typescript.parsers.typescript.parse(text)
+            i = 1
+            ast = transform(ast)
+            ast = transform(ast)
+            ast = transform(ast)
+            window.ast = ast
+            return ast
+        },
+    })
+    out_.value = pretty
+}
+deRamda()
+in_.oninput = () => {
+    try { deRamda() }
+    catch (error) { errors.innerText = error }
+}
+</script>
