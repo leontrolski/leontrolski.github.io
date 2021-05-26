@@ -226,6 +226,8 @@ const deRamda = () => {
     const pretty = prettier.format(in_.value, {
         plugins: prettierPlugins,
         semi: false,
+        arrowParens: "avoid",
+        tabWidth: 4,
         parser(text, args) {
             let ast = prettierPlugins.typescript.parsers.typescript.parse(text)
             i = 1
