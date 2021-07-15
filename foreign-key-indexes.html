@@ -1,0 +1,86 @@
+<html>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <head>
+        <title>
+            leontrolski -             foreign key indexes
+        </title>
+        <style>
+            
+            body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 63%;}
+            @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+            pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
+            a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
+            a:hover {border-bottom: 0;}
+            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em;}
+            blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
+            details {border-bottom:solid 5px gray;}
+        
+        </style>
+        <link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js">
+
+        </script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js">
+
+        </script>
+
+    </head>
+    <body>
+        <a href="index.html">
+            <img src="pic.png" style="height:2em">
+            ⇦
+        </a>
+        <h1>
+            Don&#39;t get bitten by missing foreign key indexes
+        </h1>
+        <p>
+            Postgres doesn&#39;t give you indexes on foreign keys by default (unlike primary keys). This makes some sense when you think about it - there&#39;s no necessity for them in order to keep the constraint checking efficient.
+        </p>
+        <p>
+            In reality, you nearly always want an index on any foreign keys - every time you join tables on said key. I lost track of the number of times I&#39;ve hit performance bugs due to this, so I added a test to check, feel free to steal:
+        </p>
+        <pre class="language-python"><code># lovingly copy-pasta-ed from stackoverflow
+foreign_key_sql = &#34;&#34;&#34;
+SELECT
+    tc.table_name,
+    kcu.column_name,
+    tc.constraint_name
+FROM information_schema.table_constraints AS tc
+JOIN information_schema.key_column_usage AS kcu
+    ON tc.constraint_name = kcu.constraint_name
+    AND tc.table_schema = kcu.table_schema
+LEFT OUTER JOIN (
+    SELECT
+        t.relname AS table_name,
+        a.attname AS column_name,
+        i.relname AS index_name
+    FROM
+        pg_class AS t,
+        pg_class AS i,
+        pg_index AS ix,
+        pg_attribute AS a
+    WHERE
+        t.oid = ix.indrelid
+        AND i.oid = ix.indexrelid
+        AND a.attrelid = t.oid
+        AND a.attnum = ANY(ix.indkey)
+        AND t.relkind = &#39;r&#39;
+) as indexes
+ON tc.table_name = indexes.table_name AND kcu.column_name = indexes.column_name
+WHERE tc.constraint_type = &#39;FOREIGN KEY&#39;
+AND indexes.index_name IS NULL
+&#34;&#34;&#34;
+
+def assert_all_foreign_keys_have_indexes(engine: Engine) -&gt; None:
+    rows = list(engine.execute(foreign_key_sql))
+    if rows:
+        msg = &#34;The following foreign keys have no index:\n&#34; + &#34;\n&#34;.join(
+            f&#34;{table=} {column=} {foreign_key=}&#34;
+            for table, column, foreign_key in rows
+        )
+        raise RuntimeError(msg)</code>
+</pre>
+
+    </body>
+
+</html>

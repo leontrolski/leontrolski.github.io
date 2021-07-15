@@ -3,8 +3,8 @@ cd "$(dirname "$0")/.."
 
 for SRC in $(ls src); do
     if [ "$SRC" != 'base.dn.js' ]; then
-        FILENAME=$(dnjs "src/$SRC" --raw --name filename)
-        dnjs "src/$SRC" --html > .tmp.html
+        FILENAME=$(dnjs --raw --name filename "src/$SRC")
+        dnjs --html "src/$SRC" > .tmp.html
         mv .tmp.html $FILENAME
         echo "generated $FILENAME"
     fi
