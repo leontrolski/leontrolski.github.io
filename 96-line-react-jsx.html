@@ -1,0 +1,160 @@
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<head>
+    <title>leontrolski - 96 line React</title>
+    <style>
+        body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 63%;}
+        @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+        pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
+        a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
+        a:hover {border-bottom: 0;}
+    </style>
+
+    <!-- here it is! -->
+    <script defer src="96-line-react-jsx.js"></script>
+
+    <link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</head>
+<body class="language-javascript">
+    <a href="index.html"><img style="height:2em" src="pic.png"/>⇦</a>
+    <h1>96 line React with JSX</h1>
+    <p>
+        A while ago, I wrote a short post showing a minimal <a href="33-line-react.html">33 line React</a>. A lot of the comments focused on the <a href="https://mithril.js.org/">Mithril</a>-like syntax for the virtual DOM. So that we can ignore that aspect, here is a <a href="https://github.com/leontrolski/leontrolski.github.io/blob/master/96-line-react-jsx.js">96 line React with a JSX compiler</a>.
+    </p>
+    <h2>Noughts and crosses</h2>
+    <p>
+        We're going to make this noughts and crosses game:
+        <div id="noughts"></div>
+    </p>
+    <style>
+        .o{background:red;}
+        .x{background:blue;}
+        .cell{height:4em;width:4em;border:1px solid black;}
+    </style>
+    <script type="text/jsx">
+let currentPlayer = "o"
+let winner = null
+const g = [
+    ["", "", ""],
+    ["", "", ""],
+    ["", "", ""],
+]
+
+const move = (value, i, j) => {
+    if (value !== "") return
+    g[i][j] = currentPlayer
+    currentPlayer = currentPlayer === "x" ? "o" : "x"
+    const winners = [
+        ...[0, 1, 2].map((i) => [g[i][0], g[i][1], g[i][2]].join("")),
+        ...[0, 1, 2].map((j) => [g[0][j], g[1][j], g[2][j]].join("")),
+        [g[0][0], g[1][1], g[2][2]].join(""),
+        [g[2][0], g[1][1], g[0][2]].join(""),
+    ]
+    if (winners.includes("xxx")) winner = "x"
+    if (winners.includes("ooo")) winner = "o"
+    renderNoughts()
+}
+
+const Cell = ({ value, i, j }) => (
+    <button class="cell" onclick={() => move(value, i, j)}>
+        {value}
+    </button>
+)
+
+const Noughts = () => (
+    <div>
+        {winner ? <marquee>winner: {winner}</marquee> : <h3>current player: {currentPlayer}</h3>}
+        <table>
+            {g.map((row, i) => (
+                <tr>
+                    {row.map((value, j) => (
+                        <td class={value}>
+                            <Cell value={value} i={i} j={j} />
+                        </td>
+                    ))}
+                </tr>
+            ))}
+        </table>
+    </div>
+)
+
+const renderNoughts = () => m.render(document.getElementById("noughts"), { children: [Noughts()] })
+renderNoughts()
+    </script>
+    <p>
+        Now let's look at the code, you can also just view the page source if you want.
+    </p>
+    <pre><code>let currentPlayer = "o"
+let winner = null
+const g = [
+    ["", "", ""],
+    ["", "", ""],
+    ["", "", ""],
+]
+
+const move = (value, i, j) => {
+    // ... game logic goes here
+    renderNoughts()
+}
+
+
+const Cell = ({ value, i, j }) => (
+    &lt;button class="cell" onclick={() => move(value, i, j)}>
+        {value}
+    &lt;/button>
+)
+
+const Noughts = () => (
+    &lt;div>
+        {winner ? &lt;marquee>winner: {winner}&lt;/marquee> : &lt;h3>current player: {currentPlayer}&lt;/h3>}
+        &lt;table>
+            {g.map((row, i) => (
+                &lt;tr>
+                    {row.map((value, j) => (
+                        &lt;td class={value}>
+                            &lt;Cell value={value} i={i} j={j} />
+                        &lt;/td>
+                    ))}
+                &lt;/tr>
+            ))}
+        &lt;/table>
+    &lt;/div>
+)
+
+const renderNoughts = () => m.render(document.getElementById("noughts"), { children: [Noughts()] })
+renderNoughts()
+</code></pre>
+    <p>
+        You can read the bread-and-butter of how it works in the <a href="33-line-react.html">original post</a>, the only difference is, rather than use the simpler hyperscript syntax, we compile any <code>&lt;script type="text/jsx"></code> scripts to plain ol' Javascript with <code>m.parseJsx(source)</code>.
+    </p>
+    <p>
+        So for example:
+    </p>
+    <pre><code>const Cell = ({ value, i, j }) => (
+    &lt;button class="cell" onclick={() => move(value, i, j)}>
+        {value}
+    &lt;/button>
+)</code></pre>
+    <p>
+        Gets compiled to:
+    </p>
+    <pre><code>const Cell = ({ value, i, j }) => (
+    m("button", {"class": "cell", "onclick": () => move(value, i, j), }, " ", value, " ")
+)</code></pre>
+    <em>
+        <h3>Compiler caveats</h3>
+        <ul>
+            <li>I've tried to handle nested strings/templates/components etc, but there will be loads of edge cases this compiler doesn't handle (known example: it doesn't handle html comments).</li>
+            <li>It determines that we're entering JSX when there is a <code>&lt;</code>  <b>not</b> followed by an equals sign or a space. I'm not sure what proper JSX compilers do.</li>
+            <li>There's basically no error handling, if you pass in invalid JSX, you're on your own.</li>
+        </ul>
+    </em>
+    <script>
+        // notes:
+        // - determines that it's not less-than with trailing space
+        // - doesn't handle html comments
+        // - <></>
+    </script>
+</body>
