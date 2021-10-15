@@ -1,0 +1,202 @@
+<html>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <head>
+        <title>
+            leontrolski -             SQLAlchemy relationships TLDR
+        </title>
+        <style>
+            
+            body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 63%;}
+            @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+            pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
+            a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
+            a:hover {border-bottom: 0;}
+            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em;}
+            blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
+            details {border-bottom:solid 5px gray;}
+        
+        </style>
+        <link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js">
+
+        </script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js">
+
+        </script>
+
+    </head>
+    <body>
+        <a href="index.html">
+            <img src="pic.png" style="height:2em">
+            ⇦
+        </a>
+        <h1>
+            SQLAlchemy relationship loading techniques TLDR
+        </h1>
+        <p>
+            The             <a href="https://docs.sqlalchemy.org/en/14/orm/loading_relationships.html">
+                SQLAlchemy docs for relationship loading techniques
+            </a>
+             are great and have some useful examples.
+        </p>
+        <p>
+            This is a TLDR for those in a hurry who can never remember the difference between a             <code class="inline">subqueryload</code>
+             and a             <code class="inline">selectinload</code>
+            .
+        </p>
+        <br>
+        <details>
+            <summary>
+                Users have many Baskets, simple! Here&#39;s our set up code.
+            </summary>
+            <pre class="language-python"><code>from sqlalchemy import Column, Integer, String, create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import (
+    backref,
+    relationship,
+    sessionmaker,
+    lazyload,
+    joinedload,
+    subqueryload,
+    selectinload,
+    raiseload,
+    noload,
+)
+from sqlalchemy.schema import ForeignKey
+
+Base = declarative_base()
+
+
+class User(Base):
+    __tablename__ = &#34;user&#34;
+    user_id = Column(Integer, primary_key=True)
+    name = Column(String)
+
+
+class Basket(Base):
+    __tablename__ = &#34;basket&#34;
+    basket_id = Column(Integer, primary_key=True)
+    user_id = Column(String, ForeignKey(User.user_id))
+    price = Column(Integer)
+    user = relationship(User, backref=backref(&#34;baskets&#34;, lazy=&#34;raise&#34;))
+
+
+engine = create_engine(&#34;sqlite://&#34;, echo=True)
+Base.metadata.create_all(engine)
+session = sessionmaker(engine)()
+
+
+users = [
+    User(
+        name=&#34;ben&#34;,
+        baskets=[Basket(price=1), Basket(price=2)],
+    ),
+    User(
+        name=&#34;si&#34;,
+        baskets=[Basket(price=3), Basket(price=4)],
+    ),
+    User(
+        name=&#34;si&#34;,
+        baskets=[Basket(price=5)],
+    ),
+]
+session.add_all(users)
+session.commit()</code>
+</pre>
+
+        </details>
+        <br>
+        <br>
+        <b>
+            Note from the above:
+        </b>
+        <pre class="language-python"><code>backref=backref(&#34;baskets&#34;, lazy=&#34;raise&#34;)</code>
+</pre>
+        <b>
+            This should probably be the default as it forces you to pick a loading technique at query time.
+        </b>
+        <br>
+        <br>
+        <p>
+            The N+1 (where N is the number of Users) looking bit of code we&#39;re going to write at is:
+        </p>
+        <pre class="language-python"><code>qry = (
+    session.query(User)
+    .filter(User.name == &#34;si&#34;)
+    .options(someloadingtechnique(User.baskets))
+)
+
+for user in qry:  # Point A
+    print(f&#34;User: {user.user_id}&#34;)
+
+    for basket in user.baskets:  # Point B
+        print(f&#34;Basket {basket.basket_id}&#34;)</code>
+</pre>
+        <p>
+            We&#39;re going to swap out             <code class="inline">someloadingtechnique</code>
+             with each of SQLAlchemy&#39;s and inspect the SQL.
+        </p>
+        <br>
+        <pre class="language-python"><code>.options(lazyload(User.baskets))  # SQLAlchemy&#39;s default on a relationship</code>
+</pre>
+        <pre class="language-sql"><code>-- At point A
+SELECT ...
+FROM user
+WHERE user.name = ?</code>
+</pre>
+        <pre class="language-sql"><code>-- Each time at point B - classic N+1!
+SELECT ...
+FROM basket
+WHERE ? = basket.user_id</code>
+</pre>
+        <br>
+        <pre class="language-python"><code>.options(joinedload(User.baskets))  # I&#39;m informed this is similar to Django&#39;s select_related</code>
+</pre>
+        <pre class="language-sql"><code>-- At point A, nothing at point B
+SELECT ...
+FROM user
+LEFT OUTER JOIN basket ON user.user_id = basket.user_id
+WHERE user.name = ?</code>
+</pre>
+        <br>
+        <pre class="language-python"><code>.options(subqueryload(User.baskets))</code>
+</pre>
+        <pre class="language-sql"><code>-- At point A, nothing at point B
+SELECT ...
+FROM (
+    SELECT user.user_id AS user_user_id
+    FROM user
+    WHERE user.name = ?
+) AS anon_1
+JOIN basket ON anon_1.user_user_id = basket.user_id</code>
+</pre>
+        <br>
+        <pre class="language-python"><code>.options(selectinload(User.baskets))  # I&#39;m informed this is similar to Django&#39;s prefetch_related</code>
+</pre>
+        <pre class="language-sql"><code>-- Both at point A!
+SELECT ...
+FROM user
+WHERE user.name = ?
+
+SELECT ...
+FROM user
+JOIN basket ON user.user_id = basket.user_id
+WHERE user.user_id IN (?, ?) -- The ids we SELECT-ed above earlier
+
+-- SQLAlchemy &#34;joins&#34; the results together in memory</code>
+</pre>
+        <br>
+        <pre class="language-python"><code>.options(raiseload(User.baskets))
+
+# At point B, raises an error, no second query performed</code>
+</pre>
+        <br>
+        <pre class="language-python"><code>.options(noload(User.baskets))
+
+# At point B, no second query performed
+# user.baskets is just an empty list</code>
+</pre>
+
+    </body>
+
+</html>
