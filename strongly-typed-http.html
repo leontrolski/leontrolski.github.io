@@ -1,0 +1,246 @@
+<html>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <head>
+        <title>
+            leontrolski -             strongly typed http
+        </title>
+        <style>
+            
+            body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 63%;}
+            @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+            pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
+            a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
+            a:hover {border-bottom: 0;}
+            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em; white-space: nowrap;}
+            blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
+            details {border-bottom:solid 5px gray;}
+        
+        </style>
+        <link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js">
+
+        </script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js">
+
+        </script>
+
+    </head>
+    <body>
+        <a href="index.html">
+            <img src="pic.png" style="height:2em">
+            ⇦
+        </a>
+        <h1>
+            Strongly typed Web 1.0 with TypeScript
+        </h1>
+        <em>
+            Or more generically - &#34;Using declarative descriptions to strongly type system boundaries with TypeScript&#34;.
+        </em>
+        <p>
+            You&#39;re building your Web 1.0 site (maybe more             <a href="https://en.wikipedia.org/wiki/Web_2.0#Technologies">
+                Web 1.5
+            </a>
+            ), you&#39;ve got proper             <code class="inline">&lt;form&gt;</code>
+            s,             <code class="inline">/urls/with/:params</code>
+            ,             <code class="inline">?request=query&amp;parameters=here</code>
+            . All the good stuff. You&#39;re rendering your html in the same codebase you&#39;re serving routes from, and you&#39;re doing it all in TypeScript.
+        </p>
+        <p>
+            How can we strongly type all the interactions between client and server so that we can&#39;t make stupid mistakes like:
+        </p>
+        <pre class="language-html"><code>&lt;form method=&#34;POST&#34; action=&#34;/foo&#34;&gt;
+    &lt;input name=&#34;achieve&#34;&gt;
+&lt;/form&gt;</code>
+</pre>
+        <p>
+            With a typo in our Express app:
+        </p>
+        <pre class="language-javascript"><code>app.post(&#34;/foo&#34;, (req, res) =&gt; {
+    const achieve = req.body.acheive  // note the typo!
+    ...
+})</code>
+</pre>
+        <h2>
+            Let&#39;s go!
+        </h2>
+        <p>
+            I&#39;m going to come back to the implementation, for now let&#39;s just write some staticly typed GET links. Firstly, let&#39;s describe our routes:
+        </p>
+        <pre class="language-javascript"><code>import * as http from &#34;./lib/http&#34;  // our small helper library - see below
+
+const get = {
+    index: {
+        url: &#34;/&#34;,
+        params: [],
+        query: [],
+        queryNotRequired: [],
+    },
+    &#34;/v1/:foo&#34;: {
+        url: &#34;/v1/:foo&#34;,
+        params: [&#34;foo&#34;],
+        query: [&#34;a&#34;, &#34;b&#34;],
+        queryNotRequired: [&#34;c&#34;],
+    },
+} as const
+const GET = http.makeGET(get)</code>
+</pre>
+        <ul>
+            <li>
+                First we have our index, this has no params and no query parameters - simple.
+            </li>
+            <li>
+                Next we have the route                 <code class="inline">/v1/:foo</code>
+                , this has one param and three query parameters, two of which are required.
+            </li>
+
+        </ul>
+        <p>
+            In our template, we now want to make a link like:
+        </p>
+        <pre class="language-html"><code>&lt;a href=&#34;/v1/hey?a=A&amp;b=B&#34;&gt;...&lt;/a&gt;</code>
+</pre>
+        <p>
+            We&#39;re dynamically rendering the element from             <a href="https://reactjs.org/docs/react-dom-server.html">
+                React
+            </a>
+             or             <a href="https://github.com/MithrilJS/mithril-node-render#mithril-node-render">
+                Mithril
+            </a>
+             or whatever.
+        </p>
+        <p>
+            With our declarative definition set up, we can now use:
+        </p>
+        <pre class="language-javascript"><code>href = GET[&#34;/v1/:foo&#34;].makeUrl({foo: &#34;hey&#34;}, {a: &#34;A&#34;, b: &#34;B&#34;})</code>
+</pre>
+        <p>
+            Let&#39;s see with typechecking in VSCode:
+        </p>
+        <video autoplay loop muted src="videos/get-from-client.webm" style="
+        margin: auto;
+        display: block;
+        max-width: calc(min(80em, 100%));
+        box-shadow: 0px 0px 6px 2px #0000002b;
+        margin-bottom: 2em;
+    ">
+
+        </video>
+        <p>
+            All our parameters were typechecked, wahoo!
+        </p>
+        <p>
+            Now, let&#39;s look at the server-side in Express:
+        </p>
+        <pre class="language-javascript"><code>app.get(GET[&#34;/v1/:foo&#34;].url, (req, res) =&gt; {
+    const { params, query } = GET[&#34;/v1/:foo&#34;].req(req)
+})</code>
+</pre>
+        <p>
+            And again with typechecking:
+        </p>
+        <video autoplay loop muted src="videos/get-from-server.webm" style="
+        margin: auto;
+        display: block;
+        max-width: calc(min(30em, 100%));
+        box-shadow: 0px 0px 6px 2px #0000002b;
+        margin-bottom: 2em;
+    ">
+
+        </video>
+        <p>
+            A very similar approach is taken for POST routes.
+        </p>
+        <p>
+            The description:
+        </p>
+        <pre class="language-javascript"><code>const post = {
+    &#34;/v2/:bar&#34;: {
+        url: &#34;/v2/:bar&#34;,
+        params: [&#34;bar&#34;],
+        body: [&#34;email&#34;, &#34;message&#34;],
+    },
+} as const
+const POST = http.makePOST(post)</code>
+</pre>
+        <p>
+            During rendering:
+        </p>
+        <pre class="language-javascript"><code>const form = POST[&#34;/v2/:bar&#34;].makeForm({bar: &#34;there&#34;})</code>
+</pre>
+        <p>
+            Where             <code class="inline">form</code>
+             has the following to help build your html:             <code class="inline">.form</code>
+            ,             <code class="inline">.inputs</code>
+            ,             <code class="inline">.assertAllInputsReferenced()</code>
+             - this final bit uses some             <code class="inline">Proxy</code>
+             magic to ensure you reference all the form body parts that you needed to.
+        </p>
+        <p>
+            Now for the server-side usage in Express:
+        </p>
+        <video autoplay loop muted src="videos/post-from-server.webm" style="
+        margin: auto;
+        display: block;
+        max-width: calc(min(30em, 100%));
+        box-shadow: 0px 0px 6px 2px #0000002b;
+        margin-bottom: 2em;
+    ">
+
+        </video>
+        <br>
+        <br>
+        <h2>
+            How does it work?
+        </h2>
+        <p>
+            I&#39;m not going to go into crazy detail, you can inspect             <a href="https://github.com/leontrolski/strongly-typed-http/blob/main/http.ts">
+                the source
+            </a>
+             yourself. In summary, these bits of TypeScript were used heavily (see the video below):
+        </p>
+        <pre class="language-javascript"><code>const l = [&#34;a&#34;, &#34;b&#34;] as const  // make a value&#39;s interior visible to TypeScript
+const foo = {bar: l} as const
+type Bar = (typeof foo)[&#34;bar&#34;]  // convert readonly -&gt; type and access a property
+type BarUnion = Bar[number]  // convert literal[] -&gt; union of literals
+type BarMap = { [K in BarUnion]?: string}  // make a map from a union of strings
+const maker = &lt;L extends readonly string[]&gt;(l: L): L[number] =&gt; l[0]  // use generics
+const made = maker&lt;typeof l&gt;(l)</code>
+</pre>
+        <video autoplay loop muted src="videos/nice-typescript.webm" style="
+        margin: auto;
+        display: block;
+        max-width: calc(min(80em, 100%));
+        box-shadow: 0px 0px 6px 2px #0000002b;
+        margin-bottom: 2em;
+    ">
+
+        </video>
+        <h2>
+            Conclusions
+        </h2>
+        <ul>
+            <li>
+                I now have compile time type safety for my old-skool web pages, feels good.
+            </li>
+            <li>
+                The big takeaway for me was - use                 <code class="inline">as const</code>
+                 + generics to bridge the run-time/compile-time boundary.
+            </li>
+            <li>
+                There are probably more generic ways of doing this kind of thing,                 <a href="https://gcanti.github.io/io-ts/modules/Kleisli.ts.html#fromstruct">
+                    io-ts
+                </a>
+                 is in this space (but requires you and your colleagues to graduate from Kleisli&#39;s school of Functors and Monadry).
+            </li>
+            <li>
+                In Python land                 <a href="https://fastapi.tiangolo.com/#example-upgrade">
+                    FastAPI
+                </a>
+                 has done a brilliant job of doing this kind of thing, with nice validation methods and swagger docs baked in. If you haven&#39;t seen it, look through the docs - every language should have an equivalent framework.
+            </li>
+
+        </ul>
+
+    </body>
+
+</html>
