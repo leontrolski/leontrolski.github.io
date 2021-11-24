@@ -310,63 +310,152 @@ const g = [['', '', ''], ['', '', ''], ['', '', '']]  // grid&lt;/code&gt;&lt;/p
             </description>
         </item>
         <item>
-            <title>Can we contain mutable data in imperative languages?</title>
-            <pubDate>Sun, 21 Feb 2021 20:19:52 +0000</pubDate>
-            <link>https://leontrolski.github.io/alter.html</link>
-            <guid>https://leontrolski.github.io/alter.html</guid>
+            <title>96 line React with JSX</title>
+            <pubDate>Mon, 23 Aug 2021 13:16:39 +0100</pubDate>
+            <link>https://leontrolski.github.io/96-line-react-jsx.html</link>
+            <guid>https://leontrolski.github.io/96-line-react-jsx.html</guid>
             <description>
 &amp;#x26a0;&amp;#xfe0f; This article contains JS code. It might not work properly in your feed reader.
-You might want to visit the &lt;a href="https://leontrolski.github.io/alter.html"&gt;original article&lt;/a&gt;.
-        &lt;/style&gt;&lt;link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet"&gt;&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js"&gt;&lt;/script&gt;&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js"&gt;&lt;/script&gt;&lt;/head&gt;&lt;body&gt;&lt;a href="index.html"&gt;&lt;img src="pic.png" style="height:2em"&gt;⇦&lt;/a&gt;&lt;h1&gt;Can we contain mutable data in imperative languages?&lt;/h1&gt;&lt;p&gt;Using immutable data confers all sorts of advantages, in practice, the main ones are:&lt;/p&gt;&lt;ul&gt;&lt;li&gt;It removes nasty &amp;quot;action at a distance&amp;quot; bugs.&lt;/li&gt;&lt;li&gt;It opens the door for easy comparison of values.&lt;/li&gt;&lt;li&gt;It can make concurrent programming easier.&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;This post briefly surveys the territory, then proposes a small syntactic addition to Javascript that would help constrain mutability, while having a clear transition path from existing code (no funky FP stuff). The examples are in Javascript, but the same concept could be ported to Python and other high level languages with mutable data.&lt;/p&gt;&lt;em&gt;If you&amp;#x27;re already familiar with immutable libraries in Javascript, feel free to jump to the &lt;a href="#proposal"&gt;proposal&lt;/a&gt;.&lt;/em&gt;&lt;h2&gt;What do we have now?&lt;/h2&gt;&lt;p&gt;The most well known &lt;a href="https://github.com/immutable-js/immutable-js"&gt;immutable library&lt;/a&gt; gives us a smorgasbord of new data structures, using them in practice can be a bit clunky:&lt;/p&gt;&lt;pre class="language-javascript"&gt;&lt;code&gt;const map1 = Map({a: 1, b: 2, c: 3})
-const map2 = map1.set(&amp;#x27;b&amp;#x27;, 50)&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Once you start updating large data nested structures, more gnarliness ensues. In introducing a non-native data-type we lose a number of syntactic/typing niceties - it seems that for most people, using new exotic data-types is not worth this hassle.&lt;/p&gt;&lt;p&gt;A more recent library that aims to solve these problems is &lt;a href="https://immerjs.github.io/immer/docs/introduction"&gt;immer&lt;/a&gt;, immer is really neat as it sidesteps the need for new data-types. &lt;em&gt;I even wrote a &lt;a href="https://github.com/leontrolski/immerframe"&gt;half baked Python port&lt;/a&gt; of it&lt;/em&gt;.&lt;/p&gt;&lt;p&gt;The example above becomes:&lt;/p&gt;&lt;pre class="language-javascript"&gt;&lt;code&gt;const map1 = { a: 1, b: 2, c: 3 }
-const map2 = produce(map1, draft =&amp;gt; {
-    draft.b = 50
-})&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Immer is a really cool idea and is designed well to work with contemporary frontend patterns, but suffers from two flaws:&lt;/p&gt;&lt;ul&gt;&lt;li&gt;&lt;code class="inline"&gt;draft&lt;/code&gt;is a mega magicy proxy object, its website lists a number of &lt;a href="https://immerjs.github.io/immer/docs/pitfalls"&gt;pitfalls&lt;/a&gt; resulting from this.&lt;/li&gt;&lt;li&gt;Immer can only go so far with structural sharing of data.&lt;/li&gt;&lt;/ul&gt;&lt;details&gt;&lt;summary&gt;Some detail on that second point.&lt;/summary&gt;&lt;p&gt;With a library that deals in built-in data types, it&amp;#x27;s only possible to structurally share data that&amp;#x27;s passed around by reference (basically objects and arrays, not strings or numbers). If we do:&lt;/p&gt;&lt;pre class="language-javascript"&gt;&lt;code&gt;const foo = { some massive nested object }
-const array1 = [foo]
-const array2 = produce(array1, draft =&amp;gt; {
-    array1.push(42)
-})&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Then &lt;code class="inline"&gt;array2[0]&lt;/code&gt;&lt;em&gt; is &lt;/em&gt;&lt;code class="inline"&gt;foo&lt;/code&gt;, we didn&amp;#x27;t have to duplicate anything in memory. Under the hood, &lt;code class="inline"&gt;array2&lt;/code&gt; is: some reference to &lt;code class="inline"&gt;foo&lt;/code&gt;, and the atomic value &lt;code class="inline"&gt;42&lt;/code&gt;.&lt;/p&gt;&lt;p&gt;However, if we did:&lt;/p&gt;&lt;pre class="language-javascript"&gt;&lt;code&gt;const array1 = [1, 2, 3, etc, 9999999]
-const array2 = produce(array1, draft =&amp;gt; {
-    array1.push(42)
-})&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Then under the hood &lt;code class="inline"&gt;array2&lt;/code&gt; is &lt;em&gt;not&lt;/em&gt; a reference to &lt;code class="inline"&gt;array2&lt;/code&gt; with &lt;code class="inline"&gt;42&lt;/code&gt; tacked on the end, it is a whole new array &lt;code class="inline"&gt;[1, 2, 3, etc, 9999999, 42]&lt;/code&gt;.&lt;/p&gt;&lt;p&gt;With the kind of data used in most frontend applications, this is not so much of a problem. If however we were writing a library that did involve mucking around with rather long arrays, this is a big problem vis-a-vis memory usage.&lt;/p&gt;&lt;/details&gt;&lt;p&gt;As a thought experiment, let&amp;#x27;s imagine what would happen if we baked the immer concept into the language...&lt;/p&gt;&lt;h2 id="proposal"&gt;Syntax proposal&lt;/h2&gt;&lt;p&gt;The proposed syntax consists of one new keyword, &lt;code class="inline"&gt;alter&lt;/code&gt;:&lt;/p&gt;&lt;pre class="language-javascript"&gt;&lt;code&gt;const map1 = { a: 1, b: 2, c: 3 }
-const map2 = alter (map1) {
-    map1.b = 50
-}&lt;/code&gt;&lt;/pre&gt;&lt;h2&gt;The rules&lt;/h2&gt;&lt;ul&gt;&lt;li&gt;Everything we do to mutate &lt;code class="inline"&gt;map1&lt;/code&gt; within the &lt;code class="inline"&gt;alter&lt;/code&gt; block applies only within the lexical scope of that block.&lt;/li&gt;&lt;li&gt;The block evaluates to the final value of &lt;code class="inline"&gt;map1&lt;/code&gt;.&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;The first rule is important, let&amp;#x27;s imagine we&amp;#x27;ve added a &lt;code class="inline"&gt;--disallow-mutating&lt;/code&gt; flag to node and attempted to run the following:&lt;/p&gt;&lt;pre class="language-javascript"&gt;&lt;code&gt;function nastyMutator(m){
-    m.b += 1
+You might want to visit the &lt;a href="https://leontrolski.github.io/96-line-react-jsx.html"&gt;original article&lt;/a&gt;.
+    &lt;h1&gt;96 line React with JSX&lt;/h1&gt;
+    &lt;p&gt;
+        A while ago, I wrote a short post showing a minimal &lt;a href="33-line-react.html"&gt;33 line React&lt;/a&gt;. A lot of the comments focused on the &lt;a href="https://mithril.js.org/"&gt;Mithril&lt;/a&gt;-like syntax for the virtual DOM. So that we can ignore that aspect, here is a &lt;a href="https://github.com/leontrolski/leontrolski.github.io/blob/master/96-line-react-jsx.js"&gt;96 line React with a JSX compiler&lt;/a&gt;.
+    &lt;/p&gt;
+    &lt;h2&gt;Noughts and crosses&lt;/h2&gt;
+    &lt;p&gt;
+        We're going to make this noughts and crosses game:
+        &lt;div id="noughts"&gt;&lt;/div&gt;
+    &lt;/p&gt;
+    &lt;style&gt;
+        .o{background:red;}
+        .x{background:blue;}
+        .cell{height:4em;width:4em;border:1px solid black;}
+    &lt;/style&gt;
+    &lt;script type="text/jsx"&gt;
+let currentPlayer = "o"
+let winner = null
+const g = [
+    ["", "", ""],
+    ["", "", ""],
+    ["", "", ""],
+]
+
+const move = (value, i, j) =&gt; {
+    if (value !== "") return
+    g[i][j] = currentPlayer
+    currentPlayer = currentPlayer === "x" ? "o" : "x"
+    const winners = [
+        ...[0, 1, 2].map((i) =&gt; [g[i][0], g[i][1], g[i][2]].join("")),
+        ...[0, 1, 2].map((j) =&gt; [g[0][j], g[1][j], g[2][j]].join("")),
+        [g[0][0], g[1][1], g[2][2]].join(""),
+        [g[2][0], g[1][1], g[0][2]].join(""),
+    ]
+    if (winners.includes("xxx")) winner = "x"
+    if (winners.includes("ooo")) winner = "o"
+    renderNoughts()
 }
-const map1 = { a: 1, b: 2, c: 3 }
-const map2 = alter (map1) {
-    nastyMutator(map1)
-}&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;The interpreter would raise an error for the second line at parse time.&lt;/p&gt;&lt;em&gt;Note that we&amp;#x27;re still allowing reassignment, so the following is permissable:&lt;/em&gt;&lt;pre class="language-javascript"&gt;&lt;code&gt;let map1 = { a: 1, b: 2, c: 3 }
-map1 = alter (map1) {
-    map1.b = 50
-}&lt;/code&gt;&lt;/pre&gt;&lt;h3&gt;Other syntax&lt;/h3&gt;&lt;p&gt;The block can just be the next single statement, as with &lt;code class="inline"&gt;if&lt;/code&gt; and &lt;code class="inline"&gt;for&lt;/code&gt;:&lt;/p&gt;&lt;pre class="language-javascript"&gt;&lt;code&gt;map1 = alter (map1) map1.b = 50&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Standard unpacking syntax would enable doing many things at once:&lt;/p&gt;&lt;pre class="language-javascript"&gt;&lt;code&gt;[c, d] = alter ([a, b]) {
-    c.foo = 1
-    b.bar = 2
-}&lt;/code&gt;&lt;/pre&gt;&lt;h1&gt;What do we win?&lt;/h1&gt;&lt;p&gt;We solve the problems we had with using specialist data types and with immer:&lt;/p&gt;&lt;ul&gt;&lt;li&gt;We can stick to boring objects and arrays and keep all our typing.&lt;/li&gt;&lt;li&gt;Within the &lt;code class="inline"&gt;alter&lt;/code&gt; block, the variable we specified at the beginning is just a plain &amp;#x27;ol value - no pitfalls resulting from proxy magic.&lt;/li&gt;&lt;li&gt;A clever interpreter would be able to do lots of structural sharing, so the following would be memory efficient:&lt;pre class="language-javascript"&gt;&lt;code&gt;const array1 = [1, 2, 3, etc, 9999999]
-const array2 = alter (array1) {
-    array1.push(42)
-}&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;Now let&amp;#x27;s think long term, let&amp;#x27;s imagine uptake is high - there&amp;#x27;s no need to install any libraries and converting existing code is easy, so why not - what happens then?&lt;/p&gt;&lt;p&gt;We can reach the stage where all the mutating in our codebase is contained within &lt;code class="inline"&gt;alter&lt;/code&gt; blocks - we can check this by running with our &lt;code class="inline"&gt;--disallow-mutating&lt;/code&gt; flag from earlier. (Maybe we add a &lt;code class="inline"&gt;mutate&lt;/code&gt; keyword for specific circumstances so we can do eg: &lt;code class="inline"&gt;mutate this.linepos += 1&lt;/code&gt;).&lt;/p&gt;&lt;p&gt;Now all our data outside of &lt;code class="inline"&gt;alter&lt;/code&gt; blocks is immutable, we can:&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Reason more easily about the code - no mutation at a distance.&lt;/li&gt;&lt;li&gt;Do efficient comparisons on stuff, this opens the door for objects in sets and as keys in maps.&lt;/li&gt;&lt;li&gt;The interpreter can now do various performance tricks.&lt;/li&gt;&lt;/ul&gt;&lt;h2&gt;Application to global-state-styley frontends&lt;/h2&gt;&lt;p&gt;As the syntax is lifted straight from immer, we can trivially update &lt;a href="https://immerjs.github.io/immer/docs/example-reducer"&gt;their reducer pattern example&lt;/a&gt;:&lt;/p&gt;&lt;pre class="language-javascript"&gt;&lt;code&gt;const byId = (state, action) =&amp;gt; alter (state) {
-    switch (action.type) {
-        case RECEIVE_PRODUCTS:
-            action.products.forEach(product =&amp;gt; {
-                state[product.id] = product
-            })
-    }
-}&lt;/code&gt;&lt;/pre&gt;&lt;h2&gt;Python equivalent&lt;/h2&gt;&lt;p&gt;The Python version would look the same, just with Python&amp;#x27;s block syntax:&lt;/p&gt;&lt;pre class="language-python"&gt;&lt;code&gt;const array1 = [1, 2, 3, etc, 9999999]
-const array2 = alter array1:
-    array1.push(42)&lt;/code&gt;&lt;/pre&gt;&lt;details&gt;&lt;summary&gt;Aside on semantics of updating deeply nested values in FP languages.&lt;/summary&gt;&lt;p&gt;Clojure has the concept of &lt;a href="https://clojure.org/reference/transients"&gt;transients&lt;/a&gt; that feel somewhat similar to &lt;code class="inline"&gt;alter&lt;/code&gt;, I should play around with these more.&lt;/p&gt;&lt;p&gt;Haskellers (often it seems) use the &lt;a href="https://hackage.haskell.org/package/lens"&gt;lens&lt;/a&gt; library for making deep changes to objects. I&amp;#x27;ve seen the Python equivalent used and the resulting code has always been reverted back to a &amp;quot;native&amp;quot; style at some point as it can be tricksy to read and doesn&amp;#x27;t play well with modern typed Python. An open question for me is:&lt;/p&gt;&lt;blockquote&gt;Is there a pure-FP-ish way to doing deep updates that&amp;#x27;s always as &amp;quot;natural&amp;quot; as the classic mutational way?&lt;/blockquote&gt;&lt;p&gt;Here&amp;#x27;s a contrived example of something that to me &amp;quot;feels natural&amp;quot; in an imperative style, but it could just be my unfamiliarity with FP stuff.&lt;/p&gt;&lt;pre class="language-javascript"&gt;&lt;code&gt;const stateAfter = alter (state) {
-    const unflagged = []
-    for (const message of state.messages){
-        if (message.flagged){
-            state.flaggedMessages.push(message)
-            state.totalCount -= 1
-            delete state.visibleUserIds[message.userId]
-        }
-        else unflagged.push(message)
-    }
-    state.messages = unflagged
-}&lt;/code&gt;&lt;/pre&gt;&lt;/details&gt;&lt;/body&gt;&lt;/html&gt;
+
+const Cell = ({ value, i, j }) =&gt; (
+    &lt;button class="cell" onclick={() =&gt; move(value, i, j)}&gt;
+        {value}
+    &lt;/button&gt;
+)
+
+const Noughts = () =&gt; (
+    &lt;div&gt;
+        {winner ? &lt;marquee&gt;winner: {winner}&lt;/marquee&gt; : &lt;h3&gt;current player: {currentPlayer}&lt;/h3&gt;}
+        &lt;table&gt;
+            {g.map((row, i) =&gt; (
+                &lt;tr&gt;
+                    {row.map((value, j) =&gt; (
+                        &lt;td class={value}&gt;
+                            &lt;Cell value={value} i={i} j={j} /&gt;
+                        &lt;/td&gt;
+                    ))}
+                &lt;/tr&gt;
+            ))}
+        &lt;/table&gt;
+    &lt;/div&gt;
+)
+
+const renderNoughts = () =&gt; m.render(document.getElementById("noughts"), { children: [Noughts()] })
+renderNoughts()
+    &lt;/script&gt;
+    &lt;p&gt;
+        Now let's look at the code, you can also just view the page source if you want.
+    &lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;let currentPlayer = "o"
+let winner = null
+const g = [
+    ["", "", ""],
+    ["", "", ""],
+    ["", "", ""],
+]
+
+const move = (value, i, j) =&gt; {
+    // ... game logic goes here
+    renderNoughts()
+}
+
+
+const Cell = ({ value, i, j }) =&gt; (
+    &amp;lt;button class="cell" onclick={() =&gt; move(value, i, j)}&gt;
+        {value}
+    &amp;lt;/button&gt;
+)
+
+const Noughts = () =&gt; (
+    &amp;lt;div&gt;
+        {winner ? &amp;lt;marquee&gt;winner: {winner}&amp;lt;/marquee&gt; : &amp;lt;h3&gt;current player: {currentPlayer}&amp;lt;/h3&gt;}
+        &amp;lt;table&gt;
+            {g.map((row, i) =&gt; (
+                &amp;lt;tr&gt;
+                    {row.map((value, j) =&gt; (
+                        &amp;lt;td class={value}&gt;
+                            &amp;lt;Cell value={value} i={i} j={j} /&gt;
+                        &amp;lt;/td&gt;
+                    ))}
+                &amp;lt;/tr&gt;
+            ))}
+        &amp;lt;/table&gt;
+    &amp;lt;/div&gt;
+)
+
+const renderNoughts = () =&gt; m.render(document.getElementById("noughts"), { children: [Noughts()] })
+renderNoughts()
+&lt;/code&gt;&lt;/pre&gt;
+    &lt;p&gt;
+        You can read the bread-and-butter of how it works in the &lt;a href="33-line-react.html"&gt;original post&lt;/a&gt;, the only difference is, rather than use the simpler hyperscript syntax, we compile any &lt;code&gt;&amp;lt;script type="text/jsx"&gt;&lt;/code&gt; scripts to plain ol' Javascript with &lt;code&gt;m.parseJsx(source)&lt;/code&gt;.
+    &lt;/p&gt;
+    &lt;p&gt;
+        So for example:
+    &lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;const Cell = ({ value, i, j }) =&gt; (
+    &amp;lt;button class="cell" onclick={() =&gt; move(value, i, j)}&gt;
+        {value}
+    &amp;lt;/button&gt;
+)&lt;/code&gt;&lt;/pre&gt;
+    &lt;p&gt;
+        Gets compiled to:
+    &lt;/p&gt;
+    &lt;pre&gt;&lt;code&gt;const Cell = ({ value, i, j }) =&gt; (
+    m("button", {"class": "cell", "onclick": () =&gt; move(value, i, j), }, " ", value, " ")
+)&lt;/code&gt;&lt;/pre&gt;
+    &lt;em&gt;
+        &lt;h3&gt;Compiler caveats&lt;/h3&gt;
+        &lt;ul&gt;
+            &lt;li&gt;I've tried to handle nested strings/templates/components etc, but there will be loads of edge cases this compiler doesn't handle (known example: it doesn't handle html comments).&lt;/li&gt;
+            &lt;li&gt;It determines that we're entering JSX when there is a &lt;code&gt;&amp;lt;&lt;/code&gt;  &lt;b&gt;not&lt;/b&gt; followed by an equals sign or a space. I'm not sure what proper JSX compilers do.&lt;/li&gt;
+            &lt;li&gt;There's basically no error handling, if you pass in invalid JSX, you're on your own.&lt;/li&gt;
+        &lt;/ul&gt;
+    &lt;/em&gt;
+    &lt;script&gt;
+        // notes:
+        // - determines that it's not less-than with trailing space
+        // - doesn't handle html comments
+        // - &lt;&gt;&lt;/&gt;
+    &lt;/script&gt;
+&lt;/body&gt;
             </description>
         </item>
         <item>
@@ -931,103 +1020,8 @@ app.get('/', (req, res) =&gt; res.send(myUl().asHTMLStr())&lt;/code&gt;&lt;/pre&
             </description>
         </item>
         <item>
-            <title>&lt;code class="inline"&gt;git bisect&lt;/code&gt; succinctly</title>
-            <pubDate>Tue, 2 Feb 2021 15:45:41 +0000</pubDate>
-            <link>https://leontrolski.github.io/git-bisect.html</link>
-            <guid>https://leontrolski.github.io/git-bisect.html</guid>
-            <description>
-&amp;#x26a0;&amp;#xfe0f; This article contains JS code. It might not work properly in your feed reader.
-You might want to visit the &lt;a href="https://leontrolski.github.io/git-bisect.html"&gt;original article&lt;/a&gt;.
-        &lt;/style&gt;&lt;link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet"&gt;&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js"&gt;&lt;/script&gt;&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js"&gt;&lt;/script&gt;&lt;/head&gt;&lt;body&gt;&lt;a href="index.html"&gt;&lt;img src="pic.png" style="height:2em"&gt;⇦&lt;/a&gt;&lt;h1&gt;&lt;code class="inline"&gt;git bisect&lt;/code&gt; succinctly&lt;/h1&gt;&lt;p&gt;I can never remember how to &lt;code class="inline"&gt;git bisect&lt;/code&gt;, it&amp;#x27;s occasionally super-useful and there are extensive posts about it elsewhere, but I&amp;#x27;ve never needed more than:&lt;/p&gt;&lt;pre class="language-bash"&gt;&lt;code&gt;cd ../top-of-repo
-
-#                sad  happy
-git bisect start HEAD HEAD~200 --
-
-# run the test you wrote
-git bisect run sh -c &amp;#x27;cd somewhere; pytest something&amp;#x27;
-
-# tests run
-# then you see like:
-# abcd123... is the first bad commit
-# then to clean up
-git bisect reset&lt;/code&gt;&lt;/pre&gt;&lt;/body&gt;&lt;/html&gt;
-            </description>
-        </item>
-        <item>
-            <title>OO in Python is mostly pointless</title>
-            <pubDate>Tue, 2 Feb 2021 15:45:41 +0000</pubDate>
-            <link>https://leontrolski.github.io/mostly-pointless.html</link>
-            <guid>https://leontrolski.github.io/mostly-pointless.html</guid>
-            <description>
-&amp;#x26a0;&amp;#xfe0f; This article contains JS code. It might not work properly in your feed reader.
-You might want to visit the &lt;a href="https://leontrolski.github.io/mostly-pointless.html"&gt;original article&lt;/a&gt;.
-        &lt;/style&gt;&lt;link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet"&gt;&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js"&gt;&lt;/script&gt;&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js"&gt;&lt;/script&gt;&lt;/head&gt;&lt;body&gt;&lt;a href="index.html"&gt;&lt;img src="pic.png" style="height:2em"&gt;⇦&lt;/a&gt;&lt;h1&gt;OO in Python is mostly pointless&lt;/h1&gt;&lt;p&gt;&lt;em&gt;Discussion &lt;a href="https://news.ycombinator.com/item?id=25933121"&gt;here&lt;/a&gt; and &lt;a href="https://lobste.rs/s/ldzfsw/oo_python_is_mostly_pointless"&gt;here&lt;/a&gt;. Call to arms for idiomatic OO code &lt;a href="https://github.com/leontrolski/call-to-arms"&gt;here&lt;/a&gt;.&lt;/em&gt;&lt;/p&gt;&lt;p&gt;People bash OO a lot these days, I&amp;#x27;m increasingly coming to the opinion they&amp;#x27;re right, at least in Python. My point here is not to argue that OO is bad per se, more that its introduction is simply unnecessary, AKA not useful.&lt;/p&gt;&lt;h2&gt;Oli&amp;#x27;s Conjecture&lt;/h2&gt;&lt;blockquote&gt;All OO code can be refactored into equivalent non-OO code that&amp;#x27;s as easy or more easy to understand.&lt;/blockquote&gt;&lt;p&gt;Let&amp;#x27;s take an example that should pan out in OO&amp;#x27;s favour, we&amp;#x27;ve all seen/written code somewhat like the following:&lt;/p&gt;&lt;pre class="language-python"&gt;&lt;code&gt;class ApiClient:
-    def __init__(self, root_url: str, session_cls: sessionmaker):
-        self.root_url = root_url
-        self.session_cls = session_cls
-
-    def construct_url(self, entity: str) -&amp;gt; str:
-        return f&amp;quot;{self.root_url}/v1/{entity}&amp;quot;
-
-    def get_items(self, entity: str) -&amp;gt; List[Item]:
-        resp = requests.get(self.construct_url(entity))
-        resp.raise_for_status()
-        return [Item(**n) for n in resp.json()[&amp;quot;items&amp;quot;]]
-
-    def save_items(self, entity: str) -&amp;gt; None:
-        with scoped_session(self.session_cls) as session:
-            session.add(self.get_items(entity))
-
-
-class ClientA(ApiClient):
-    def construct_url(self, entity: str) -&amp;gt; str:
-        return f&amp;quot;{self.root_url}/{entity}&amp;quot;
-
-
-class ClientB(ApiClient):
-    def construct_url(self, entity: str) -&amp;gt; str:
-        return f&amp;quot;{self.root_url}/a/special/place/{entity}&amp;quot;
-
-
-client_a = ClientA(&amp;quot;https://client-a&amp;quot;, session_cls)
-client_a.save_items(&amp;quot;bars&amp;quot;)&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;We chose OO it because we wanted to bind the &lt;code class="inline"&gt;root_url&lt;/code&gt; to something and we didn&amp;#x27;t want to pass around the &lt;code class="inline"&gt;sessionmaker&lt;/code&gt;. We also wanted to utilise inheritance to hook into a method halfway through the call stack.&lt;/p&gt;&lt;p&gt;But what if we do just pass data around, and write &amp;#x27;boring&amp;#x27; functions, what happens then?&lt;/p&gt;&lt;pre class="language-python"&gt;&lt;code&gt;@dataclass
-class Client:
-    root_url: str
-    url_layout: str
-
-
-client_a = Client(
-    root_url=&amp;quot;https://client-a&amp;quot;,
-    url_layout=&amp;quot;{root_url}/{entity}&amp;quot;,
-)
-
-client_b = Client(
-    root_url=&amp;quot;https://client-b&amp;quot;,
-    url_layout=&amp;quot;{root_url}/a/special/place/{entity}&amp;quot;,
-)
-
-
-def construct_url(client: Client, entity: str) -&amp;gt; str:
-    return client.url_layout.format(root_url=client.root_url, entity=entity)
-
-
-def get_items(client: Client, entity: str) -&amp;gt; List[Item]:
-    resp = requests.get(construct_url(client, entity))
-    resp.raise_for_status()
-    return [Item(**n) for n in resp.json()[&amp;quot;items&amp;quot;]]
-
-
-def save_items(client: Client, session_cls: session_cls, entity: str) -&amp;gt; None:
-    with scoped_session(session_cls) as session:
-        session.add(get_items(client, entity))
-
-
-save_items(client_a, session_cls, &amp;quot;bars&amp;quot;)&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;We had to pass round the &lt;code class="inline"&gt;Client&lt;/code&gt; and the &lt;code class="inline"&gt;session_cls&lt;/code&gt; around.&lt;/p&gt;&lt;p&gt;🤷&lt;/p&gt;&lt;p&gt;Who cares? We even wrote like 10% fewer characters. Also, the conjecture stands, the resulting code is at least as easy to understand and we didn&amp;#x27;t need any OO.&lt;/p&gt;&lt;p&gt;I&amp;#x27;ve heard this style referred to as the &lt;b&gt;bag-of-functions&lt;/b&gt; style. That is to say, all your code just consists of typed data and module-namespaced-bags-of-functions.&lt;/p&gt;&lt;h2&gt;What about long lived global-y things?&lt;/h2&gt;&lt;p&gt;Use &lt;a href="sane-config.html"&gt;this pattern&lt;/a&gt; to reuse config/db session classes over the lifetime of an application.&lt;/p&gt;&lt;h2&gt;What about interfaces/abstract base classes?&lt;/h2&gt;&lt;p&gt;Just try writing without them, I promise it&amp;#x27;s going to be OK. &lt;em&gt;(To be fair, it&amp;#x27;s only the introduction of type hints to Python that has made the &lt;b&gt;bag-of-functions&lt;/b&gt; style so pleasant).&lt;/em&gt;&lt;/p&gt;&lt;h2&gt;What about impure things?&lt;/h2&gt;&lt;p&gt;If you&amp;#x27;ve taken the pure-FP/hexagonal-architecture pill, you want to write pure classes that take impure &amp;#x27;adapter&amp;#x27; instances for &lt;code class="inline"&gt;getting-the-current-datetime/API-calls/talking-to-the-db/other-impure-stuff&lt;/code&gt;. The idea is nice in principle - should be good for testing right? - in practice, you can just use &lt;a href="https://github.com/spulec/freezegun"&gt;freezegun&lt;/a&gt; / use &lt;a href="https://github.com/getsentry/responses"&gt;responses&lt;/a&gt; / &lt;a href="https://dhh.dk/2014/slow-database-test-fallacy.html"&gt;test with the db&lt;/a&gt; (the &lt;code class="inline"&gt;other-impure-stuff&lt;/code&gt; tends to not actually exist) and save yourself a lot of hassle.&lt;/p&gt;&lt;h2&gt;Exceptions:&lt;/h2&gt;&lt;p&gt;I&amp;#x27;d like to make exceptions for the following:&lt;/p&gt;&lt;ul&gt;&lt;li&gt;You&amp;#x27;ll notice I put &lt;code class="inline"&gt;@dataclass&lt;/code&gt;s in the refactored code, these are fine - they&amp;#x27;re just record types. Python 5 will only have these, not &amp;#x27;normal&amp;#x27; classes.&lt;/li&gt;&lt;li&gt;It&amp;#x27;s fine to subclass &lt;code class="inline"&gt;Exception&lt;/code&gt;s.  The usage of &lt;code class="inline"&gt;try: ... except SomeClass: ...&lt;/code&gt; fundamentally ties you to a heirarchical worldview, this is fine, just don&amp;#x27;t make it too complicated.&lt;/li&gt;&lt;li&gt;&lt;code class="inline"&gt;Enum&lt;/code&gt;s - same as above, they fit in well with the rest of Python.&lt;/li&gt;&lt;li&gt;Very, very occasionally (at least in application development), you come up with a core type that&amp;#x27;s used so often, it&amp;#x27;s nice to have the cutesy stuff - think something like a &lt;code class="inline"&gt;pandas.DataFrame&lt;/code&gt;/&lt;code class="inline"&gt;sqlalchemy.Session&lt;/code&gt;. In general though, don&amp;#x27;t kid yourself that you&amp;#x27;re building anything that exciting, it&amp;#x27;s just vanity getting the better of you.&lt;/li&gt;&lt;/ul&gt;&lt;h2&gt;I lied.&lt;/h2&gt;&lt;blockquote&gt;My point here is not to argue that OO is bad per se.&lt;/blockquote&gt;&lt;p&gt;OK, I lied, it&amp;#x27;s not just a case of OO being a largely futile addition to the language, it&amp;#x27;s that it often obscures the problem at hand and encourages bad behaviours:&lt;/p&gt;&lt;ul&gt;&lt;li&gt;It encourages you to mutate. Bag-of-functions makes it feel icky to mutate arguments - as it should feel. (Feel free to mutate within the confines of your function BTW, let&amp;#x27;s not go mad FP).&lt;/li&gt;&lt;li&gt;It&amp;#x27;s somewhat just the return of global variables. Not being able to share data between functions with &lt;code class="inline"&gt;self&lt;/code&gt; forces you to write functions with a smaller state-space that are easier to test.&lt;/li&gt;&lt;li&gt;Smooshing functions in with your data makes it harder to serialise anything - in a world of REST APIs, serialisability is super useful.&lt;/li&gt;&lt;li&gt;It encourages mad inheritance hierarchies - this has been talked about at length elsewhere.&lt;/li&gt;&lt;li&gt;Most importantly though, it adds nothing, it&amp;#x27;s just noise that distracts from the problem at hand and makes it harder to navigate/comprehend your code.&lt;/li&gt;&lt;/ul&gt;&lt;h2&gt;Notes&lt;/h2&gt;&lt;ul&gt;&lt;li&gt;&lt;a href="poor-mans-object.html"&gt;I&amp;#x27;ve written before about the poor man&amp;#x27;s object/closure thingy.&lt;/a&gt;&lt;/li&gt;&lt;li&gt;&lt;a href="https://www.youtube.com/watch?v=o9pEzgHorH0"&gt;A classic video in the OO-bashing genre.&lt;/a&gt;&lt;/li&gt;&lt;/ul&gt;&lt;/body&gt;&lt;/html&gt;
-            </description>
-        </item>
-        <item>
             <title>What nested SQL queries might look like</title>
-            <pubDate>Thu, 14 May 2020 17:40:01 +0100</pubDate>
+            <pubDate>Thu, 15 Jul 2021 14:47:07 +0100</pubDate>
             <link>https://leontrolski.github.io/nested-sql.html</link>
             <guid>https://leontrolski.github.io/nested-sql.html</guid>
             <description>
@@ -1581,287 +1575,6 @@ tuple(greater_than_2(tree))&lt;/code&gt;&lt;/pre&gt;
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;/body&gt;
-            </description>
-        </item>
-        <item>
-            <title>Stop doing mad config</title>
-            <pubDate>Thu, 17 Dec 2020 21:47:13 +0000</pubDate>
-            <link>https://leontrolski.github.io/sane-config.html</link>
-            <guid>https://leontrolski.github.io/sane-config.html</guid>
-            <description>
-&amp;#x26a0;&amp;#xfe0f; This article contains JS code. It might not work properly in your feed reader.
-You might want to visit the &lt;a href="https://leontrolski.github.io/sane-config.html"&gt;original article&lt;/a&gt;.
-        &lt;/style&gt;&lt;link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet"&gt;&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js"&gt;&lt;/script&gt;&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js"&gt;&lt;/script&gt;&lt;/head&gt;&lt;body&gt;&lt;a href="index.html"&gt;&lt;img src="pic.png" style="height:2em"&gt;⇦&lt;/a&gt;&lt;h1&gt;Stop doing mad config&lt;/h1&gt;&lt;p&gt;People do all sorts of wild and wonderful things in Python to get configuration from files/the environment, then even stranger things attaching said config to applications.&lt;/p&gt;&lt;p&gt;Here&amp;#x27;s how everyone should do it, in a way that&amp;#x27;s (in vague order of importance):&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Easy to test.&lt;/li&gt;&lt;li&gt;Can be used from web apps, cron jobs, message processors, you name it.&lt;/li&gt;&lt;li&gt;Well typed.&lt;/li&gt;&lt;li&gt;Simple and well-understood.&lt;/li&gt;&lt;li&gt;Quick.&lt;/li&gt;&lt;/ul&gt;&lt;pre class="language-python"&gt;&lt;code&gt;from dataclasses import dataclass
-from functools import lru_cache
-import os
-from pathlib import Path
-
-
-@dataclass
-class Config:
-    DB_URL: str
-    NUMBER_OF_WORKERS: int
-    COMPLICATED_THING: dict
-
-
-@lru_cache(None)
-def get_config() -&amp;gt; Config:
-    complicated_path = Path(__file__).parent / &amp;quot;some-file.json&amp;quot;
-    return Config(
-        DB_URL=os.environ[&amp;quot;DB_URL&amp;quot;],
-        NUMBER_OF_WORKERS=int(os.environ.get(&amp;quot;N_WORKERS&amp;quot;, 4)),
-        COMPLICATED_THING=json.loads(complicated_path.read_bytes()),
-    )&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;When you want to use it, do:&lt;/p&gt;&lt;pre class="language-python"&gt;&lt;code&gt;from my_service import config
-
-def create_application():
-    engine = Engine(url=config.get_config().DB_URL)
-    ...&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;When you want to test it, do:&lt;/p&gt;&lt;pre class="language-python"&gt;&lt;code&gt;@pytest.fixture
-def dummy_config(monkeypatch):
-    monkeypatch.setattr(config, &amp;quot;get_config&amp;quot;, lambda: Config(...))
-
-def test_thingie(dummy_config):
-    ...&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Now no more funny stuff OK.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;
-            </description>
-        </item>
-        <item>
-            <title>Evolving backend → frontend rendered &lt;code class="inline"&gt;Python&lt;/code&gt;/&lt;code class="inline"&gt;JS&lt;/code&gt; apps with &lt;code class="inline"&gt;dnjs&lt;/code&gt;</title>
-            <pubDate>Fri, 11 Sep 2020 17:09:37 +0100</pubDate>
-            <link>https://leontrolski.github.io/semi-isomorphic.html</link>
-            <guid>https://leontrolski.github.io/semi-isomorphic.html</guid>
-            <description>
-&amp;#x26a0;&amp;#xfe0f; This article contains JS code. It might not work properly in your feed reader.
-You might want to visit the &lt;a href="https://leontrolski.github.io/semi-isomorphic.html"&gt;original article&lt;/a&gt;.
-        &lt;/style&gt;&lt;link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet"&gt;&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js"&gt;&lt;/script&gt;&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js"&gt;&lt;/script&gt;&lt;/head&gt;&lt;body&gt;&lt;a href="index.html"&gt;&lt;img src="pic.png" style="height:2em"&gt;⇦&lt;/a&gt;&lt;h1&gt;Evolving backend → frontend rendered &lt;code class="inline"&gt;Python&lt;/code&gt;/&lt;code class="inline"&gt;JS&lt;/code&gt; apps with &lt;code class="inline"&gt;dnjs&lt;/code&gt;&lt;/h1&gt;&lt;p&gt;With very little ceremony  or surprise, &lt;a href="https://github.com/leontrolski/dnjs#dnjs"&gt;dnjs&lt;/a&gt; lets you &lt;b&gt;specify configuration&lt;/b&gt;, generate &lt;b&gt;static html/css&lt;/b&gt;, and &lt;b&gt;render html on the backend/frontend&lt;/b&gt; across languages. &lt;a href="https://github.com/leontrolski/leontrolski.github.io/tree/master/src/semi-isomorphic.dn.js"&gt;This page&lt;/a&gt; is even written with it. &lt;em&gt;A word of warning: the project is still in its development stages.&lt;/em&gt;&lt;/p&gt;&lt;h2&gt;What&amp;#x27;s the problem?&lt;/h2&gt;&lt;p&gt;In most worlds, when you&amp;#x27;re building a web app, there is a very clear divide between:&lt;/p&gt;&lt;ol&gt;&lt;li&gt;&amp;quot;Let&amp;#x27;s build a backend-rendered page in &lt;code class="inline"&gt;Python&lt;/code&gt;/&lt;code class="inline"&gt;JS&lt;/code&gt;/... rendering the html with some funky templating language. We can sprinkle in some ad-hoc &lt;code class="inline"&gt;JS&lt;/code&gt; as we get there.&amp;quot;&lt;/li&gt;&lt;li&gt;&amp;quot;Let&amp;#x27;s build a fully frontend-rendered app with &lt;code class="inline"&gt;React&lt;/code&gt;/&lt;code class="inline"&gt;Vue&lt;/code&gt;/...&amp;quot;&lt;/li&gt;&lt;/ol&gt;&lt;p&gt;A lot of the time, teams plump for option 2, even when the user experience might be worse (slow loading times, lack of hyperlinking, etc), and the developer experience might be worse (lots of client state, hard to test, etc).&lt;/p&gt;&lt;p&gt;&lt;code class="inline"&gt;dnjs&lt;/code&gt; takes the following positions:&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Most backend templating languages are clunky, often difficult to compose and missing tooling (eg. linters) available for fully-fledged languages.&lt;/li&gt;&lt;li&gt;There is a UI-complexity threshold at which one might choose to make part of the app frontend-rendered, this is OK.&lt;/li&gt;&lt;li&gt;The default ways of constructing DOM nodes in the browser are &lt;a href="dom-syntax.html"&gt;inelegant&lt;/a&gt;.&lt;/li&gt;&lt;li&gt;Build chains and compile steps may eventually become necessary, but we&amp;#x27;ll start with browser-compatible code.&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;It attempts to resolve these with a &lt;a href="https://github.com/leontrolski/dnjs#how-exactly-does-dnjs-extend-json"&gt;pure subset of &lt;code class="inline"&gt;JS&lt;/code&gt;&lt;/a&gt; that is &lt;b&gt;reasonable to implement in host languages&lt;/b&gt; and &lt;b&gt;has a standardised way of describing DOM nodes&lt;/b&gt;. Being able to share things across the backend and the frontend means we can evolve our app over time. We can start with simple html forms, then progress to frontend-rendering as the complexity requires - &lt;em&gt;while reusing previously written components&lt;/em&gt;.&lt;/p&gt;&lt;p&gt;Let&amp;#x27;s walk through an example where we span this transition.&lt;/p&gt;&lt;h2&gt;An example app&lt;/h2&gt;&lt;p&gt;In this post, we will build the following simple web app, where we can add todos and check them if they&amp;#x27;re done. The data will be persisted on the backend:&lt;/p&gt;&lt;video src="videos/basic.webm" controls style="
-        margin: auto;
-        display: block;
-        max-width: calc(min(20em, 100%));
-        box-shadow: 0px 0px 6px 2px #0000002b;
-        margin-top: 2em;
-        margin-bottom: 2em;
-    "&gt;&lt;/video&gt;&lt;h2&gt;The 3 ways we will build it are:&lt;/h2&gt;&lt;ul&gt;&lt;li&gt;Using just backend rendering and &lt;code class="inline"&gt;&amp;lt;form&amp;gt;&lt;/code&gt; elements à la 1995. This we&amp;#x27;ll refer to as &lt;code class="inline"&gt;backend&lt;/code&gt;.&lt;/li&gt;&lt;li&gt;Using a sprinkling of imperative&lt;code class="inline"&gt;JS&lt;/code&gt; to dynamically add the new comment without reloading the page. This we&amp;#x27;ll refer to as &lt;code class="inline"&gt;classic&lt;/code&gt;.&lt;/li&gt;&lt;li&gt;Rendering the entire comment list with a&lt;code class="inline"&gt;JS&lt;/code&gt; library (in this case &lt;a href="https://mithril.js.org/"&gt;mithril&lt;/a&gt;). This we&amp;#x27;ll refer to as &lt;code class="inline"&gt;declarative&lt;/code&gt; because we specify the DOM as a pure function of state.&lt;/li&gt;&lt;/ul&gt;&lt;h2&gt;Aside: running the examples&lt;/h2&gt;&lt;p&gt;The source for the above can be found in the &lt;a href="https://github.com/leontrolski/dnjs/tree/master/examples/todo"&gt;&lt;code class="inline"&gt;examples/todo&lt;/code&gt;&lt;/a&gt; directory of the &lt;code class="inline"&gt;dnjs&lt;/code&gt; repo. It has the following structure:&lt;/p&gt;&lt;pre class="language-bash"&gt;&lt;code&gt;├── app.py
-├── shared
-│   ├── components.dn.js
-│   └── style.dn.js
-├── static
-│   ├── backend.js
-│   ├── classic.js
-│   ├── declarative.js
-│   └── style.css
-└── templates
-    └── page.dn.js&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;You should be able to run the server with:&lt;/p&gt;&lt;pre class="language-bash"&gt;&lt;code&gt;git clone git@github.com:leontrolski/dnjs.git
-cd dnjs; python3 -m venv .env; source .env/bin/activate
-pip install dnjs fastapi uvicorn aiofiles python-multipart
-
-examples/todo/bin/serve
-open &amp;#x27;http://localhost:8000/backend&amp;#x27;&lt;/code&gt;&lt;/pre&gt;&lt;h2&gt;Building the app with &lt;code class="inline"&gt;backend&lt;/code&gt;&lt;/h2&gt;&lt;p&gt;We&amp;#x27;re going to use the &lt;code class="inline"&gt;Python&lt;/code&gt; library &lt;a href="https://fastapi.tiangolo.com/"&gt;FastAPI&lt;/a&gt; for our backend. Let&amp;#x27;s start by looking at the body of the html we want to end up with:&lt;/p&gt;&lt;pre class="language-html"&gt;&lt;code&gt;&amp;lt;h1 class=&amp;quot;todo-bold todo-red&amp;quot;&amp;gt;Hello Ms Backend&amp;lt;/h1&amp;gt;
-&amp;lt;div id=&amp;quot;todo-list&amp;quot;&amp;gt;
-    &amp;lt;form id=&amp;quot;todoListForm&amp;quot; method=&amp;quot;POST&amp;quot;&amp;gt;
-        &amp;lt;ul&amp;gt;
-            &amp;lt;li class=&amp;quot;todo-todo&amp;quot;&amp;gt;
-                hullo
-                &amp;lt;input class=&amp;quot;doneCheckbox&amp;quot; name=&amp;quot;doneCheckbox&amp;quot; value=&amp;quot;0&amp;quot; type=&amp;quot;checkbox&amp;quot; /&amp;gt;
-            &amp;lt;/li&amp;gt;
-            &amp;lt;li class=&amp;quot;todo-todo&amp;quot;&amp;gt;
-                goodbye
-                &amp;lt;input class=&amp;quot;doneCheckbox&amp;quot; name=&amp;quot;doneCheckbox&amp;quot; value=&amp;quot;1&amp;quot; type=&amp;quot;checkbox&amp;quot; checked /&amp;gt;
-            &amp;lt;/li&amp;gt;
-        &amp;lt;/ul&amp;gt;
-        &amp;lt;input name=&amp;quot;newMessage&amp;quot; value=&amp;quot;&amp;quot; placeholder=&amp;quot;message&amp;quot; autocomplete=&amp;quot;off&amp;quot; /&amp;gt;
-        &amp;lt;button&amp;gt;add todo&amp;lt;/button&amp;gt;
-    &amp;lt;/form&amp;gt;
-&amp;lt;/div&amp;gt;&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;As you can see, we&amp;#x27;re going to render just a normal html &lt;code class="inline"&gt;&amp;lt;form&amp;gt;&lt;/code&gt;. When we submit the form, it will POST one &lt;code class="inline"&gt;newMessage&lt;/code&gt; with &lt;code class="inline"&gt;value=&amp;quot;some message&amp;quot;&lt;/code&gt; and many &lt;code class="inline"&gt;doneCheckbox&lt;/code&gt;s, each with &lt;code class="inline"&gt;value=&amp;quot;index&amp;quot;&lt;/code&gt; - the indexes of todos that are checked.&lt;/p&gt;&lt;h3&gt;An aside on html forms&lt;/h3&gt;&lt;p&gt;Html forms are really not a thing of beauty, they map poorly to json structures, you can&amp;#x27;t nest them, they can only convey strings, etc. Lots of frontend devs in particular seem to have forgotten the weirdo ins and outs of how they work, for example: that &lt;code class="inline"&gt;&amp;lt;button&amp;gt;&lt;/code&gt;s and &lt;code class="inline"&gt;&amp;lt;input type=&amp;quot;checkbox&amp;quot;&amp;gt;&lt;/code&gt;s have &lt;code class="inline"&gt;(name, value)&lt;/code&gt;s &lt;em&gt;that are only are POSTed when they are clicked/checked.&lt;/em&gt;&lt;/p&gt;&lt;p&gt;&lt;em&gt;Despite&lt;/em&gt; these shortcomings, they are well worth using for simple forms (that is to say - most forms). Not using any &lt;code class="inline"&gt;JS&lt;/code&gt; means having basically zero state in the browser, and that makes reasoning about/testing the app way easier. Like way way easier.&lt;/p&gt;&lt;h3&gt;Back to the app&lt;/h3&gt;&lt;p&gt;Let&amp;#x27;s have a look at the &lt;code class="inline"&gt;dnjs&lt;/code&gt; templating code we use to render the page from&lt;code class="inline"&gt;Python&lt;/code&gt;, the base page is in &lt;a href="https://github.com/leontrolski/dnjs/tree/master/examples/todo/templates/page.dn.js"&gt;&lt;code class="inline"&gt;examples/todo/templates/page.dn.js&lt;/code&gt;&lt;/a&gt; and looks like:&lt;/p&gt;&lt;pre class="language-javascript"&gt;&lt;code&gt;import { TodoList } from &amp;quot;../shared/components.dn.js&amp;quot;
-
-const title = [classes.bold, classes.red]
-
-export default (data) =&amp;gt; (
-    ...
-    m(&amp;quot;h1&amp;quot;, {class: title}, &amp;quot;Hello &amp;quot;, data.username),
-    m(&amp;quot;#todo-list&amp;quot;, TodoList(data.state)),
-    ...
-)&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;The components for the form itself can be found in &lt;a href="https://github.com/leontrolski/dnjs/tree/master/examples/todo/shared/components.dn.js"&gt;&lt;code class="inline"&gt;examples/todo/shared/components.dn.js&lt;/code&gt;&lt;/a&gt; and look a bit like:&lt;/p&gt;&lt;pre class="language-javascript"&gt;&lt;code&gt;export const Todo = (todo) =&amp;gt; m(&amp;quot;li&amp;quot;,
-    todo.message,
-    m(&amp;quot;input.doneCheckbox&amp;quot;, {name: &amp;quot;doneCheckbox&amp;quot;, value: todo.i, checked: todo.done, type: &amp;quot;checkbox&amp;quot;}),
-)
-
-export const TodoList = (state) =&amp;gt; m(&amp;quot;form#todoListForm&amp;quot;,
-    {method: &amp;quot;POST&amp;quot;},
-    m(&amp;quot;ul&amp;quot;, state.todos.map((todo, i) =&amp;gt;Todo({...todo, i: i}))),
-    m(&amp;quot;input&amp;quot;, {name: &amp;quot;newMessage&amp;quot;, value: state.new}),
-    m(&amp;quot;button&amp;quot;, &amp;quot;add todo&amp;quot;),
-)&lt;/code&gt;&lt;/pre&gt;&lt;details&gt;&lt;summary&gt;The equivalent handlebars code would look something like this.&lt;/summary&gt;&lt;pre class="language-html"&gt;&lt;code&gt;&amp;lt;h1 class=&amp;quot;{{classes.bold}} {{classes.red}}&amp;quot;&amp;gt;Hello {{data.username}}&amp;lt;/h1&amp;gt;
-&amp;lt;div id=&amp;quot;todo-list&amp;quot;&amp;gt;
-    &amp;lt;form id=&amp;quot;todoListForm&amp;quot; method=&amp;quot;POST&amp;quot;&amp;gt;
-        &amp;lt;ul&amp;gt;
-            {{#each state.todos}}
-                &amp;lt;li&amp;gt;
-                    {{message}}
-                    &amp;lt;input class=&amp;quot;doneCheckbox&amp;quot; name=&amp;quot;doneCheckbox&amp;quot; value=&amp;quot;{{@index}}&amp;quot; {{#if done}}checked{{/if}} type=&amp;quot;checkbox&amp;quot; /&amp;gt;
-                &amp;lt;/li&amp;gt;
-            {{/each}}
-        &amp;lt;/ul&amp;gt;
-        &amp;lt;input name=&amp;quot;newMessage&amp;quot; value=&amp;quot;{{state.new}}&amp;quot; /&amp;gt;
-        &amp;lt;button&amp;gt;add todo&amp;lt;/button&amp;gt;
-    &amp;lt;/form&amp;gt;
-&amp;lt;/div&amp;gt;&lt;/code&gt;&lt;/pre&gt;&lt;/details&gt;&lt;p&gt;We will render the page in &lt;a href="https://github.com/leontrolski/dnjs/tree/master/examples/todo/app.py"&gt;&lt;code class="inline"&gt;examples/todo/app.py&lt;/code&gt;&lt;/a&gt; with:&lt;/p&gt;&lt;pre class="language-python"&gt;&lt;code&gt;@app.get(&amp;quot;/backend&amp;quot;, response_class=HTMLResponse)
-def get_backend() -&amp;gt; str:
-    return dnjs.render(
-        templates / &amp;quot;page.dn.js&amp;quot;,
-        PageData(
-            username=&amp;quot;Ms Backend&amp;quot;,
-            state=State(todos=_todos.todos, new=&amp;quot;&amp;quot;),
-        )
-    )&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;We&amp;#x27;re rendering the &lt;code class="inline"&gt;dnjs&lt;/code&gt; (a subset of &lt;code class="inline"&gt;JS&lt;/code&gt;) with &lt;code class="inline"&gt;Python&lt;/code&gt; ... 🤯&lt;/p&gt;&lt;p&gt;In the same file, we handle &lt;code class="inline"&gt;POST&lt;/code&gt;s with:&lt;/p&gt;&lt;pre class="language-python"&gt;&lt;code&gt;@app.post(&amp;quot;/backend&amp;quot;, response_class=HTMLResponse)
-def post_backend(newMessage: str, doneCheckbox: List[int]) -&amp;gt; str:
-    if newMessage:
-        _todos.todos.append(Todo(message=newMessage, done=False))
-
-    for i, todo in enumerate(_todos.todos):
-        todo.done = i in doneCheckbox
-
-    return render(...)&lt;/code&gt;&lt;/pre&gt;&lt;em&gt;Note, for demo purposes, we are storing the todos serverside with an in-memory structure &lt;code class="inline"&gt;_todos&lt;/code&gt;.&lt;/em&gt;&lt;p&gt;In case you can&amp;#x27;t be bothered to run the example application, here&amp;#x27;s a video of me clicking around the &lt;code class="inline"&gt;backend&lt;/code&gt; app with the console on.&lt;/p&gt;&lt;video src="videos/backend.webm" controls style="
-        margin: auto;
-        display: block;
-        max-width: calc(min(20em, 100%));
-        box-shadow: 0px 0px 6px 2px #0000002b;
-        margin-top: 2em;
-        margin-bottom: 2em;
-    "&gt;&lt;/video&gt;&lt;h2&gt;Adding some frontend rendering with &lt;code class="inline"&gt;classic&lt;/code&gt;&lt;/h2&gt;&lt;p&gt;The users of our app were posting lots of frequent comments, we decided it wasn&amp;#x27;t acceptable to have a page reload every time it happened. This means we had to add a sprinkling (23 lines) of&lt;code class="inline"&gt;JS&lt;/code&gt;to:&lt;/p&gt;&lt;ul&gt;&lt;li&gt;POST the data to the backed using &lt;code class="inline"&gt;XHR&lt;/code&gt;.&lt;/li&gt;&lt;li&gt;Construct a new &lt;code class="inline"&gt;&amp;lt;li&amp;gt;&lt;/code&gt; element from the data.&lt;/li&gt;&lt;li&gt;Append that element to the existing &lt;code class="inline"&gt;&amp;lt;ul&amp;gt;&lt;/code&gt; in the DOM.&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;The bulk of this - &lt;a href="https://github.com/leontrolski/dnjs/tree/master/examples/todo/static/classic.js"&gt;&lt;code class="inline"&gt;examples/todo/static/classic.js&lt;/code&gt;&lt;/a&gt; - is as follows:&lt;/p&gt;&lt;pre class="language-javascript"&gt;&lt;code&gt;import { Todo } from &amp;quot;../shared/components.dn.js&amp;quot;
-
-...
-
-todoListFormEl.onsubmit = async e =&amp;gt; {
-    // prevent the &amp;lt;form&amp;gt; from actually submitting
-    e.preventDefault()
-
-    ...
-
-    // construct the todo data and send to the backend
-    const data = {
-        message: newMessageEl.value,
-        done: false
-    }
-    await fetch(
-        &amp;quot;/classic/todos&amp;quot;,
-        {method: &amp;#x27;POST&amp;#x27;, body: JSON.stringify(data)}
-    )
-
-    // make the Todo DOM node and append it to the DOM
-    const newTodo = Todo(data, null)
-    todoListUlEl.appendChild(m.makeEl(newTodo))
-
-    ...
-}&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;The important thing here is that &lt;b&gt; we were able to reuse the same &lt;code class="inline"&gt;Todo&lt;/code&gt; component that we used on the backend on the frontend&lt;/b&gt;. Cool huh!&lt;/p&gt;&lt;h3&gt;dnjs2dom&lt;/h3&gt;&lt;p&gt;In the &lt;code class="inline"&gt;classic&lt;/code&gt; app, we use the teeny &lt;a href="https://github.com/leontrolski/dnjs2dom#dnjs-client-helper"&gt;dnjs2dom&lt;/a&gt; library to turn the &lt;code class="inline"&gt;m(...)&lt;/code&gt; components into actual DOM nodes. This library enables the line &lt;code class="inline"&gt;todoListUlEl.appendChild(m.makeEl(newTodo))&lt;/code&gt;.&lt;/p&gt;&lt;p&gt;Let&amp;#x27;s show a video of this in action:&lt;/p&gt;&lt;video src="videos/classic.webm" controls style="
-        margin: auto;
-        display: block;
-        max-width: calc(min(20em, 100%));
-        box-shadow: 0px 0px 6px 2px #0000002b;
-        margin-top: 2em;
-        margin-bottom: 2em;
-    "&gt;&lt;/video&gt;&lt;h2&gt;Going whole-hog frontend rendering with &lt;code class="inline"&gt;declarative&lt;/code&gt;&lt;/h2&gt;&lt;p&gt;It&amp;#x27;s a bit contrived with this simple app, but let&amp;#x27;s imagine our UI&amp;#x27;s complexity has tipped over to the point where we want everything super dynamic. To achieve this, we will use the (excellent) &lt;a href="https://mithril.js.org/"&gt;mithril&lt;/a&gt; - which &lt;code class="inline"&gt;dnjs&lt;/code&gt; is handily compatible with.&lt;/p&gt;&lt;p&gt;Here&amp;#x27;s the line from &lt;a href="https://github.com/leontrolski/dnjs/tree/master/examples/todo/static/declarative.js"&gt;&lt;code class="inline"&gt;examples/todo/static/declarative.js&lt;/code&gt;&lt;/a&gt; where we mount our components to the DOM with mithirl:&lt;/p&gt;&lt;pre class="language-javascript"&gt;&lt;code&gt;m.mount(todoListEl, {view: () =&amp;gt; TodoList(state, actions)})&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Note again - &lt;b&gt; we were able to reuse the same &lt;code class="inline"&gt;TodoList&lt;/code&gt; component that we used on the backend on the frontend.&lt;/b&gt;&lt;/p&gt;&lt;p&gt;&lt;a href="https://mithril.js.org/"&gt;mithril&lt;/a&gt; wraps any &lt;code class="inline"&gt;{onclick: f, onsubmit: g, ...}&lt;/code&gt; functions and rerenders the DOM as necessary in similar way to &lt;code class="inline"&gt;React&lt;/code&gt;. Below is an example of one of the functions we pass via &lt;code class="inline"&gt;m(&amp;quot;form&amp;quot;, {onsubmit: add}, ...)&lt;/code&gt;.&lt;/p&gt;&lt;pre class="language-javascript"&gt;&lt;code&gt;const add = (e) =&amp;gt; {
-    e.preventDefault()
-    if (!state.new) return
-    state.todos.push({message: state.new, done: false})
-    state.new = &amp;quot;&amp;quot;
-    m.request({
-        url: &amp;quot;/declarative/todos&amp;quot;,
-        method: &amp;quot;PUT&amp;quot;,
-        body: {todos: state.todos}
-    })
-}&lt;/code&gt;&lt;/pre&gt;&lt;em&gt;Note that if we want to render the same component from the backend, we just pass in &lt;code class="inline"&gt;{onsubmit: None}&lt;/code&gt; and it is ignored by &lt;code class="inline"&gt;dnjs&lt;/code&gt;.&lt;/em&gt;&lt;p&gt;Let&amp;#x27;s show a video of our declaratively rendered app in action:&lt;/p&gt;&lt;video src="videos/declarative.webm" controls style="
-        margin: auto;
-        display: block;
-        max-width: calc(min(20em, 100%));
-        box-shadow: 0px 0px 6px 2px #0000002b;
-        margin-top: 2em;
-        margin-bottom: 2em;
-    "&gt;&lt;/video&gt;&lt;h1&gt;Bonus css &lt;code class="inline"&gt;section&lt;/code&gt;&lt;/h1&gt;&lt;p&gt;Our app has many pages, so we&amp;#x27;d like to share/compose/namespace our css. Handily &lt;code class="inline"&gt;dnjs&lt;/code&gt; can convert from &lt;a href="https://github.com/leontrolski/dnjs/tree/master/examples/todo/shared/style.dn.js"&gt;&lt;code class="inline"&gt;examples/todo/shared/style.dn.js&lt;/code&gt;&lt;/a&gt;:&lt;/p&gt;&lt;pre class="language-javascript"&gt;&lt;code&gt;const _classes = {
-    bold: {
-        &amp;quot;font-weight&amp;quot;: &amp;quot;bold&amp;quot;,
-    },
-    red: {
-        &amp;quot;color&amp;quot;: &amp;quot;red&amp;quot;,
-    },
-    ...
-}
-
-// namespace
-export default Object.fromEntries(
-    Object.entries(_classes)
-    .map(([k, v], _) =&amp;gt; [&amp;quot;.{namespace}-{k}&amp;quot;, v])
-)&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Via:&lt;/p&gt;&lt;pre class="language-bash"&gt;&lt;code&gt;dnjs shared/style.dn.js --css &amp;gt; static/style.css&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;To:&lt;/p&gt;&lt;pre class="language-css"&gt;&lt;code&gt;.todo-bold {
-    font-weight: bold;
-}
-.todo-red {
-    color: red;
-}&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;In &lt;a href="https://github.com/leontrolski/dnjs/tree/master/examples/todo/shared/style.dn.js"&gt;&lt;code class="inline"&gt;examples/todo/shared/style.dn.js&lt;/code&gt;&lt;/a&gt; we also export the names themselves of the css classes, so in the rendering code, we can refer to eg: &lt;code class="inline"&gt;style.classes.bold&lt;/code&gt; and it will resolve to the name: &lt;code class="inline"&gt;&amp;quot;todo-bold&amp;quot;&lt;/code&gt;.&lt;/p&gt;&lt;p&gt;Similar to the advantages in html-rendering land, having your css as &amp;quot;just data&amp;quot; means you can easily compose/transform it, again without resorting to a whole new DSL like &lt;code class="inline"&gt;Sass&lt;/code&gt;.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;
-            </description>
-        </item>
-        <item>
-            <title>Python &lt;code class="inline"&gt;virtualenv&lt;/code&gt;s for Node devs</title>
-            <pubDate>Thu, 4 Feb 2021 09:07:05 +0000</pubDate>
-            <link>https://leontrolski.github.io/virtualenvs-for-node-devs.html</link>
-            <guid>https://leontrolski.github.io/virtualenvs-for-node-devs.html</guid>
-            <description>
-&amp;#x26a0;&amp;#xfe0f; This article contains JS code. It might not work properly in your feed reader.
-You might want to visit the &lt;a href="https://leontrolski.github.io/virtualenvs-for-node-devs.html"&gt;original article&lt;/a&gt;.
-        &lt;/style&gt;&lt;link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet"&gt;&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js"&gt;&lt;/script&gt;&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js"&gt;&lt;/script&gt;&lt;/head&gt;&lt;body&gt;&lt;a href="index.html"&gt;&lt;img src="pic.png" style="height:2em"&gt;⇦&lt;/a&gt;&lt;h1&gt;Python &lt;code class="inline"&gt;virtualenv&lt;/code&gt;s for Node devs&lt;/h1&gt;&lt;p&gt;You&amp;#x27;ve started doing some Python while working with another team, and they&amp;#x27;ve told you to do everything in &lt;code class="inline"&gt;virtualenv&lt;/code&gt;s as it&amp;#x27;s the right way. You&amp;#x27;ve also been told Python&amp;#x27;s packaging system is a bit of a mess, let&amp;#x27;s try tame it somewhat.&lt;/p&gt;&lt;p&gt;We&amp;#x27;re going to compare &lt;code class="inline"&gt;npm&lt;/code&gt; to the &amp;quot;modern classic&amp;quot; Python equivalent. I&amp;#x27;m going to ignore more recent developments like &lt;a href="https://python-poetry.org/"&gt;poetry&lt;/a&gt; and friends.&lt;/p&gt;&lt;p&gt;First, do you have the right Python version installed? We&amp;#x27;re going to use &lt;a href="https://asdf-vm.com"&gt;asdf&lt;/a&gt; which supports Node, Ruby, Python, etc. Steps to install for me were:&lt;/p&gt;&lt;pre class="language-bash"&gt;&lt;code&gt;brew install asdf
-echo -e &amp;quot;\n. $(brew --prefix asdf)/asdf.sh&amp;quot; &amp;gt;&amp;gt; ~/.zshrc
-# switch to a new shell window at this point
-asdf plugin-add python
-asdf install python 3.9.1
-asdf global python 3.9.1
-which python3  # should give you ~/.asdf/shims/python3
-python3 --version # should give you 3.9.1&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;OK, so we&amp;#x27;ve got a Python version that seems sane, let&amp;#x27;s set up a &lt;code class="inline"&gt;virtualenv&lt;/code&gt; with the equivalent of &lt;code class="inline"&gt;npm init&lt;/code&gt;.&lt;/p&gt;&lt;pre class="language-bash"&gt;&lt;code&gt;python3 -m venv .env&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;We now have a new folder in our current directory called &lt;code class="inline"&gt;.env&lt;/code&gt; that contains symlinks to the Python that we just ran:&lt;/p&gt;&lt;pre class="language-bash"&gt;&lt;code&gt;.env
-├── bin
-│   ├── Activate.ps1
-│   ├── activate
-│   ├── activate.csh
-│   ├── activate.fish
-│   ├── easy_install
-│   ├── easy_install-3.9
-│   ├── pip
-│   ├── pip3
-│   ├── pip3.9
-│   ├── python -&amp;gt; python3
-│   ├── python3 -&amp;gt; ~/.asdf/installs/python/3.9.1/bin/python3
-│   └── python3.9 -&amp;gt; python3
-├── include
-├── lib
-│   └── python3.9
-│       └── site-packages
-│           ├── __pycache__
-│           ├── easy_install.py
-│           ├── pip
-│           ├── pip-20.2.3.dist-info
-│           ├── pkg_resources
-│           ├── setuptools
-│           └── setuptools-49.2.1.dist-info
-└── pyvenv.cfg&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;We could always run &lt;code class="inline"&gt;.env/bin/python&lt;/code&gt; or &lt;code class="inline"&gt;.env/bin/pip install flask&lt;/code&gt; or whatever, but &lt;code class="inline"&gt;virtualenv&lt;/code&gt;s come with a special trick file to add &lt;code class="inline"&gt;.env/bin&lt;/code&gt; to &lt;code class="inline"&gt;bash&lt;/code&gt;&amp;#x27;s PATH. Let&amp;#x27;s run it:&lt;/p&gt;&lt;pre class="language-bash"&gt;&lt;code&gt;source .env/bin/activate&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Now everything should be set up. Let&amp;#x27;s try:&lt;/p&gt;&lt;pre class="language-bash"&gt;&lt;code&gt;(.env) ➜ echo $PATH
-/Users/user/src/my-special-project/.env/bin:/usr/local/bin:/usr/bin:/bin
-(.env) ➜ which python
-/Users/user/src/my-special-project/.env/bin/python
-(.env) ➜ which pip
-/Users/user/src/my-special-project/.env/bin/pip
-(.env) ➜ python --version
-Python 3.9.1&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;The main difference from &lt;code class="inline"&gt;npm&lt;/code&gt; here is we don&amp;#x27;t have to run anything with &lt;code class="inline"&gt;npm run ...&lt;/code&gt; as we&amp;#x27;ve hacked with the PATH.&lt;/p&gt;&lt;h2 id="installing-stuff"&gt;Installing stuff&lt;/h2&gt;&lt;p&gt;Let&amp;#x27;s install &lt;code class="inline"&gt;flask&lt;/code&gt;:&lt;/p&gt;&lt;pre class="language-bash"&gt;&lt;code&gt;pip install flask&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Now our directory should look like:&lt;/p&gt;&lt;pre class="language-bash"&gt;&lt;code&gt;.env
-├── bin
-│   ├── python -&amp;gt; python3
-│   ├── flask
-│   └── ...
-├── lib
-│   └── python3.9
-│       └── site-packages
-│           ├── click
-│           ├── flask
-│           └── ...&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;As you can see, &lt;code class="inline"&gt;.env/lib/python3.9/site-packages&lt;/code&gt; is a lot like &lt;code class="inline"&gt;node_modules&lt;/code&gt;. We can see all the library&amp;#x27;s files:&lt;/p&gt;&lt;pre class="language-bash"&gt;&lt;code&gt;(.env) ➜ ls .env/lib/python3.9/site-packages/flask
-__init__.py     _compat.py      cli.py          debughelpers.py json            signals.py      views.py
-__main__.py     app.py          config.py       globals.py      logging.py      templating.py   wrappers.py
-__pycache__     blueprints.py   ctx.py          helpers.py      sessions.py     testing.py&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Now, what is the equivalent to the following in a &lt;code class="inline"&gt;package.json&lt;/code&gt;?&lt;/p&gt;&lt;pre class="language-javascript"&gt;&lt;code&gt;{
-    ...
-    &amp;quot;dependencies&amp;quot;: {
-      &amp;quot;express&amp;quot;: &amp;quot;^4.17.1&amp;quot;
-    }
-}&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Python is a fair bit different from Node in that only one version of a package can be installed in a &lt;code class="inline"&gt;virtualenv&lt;/code&gt; at a time. This means you tend to have abstract requirements (that is to say with very limited version pinning) listed in &lt;code class="inline"&gt;setup.py|requirements.in|pyproject.toml&lt;/code&gt; and pinned requirements (for testing/deployent if you&amp;#x27;re working on a service) in a &lt;code class="inline"&gt;requirements.txt&lt;/code&gt;.&lt;/p&gt;&lt;p&gt;You can install a set of requirements with:&lt;/p&gt;&lt;pre class="language-bash"&gt;&lt;code&gt;pip install -r requirements.txt&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Or whatever file it is you want to install from. This is the equivalent of &lt;code class="inline"&gt;npm install&lt;/code&gt;.&lt;/p&gt;&lt;p&gt;In terms of pinning requirements in your own project a la &lt;code class="inline"&gt;yarn lock&lt;/code&gt; or whatever the flavour of the month is, I&amp;#x27;ve always been a fan of &lt;a href="https://github.com/jazzband/pip-tools"&gt;pip-tools&lt;/a&gt; - using this means you can safely ignore the last few years of Python packaging excitement and get on with your life.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;
             </description>
         </item>
     </channel>
