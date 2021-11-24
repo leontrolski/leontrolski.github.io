@@ -1,0 +1,169 @@
+<html>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <head>
+        <title>
+            leontrolski - Pratt
+        </title>
+        <script id="loader-script" src="https://www.typescriptlang.org/js/vs.loader.js" defer async></script>
+        <style>
+            body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 63%;}
+            @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+            a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
+            a:hover {border-bottom: 0;}
+            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em;}
+            blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
+
+            #container{display:flex;}
+            .half{width:50%;height:10rem;}
+            @media screen and (max-width: 800px) {
+                #container{flex-direction:column;}
+                .half{width:100%;}
+                #output{height:4rem;}
+            }
+            #editor{background-color:white;}
+            #output{overflow-y:scroll;color:white;background-color:darkslategray;font-size:0.8rem;padding-left:1rem;}
+            #buttons{display:flex;justify-content:center;}
+        </style>
+    </head>
+    <body>
+        <a href="index.html">
+            <img src="pic.png" style="height:2em">
+            ⇦
+        </a>
+        <br>
+        <br>
+        <div id="loader"><em>Loading...</em></div>
+        <div id="container">
+            <div id="editor" class="half"></div>
+            <div id="output" class="half"></div>
+        </div>
+        <div id="buttons">
+            <button id="prev">previous</button>
+            <button id="next">next</button>
+        </div>
+        <div id="prose">
+                <p>
+                    Let's write a Pratt parser and an interpreter for a small subset of JS in TypeScript!
+                </p>
+                <p>
+                    This type of parser has become fairly popular due to the simplicity with which it handles things like operator precedence. I'm part of a <a href="https://www.oilshell.org/blog/2017/03/31.html">long lineage</a> of bloggers - it's the "monad is a burrito" of parsing posts.
+                </p>
+                <p>
+                    I thought I'd bother writing up my attempt as I was particularly happy with the brevity of the resulting code. Thank you thank you <a href="https://andychu.net/">Andy C</a> for bringing Pratt into my life.
+                </p>
+                <p>
+                    Click "next" above to begin.
+                </p>
+        </div>
+    </body>
+    <script>
+const loaderScriptEl = document.getElementById("loader-script")
+const loaderEl = document.getElementById("loader")
+const editorEl = document.getElementById("editor")
+const outputEl = document.getElementById("output")
+const proseEl = document.getElementById("prose")
+const nextButtonEl = document.getElementById("next")
+
+
+let i = 0
+let outputs = []
+const parts = [
+    {source: `const source = \`
+    {
+        "a": {"b": {"c": "d"}},
+        "foo": (1 === 2)
+            ? "bar"
+            : 3 + 4 * 5
+    }
+\`
+`,  prose: `<p>We'd like to parse the source string into the follow S-expression:<p>
+    <pre>({
+    (: "a" ({ (: "b" ({ (: "c" "d")))))
+    (:
+        "foo"
+        (?
+            (=== 1 2)
+            "bar"
+            (+ 3 (* 4 5)))))</pre>`},
+    {source:`const split = source.match(/{|}|:|,|\\(|\\)|===|:|\\?|\\+|\\*|\\d+|(?:"[^"]+")/g)
+
+
+`, prose: 'yo'},
+    {source:`type Token = {
+    type: string
+    value: string
+}
+
+const tokens: Token[] = (split || []).map(value => ({
+    type: value[0] === '"' ? "string" : value.match(/\\d+/) ? "number" : value,
+    value
+}))
+`, prose: 'yooo'},
+
+]
+
+// see https://www.typescriptlang.org/dev/sandbox/
+const initialCode = `console.log("TypeScript here")
+console.log("Will be executed")
+`
+
+
+next.onclick = () => {
+    window.sandbox.editor.setValue(parts.slice(0, i + 1).map(part => part.source).join(""))
+    proseEl.innerHTML = parts[i].prose
+    i += 1
+}
+window.fakeLog = (...args) => {
+    outputs.push(args)
+}
+const runCode = async () => {
+    let js = await window.sandbox.getRunnableJS()
+    js = js.replace(/console\.log\(/g, "window.fakeLog(")
+    eval(js)
+    outputEl.innerHTML = outputs.map(outputList => `<pre>${outputList.map(output => JSON.stringify(output, null, 4)).join(", ")}</pre>`).join("")
+    outputEl.scrollTop = outputEl.scrollHeight - outputEl.clientHeight
+    outputs = []
+}
+
+loaderScriptEl.onload = () => {
+    require.config({
+        paths: {
+            vs: 'https://typescript.azureedge.net/cdn/4.4.4/monaco/min/vs',
+            sandbox: 'https://www.typescriptlang.org/js/sandbox',
+        },
+        ignoreDuplicateModules: ['vs/editor/editor.main'],
+    })
+    // Grab a copy of monaco, TypeScript and the sandbox
+    require(
+        ['vs/editor/editor.main', 'vs/language/typescript/tsWorker', 'sandbox/index'],
+        (
+            main,
+            _tsWorker,
+            sandboxFactory
+        ) => {
+            const isOK = main && window.ts && sandboxFactory
+            if (isOK) loaderEl.parentNode.removeChild(loaderEl)
+            else throw new Error('Could not get all the dependencies of sandbox set up!')
+            window.sandbox = sandboxFactory.createTypeScriptSandbox(
+                {
+                    text: initialCode,
+                    compilerOptions: {},
+                    domID: 'editor',
+                },
+                main,
+                window.ts
+            )
+            sandbox.editor.updateOptions({
+                lineNumbers: 'off',
+                glyphMargin: false,
+                folding: false,
+                lineDecorationsWidth: 0,
+                lineNumbersMinChars: 0
+            })
+            runCode()
+            window.sandbox.editor.getModel().onDidChangeContent(runCode)
+        }
+    )
+}
+  </script>
+</html>

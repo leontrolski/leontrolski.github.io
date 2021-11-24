@@ -1,0 +1,153 @@
+<html>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <head>
+        <title>
+            leontrolski -             Pratt parsing
+        </title>
+        <style>
+            
+            body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 63%;}
+            @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+            pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
+            a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
+            a:hover {border-bottom: 0;}
+            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em; white-space: nowrap;}
+            blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
+            details {border-bottom:solid 5px gray;}
+        
+        </style>
+        <link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js">
+
+        </script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js">
+
+        </script>
+
+    </head>
+    <body>
+        <a href="index.html">
+            <img src="pic.png" style="height:2em">
+            ⇦
+        </a>
+        <h1>
+            Pratt parser for a subset of JavaScript
+        </h1>
+        <p>
+            This post presents a Pratt parser for a subset of JavaScript using TypeScript. It&#39;s very similar to the one used in             <a href="https://github.com/leontrolski/dnjs">
+                dnjs.
+            </a>
+
+        </p>
+        <p>
+            This type of parser has become fairly popular due to the simplicity with which it handles things like operator precedence. In fact I&#39;m part of a             <a href="https://www.oilshell.org/blog/2017/03/31.html">
+                long lineage
+            </a>
+             of bloggers - it&#39;s the &#34;monad is a burrito&#34; of parsing posts. I thought I&#39;d bother writing up my attempt as I had a fun time writing it and was particularly happy with the brevity of the resulting code - I think this really exposes how lovely a parsing method it is. Thank you thank you             <a href="https://andychu.net/">
+                Andy C
+            </a>
+             for bringing it into my life.
+        </p>
+        <p>
+            The parser will turn the following source:
+        </p>
+        <pre class="language-javascript"><code>{
+    &#34;a&#34;: {&#34;b&#34;: {&#34;c&#34;: &#34;d&#34;}},
+    &#34;foo&#34;: (1 === 2)
+        ? &#34;bar&#34;
+        : 3 + 4 * 5
+}</code>
+</pre>
+        <p>
+            Into the following AST:
+        </p>
+        <pre class="language-javascript"><code>({
+    (: &#34;a&#34; ({ (: &#34;b&#34; ({ (: &#34;c&#34; &#34;d&#34;)))))
+    (:
+        &#34;foo&#34;
+        (?
+            (=== 1 2)
+            &#34;bar&#34;
+            (+ 3 (* 4 5)))))</code>
+</pre>
+        <p>
+            Each S-expression is of the form:
+        </p>
+        <pre class="language-javascript"><code>(operator child child ...)</code>
+</pre>
+        <p>
+            Here&#39;s le parsing code:
+        </p>
+        <pre class="language-javascript"><code>const source = &#39;...&#39;  // see above
+const split = source.match(/{|}|:|,|(|)|===|:|?|+|*|d+|(?:&#34;[^&#34;]+&#34;)/g)
+
+type Token = {
+    type: string
+    value: string
+}
+
+const tokens: Token[] = (split || []).map(value =&gt; ({
+    type: value[0] === &#39;&#34;&#39; ? &#34;string&#34; : value.match(/d+/) ? &#34;number&#34; : value,
+    value
+}))
+
+type Node_ = {
+    token: Token
+    children: Node_[]
+}
+
+const sexpr = (node: Node_): string =&gt; {
+    if (node.token.type === &#34;number&#34; || node.token.type === &#34;string&#34;)
+        return node.token.value
+    const args = node.children.map(sexpr).join(&#34; &#34;)
+    return `(${node.token.type}${args.length ? &#39; &#39; : &#39;&#39;}${args})`
+}
+
+const infixPrecedences = {&#34;===&#34;: 2, &#34;+&#34;: 14, &#34;*&#34;: 15, &#34;:&#34;: 11, &#34;?&#34;: 12}
+let i = 0
+const advance = () =&gt; i += 1
+
+const parse = (precedence: number): Node_ =&gt; {
+    const token = tokens[i]
+    let node = {token, children: []}
+    if (token.type === &#34;number&#34; || token.type === &#34;string&#34;){
+        advance()
+    }
+    else if (token.type === &#34;{&#34;) {
+        advance()
+        while (tokens[i].type !== &#34;}&#34;)
+            tokens[i].type === &#34;,&#34; ? advance() : node.children.push(parse(2))
+        advance()
+    }
+    else if (token.type === &#34;(&#34;) {
+        advance()
+        node = parse(-1)
+        advance()  // advance the &#34;)&#34;
+    }
+    else {
+        throw new Error(`must be atom or object, got: ${JSON.stringify(token)}`)
+    }
+    if (i === tokens.length) return node
+    return infix(precedence, node)
+}
+
+const infix = (precedence: number, left: Node_): Node_ =&gt; {
+    const token = tokens[i]
+    const nextPrecedence = infixPrecedences[token.type]
+    if (nextPrecedence === undefined || precedence &gt;= nextPrecedence) return left
+
+    advance()
+    const children = [left, parse(nextPrecedence)]
+    if (token.type === &#34;?&#34;){
+        advance()  // advance the &#34;:&#34;
+        children.push(parse(nextPrecedence))
+    }
+    return {token, children}
+}
+
+console.log(sexpr(parse(0)))</code>
+</pre>
+
+    </body>
+
+</html>
