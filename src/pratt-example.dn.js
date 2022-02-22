@@ -28,7 +28,7 @@ export default page(title, h1, [
     js(`(operator child child ...)`),
     m("p", "Here's le parsing code:"),
     js(`const source = '...'  // see above
-const split = source.match(/{|}|:|,|\(|\)|===|:|\?|\+|\*|\d+|(?:"[^"]+")/g)
+const split = source.match(/{|}|:|,|\\(|\\)|===|:|\\?|\\+|\\*|\\d+|(?:"[^"]+")/g)
 
 type Token = {
     type: string
@@ -36,7 +36,7 @@ type Token = {
 }
 
 const tokens: Token[] = (split || []).map(value => ({
-    type: value[0] === '"' ? "string" : value.match(/\d+/) ? "number" : value,
+    type: value[0] === '"' ? "string" : value.match(/\\d+/) ? "number" : value,
     value
 }))
 

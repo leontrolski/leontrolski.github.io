@@ -79,7 +79,7 @@
             Here&#39;s le parsing code:
         </p>
         <pre class="language-javascript"><code>const source = &#39;...&#39;  // see above
-const split = source.match(/{|}|:|,|(|)|===|:|?|+|*|d+|(?:&#34;[^&#34;]+&#34;)/g)
+const split = source.match(/{|}|:|,|\(|\)|===|:|\?|\+|\*|\d+|(?:&#34;[^&#34;]+&#34;)/g)
 
 type Token = {
     type: string
@@ -87,7 +87,7 @@ type Token = {
 }
 
 const tokens: Token[] = (split || []).map(value =&gt; ({
-    type: value[0] === &#39;&#34;&#39; ? &#34;string&#34; : value.match(/d+/) ? &#34;number&#34; : value,
+    type: value[0] === &#39;&#34;&#39; ? &#34;string&#34; : value.match(/\d+/) ? &#34;number&#34; : value,
     value
 }))
 
