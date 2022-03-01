@@ -83,12 +83,12 @@ def solutions(game: Game) -> Iterator[Game]:
     m("hr"),
     m("p", "What about ", inline("solver.py"), "? Turns out a generic backtracking solver is not crazy crazy complicated:"),
     python(`from dataclasses import dataclass, field
-from typing import Any, Callable, Generic, Hashable, Optional, Iterator, TypeVar
+from typing import Any, Callable, Generic, Hashable, Iterator, TypeVar
 
 K = TypeVar('K', bound=Hashable)  # these are "variables"
-V = TypeVar('V')                  # these are "values"
-Assignements = dict[K, V]
-Constraint = Callable[[Assignements[K, V]], bool]
+V = TypeVar('V')  # these are "values"
+Assignments = dict[K, V]
+Constraint = Callable[[Assignments[K, V]], bool]
 
 @dataclass
 class KProperties(Generic[K, V]):
@@ -106,27 +106,25 @@ class Problem(Generic[K, V]):
     def add_constraint(self, k: K, constraint: Constraint[K, V]) -> None:
         self.map[k].constraints.append(constraint)
 
-    def satisfies_constraints(self, k: K, assignments: Assignements[K, V]) -> bool:
+    def satisfies_constraints(self, k: K, assignments: Assignments[K, V]) -> bool:
         return all(constraint(assignments) for constraint in self.map[k].constraints)
 
 
-def yield_solutions(problem: Problem[K, V]) -> Iterator[Assignements[K, V]]:
-    assignments: Assignements[K, V] = {}
+def yield_solutions(problem: Problem[K, V]) -> Iterator[Assignments[K, V]]:
+    assignments: Assignments[K, V] = {}
     queue: list[tuple[K, list[V]]] = []
+
     while True:
-        k_and_vs = _next_k_and_vs(problem, assignments)
-        if k_and_vs is None:  # then there's nothing left to assign
+        if any(k not in assignments for k in problem.map):
+            k, vs = _next_k_and_vs(problem, assignments)
+        else:  # then there's nothing left to assign
             yield assignments.copy()
             if not queue:
                 return
             k, vs = queue.pop()
-        else:
-            k, vs = k_and_vs
 
         while True:
-            while queue:
-                if vs:
-                    break
+            while not vs and queue:
                 assignments.pop(k)
                 k, vs = queue.pop()
 
@@ -142,19 +140,16 @@ def yield_solutions(problem: Problem[K, V]) -> Iterator[Assignements[K, V]]:
 
 def _next_k_and_vs(
     problem: Problem[K, V],
-    assignments: Assignements[K, V]
-) -> Optional[tuple[K, list[V]]]:
+    assignments: Assignments[K, V]
+) -> tuple[K, list[V]]:
     # pick k with the (highest number of constraints, smallest domain)
     def key(v: K) -> tuple[int, int]:
         return -len(problem.map[v].constraints), len(problem.map[v].domain)
 
     unassigned = [k for k in problem.map if k not in assignments]
-    if unassigned:
-        k, *_ = sorted(unassigned, key=key)
-        vs = problem.map[k].domain.copy()
-        return k, vs
-
-    return None`),
+    k, *_ = sorted(unassigned, key=key)
+    vs = problem.map[k].domain.copy()
+    return k, vs`),
     m("p"),
 
     m("hr"),
