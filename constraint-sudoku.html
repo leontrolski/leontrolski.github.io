@@ -1,0 +1,225 @@
+<html>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <head>
+        <title>
+            leontrolski -             sudoku constraint solver
+        </title>
+        <style>
+            
+            body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 63%;}
+            @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+            pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
+            a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
+            a:hover {border-bottom: 0;}
+            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em; white-space: nowrap;}
+            blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
+            details {border-bottom:solid 5px gray;}
+        
+        </style>
+        <link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js">
+
+        </script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js">
+
+        </script>
+
+    </head>
+    <body>
+        <a href="index.html">
+            <img src="pic.png" style="height:2em">
+            ⇦
+        </a>
+        <h1>
+            Solving sudoku with a constraint solver
+        </h1>
+        <p>
+            Let&#39;s solve a sudoku by writing and then using a backtracking constaint solver.
+        </p>
+        <p>
+            The resulting interface we want is:
+        </p>
+        <pre class="language-python"><code>solution = next(solutions(game))</code>
+</pre>
+        <p>
+            Where a game might be:
+        </p>
+        <pre class="language-python"><code>game = [
+    [5, 3, 0, 0, 7, 0, 0, 0, 0],
+    [6, 0, 0, 1, 9, 5, 0, 0, 0],
+    [0, 9, 8, 0, 0, 0, 0, 6, 0],
+    [8, 0, 0, 0, 6, 0, 0, 0, 3],
+    [4, 0, 0, 8, 0, 3, 0, 0, 1],
+    [7, 0, 0, 0, 2, 0, 0, 0, 6],
+    [0, 6, 0, 0, 0, 0, 2, 8, 0],
+    [0, 0, 0, 4, 1, 9, 0, 0, 5],
+    [0, 0, 0, 0, 8, 0, 0, 7, 9],
+]</code>
+</pre>
+        <p>
+            And the resulting solution we expect to be:
+        </p>
+        <pre class="language-python"><code>expected = [
+    [5, 3, 4, 6, 7, 8, 9, 1, 2],
+    [6, 7, 2, 1, 9, 5, 3, 4, 8],
+    [1, 9, 8, 3, 4, 2, 5, 6, 7],
+    [8, 5, 9, 7, 6, 1, 4, 2, 3],
+    [4, 2, 6, 8, 5, 3, 7, 9, 1],
+    [7, 1, 3, 9, 2, 4, 8, 5, 6],
+    [9, 6, 1, 5, 3, 7, 2, 8, 4],
+    [2, 8, 7, 4, 1, 9, 6, 3, 5],
+    [3, 4, 5, 2, 8, 6, 1, 7, 9],
+]</code>
+</pre>
+        <p>
+            Here&#39;s the code, we can save this as             <code class="inline">sudoku.py</code>
+
+        </p>
+        <pre class="language-python"><code>from functools import partial
+from typing import Iterator
+
+from solver import Problem, yield_solutions
+
+Coordinate = tuple[int, int]
+Value = int
+Game = list[list[Value]]
+Assignments = dict[Coordinate, Value]
+
+
+def all_different(group: list[Coordinate], assignments: Assignments) -&gt; bool:
+    seen = set()
+    for v in (assignments[k] for k in group if k in assignments):
+        if v in seen:
+            return False
+        seen.add(v)
+    return True
+
+
+rows = [[(i, j) for j in range(9)] for i in range(9)]
+cols = [[(i, j) for i in range(9)] for j in range(9)]
+boxes = [[(i + k * 3, j + l * 3) for i in range(3) for j in range(3)] for k in range(3) for l in range(3)]
+
+
+def solutions(game: Game) -&gt; Iterator[Game]:
+    sudoku = Problem[Coordinate, Value]()
+
+    for i in range(9):
+        for j in range(9):
+            if game[i][j] &gt; 0:
+                sudoku.add_variable((i, j), [game[i][j]])
+            else:
+                sudoku.add_variable((i, j), [1, 2, 3, 4, 5, 6, 7, 8, 9])
+
+    for group in rows + cols + boxes:
+        for cell in group:
+            sudoku.add_constraint(cell, partial(all_different, group))
+
+    for s in yield_solutions(sudoku):
+        yield [[s[i, j] for j in range(9)] for i in range(9)]</code>
+</pre>
+        <p>
+            In summary, we describe the problem as:
+        </p>
+        <ul>
+            <li>
+                There are 81 coordinates -                 <code class="inline">(i, j)</code>
+                . If the coordinate already has a value in                 <code class="inline">game</code>
+                , it can only be that value, else it could be any of 1, 2, 3, 4, 5, 6, 7, 8, 9.
+            </li>
+            <li>
+                In each row/column/box, all the values must be different.
+            </li>
+
+        </ul>
+        <hr>
+        <p>
+            What about             <code class="inline">solver.py</code>
+            ? Turns out a generic backtracking solver is not crazy crazy complicated:
+        </p>
+        <pre class="language-python"><code>from dataclasses import dataclass, field
+from typing import Any, Callable, Generic, Hashable, Optional, Iterator, TypeVar
+
+K = TypeVar(&#39;K&#39;, bound=Hashable)  # these are &#34;variables&#34;
+V = TypeVar(&#39;V&#39;)                  # these are &#34;values&#34;
+Assignements = dict[K, V]
+Constraint = Callable[[Assignements[K, V]], bool]
+
+@dataclass
+class KProperties(Generic[K, V]):
+    domain: list[V]
+    constraints: list[Constraint[K, V]]
+
+
+@dataclass
+class Problem(Generic[K, V]):
+    map: dict[K, KProperties[K, V]] = field(default_factory=dict)
+
+    def add_variable(self, k: K, domain: list[V]) -&gt; None:
+        self.map[k] = KProperties(domain=domain, constraints=[])
+
+    def add_constraint(self, k: K, constraint: Constraint[K, V]) -&gt; None:
+        self.map[k].constraints.append(constraint)
+
+    def satisfies_constraints(self, k: K, assignments: Assignements[K, V]) -&gt; bool:
+        return all(constraint(assignments) for constraint in self.map[k].constraints)
+
+
+def yield_solutions(problem: Problem[K, V]) -&gt; Iterator[Assignements[K, V]]:
+    assignments: Assignements[K, V] = {}
+    queue: list[tuple[K, list[V]]] = []
+    while True:
+        k_and_vs = _next_k_and_vs(problem, assignments)
+        if k_and_vs is None:  # then there&#39;s nothing left to assign
+            yield assignments.copy()
+            if not queue:
+                return
+            k, vs = queue.pop()
+        else:
+            k, vs = k_and_vs
+
+        while True:
+            while queue:
+                if vs:
+                    break
+                assignments.pop(k)
+                k, vs = queue.pop()
+
+            if not vs:
+                return
+
+            assignments[k] = vs.pop()
+            if problem.satisfies_constraints(k, assignments):
+                break
+
+        queue.append((k, vs))
+
+
+def _next_k_and_vs(
+    problem: Problem[K, V],
+    assignments: Assignements[K, V]
+) -&gt; Optional[tuple[K, list[V]]]:
+    # pick k with the (highest number of constraints, smallest domain)
+    def key(v: K) -&gt; tuple[int, int]:
+        return -len(problem.map[v].constraints), len(problem.map[v].domain)
+
+    unassigned = [k for k in problem.map if k not in assignments]
+    if unassigned:
+        k, *_ = sorted(unassigned, key=key)
+        vs = problem.map[k].domain.copy()
+        return k, vs
+
+    return None</code>
+</pre>
+        <p>
+
+        </p>
+        <hr>
+        <p>
+            Interestingly, we can generate arbitrary completed sudokus like:
+        </p>
+        <pre class="language-python"><code>next(solutions([[0] * 9] * 9))</code>
+</pre>
+
+    </body>
+
+</html>
