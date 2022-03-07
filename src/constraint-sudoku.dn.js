@@ -83,6 +83,7 @@ def solutions(game: Game) -> Iterator[Game]:
     m("hr"),
     m("p", "What about ", inline("solver.py"), "? Turns out a generic backtracking solver is not crazy crazy complicated:"),
     python(`from dataclasses import dataclass, field
+from json import loads
 from typing import Any, Callable, Generic, Hashable, Iterator, TypeVar
 
 K = TypeVar('K', bound=Hashable)  # these are "variables"
@@ -112,16 +113,13 @@ def yield_solutions(problem: Problem[K, V]) -> Iterator[Assignments[K, V]]:
     while q:
         assignments = q.pop()
         for local in _possible(problem, assignments):
-            if ([k for k in problem.map if k not in local]):
+            if set(problem.map) - set(local):  # if any unassigned
                 q.append(local)
             else:
                 yield local
 
 
-def _possible(
-    problem: Problem[K, V],
-    assignments: Assignments[K, V]
-) -> list[Assignments[K, V]]:
+def _possible(problem: Problem[K, V], assignments: Assignments[K, V]) -> Iterator[Assignments[K, V]]:
     def key(v: K) -> tuple[int, int]:
         return -len(problem.map[v].constraints), len(problem.map[v].domain)
 
@@ -130,12 +128,10 @@ def _possible(
         return []
     # pick k with the (highest number of constraints, smallest domain)
     k = sorted(unassigned, key=key)[0]
-    return [
-        local
-        for local in ({**assignments, k: v} for v in problem.map[k].domain)
-        if all(constraint(local) for constraint in problem.map[k].constraints)
-    ]
-`),
+    for v in problem.map[k].domain:
+        local = {**assignments, k: v}
+        if all(constraint(local) for constraint in problem.map[k].constraints):
+            yield local`),
     m("p"),
 
     m("hr"),
