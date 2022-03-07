@@ -160,50 +160,35 @@ class Problem(Generic[K, V]):
     def add_constraint(self, k: K, constraint: Constraint[K, V]) -&gt; None:
         self.map[k].constraints.append(constraint)
 
-    def satisfies_constraints(self, k: K, assignments: Assignments[K, V]) -&gt; bool:
-        return all(constraint(assignments) for constraint in self.map[k].constraints)
-
 
 def yield_solutions(problem: Problem[K, V]) -&gt; Iterator[Assignments[K, V]]:
-    assignments: Assignments[K, V] = {}
-    queue: list[tuple[K, list[V]]] = []
-
-    while True:
-        if any(k not in assignments for k in problem.map):
-            k, vs = _next_k_and_vs(problem, assignments)
-        else:  # then there&#39;s nothing left to assign
-            yield assignments.copy()
-            if not queue:
-                return
-            k, vs = queue.pop()
-
-        while True:
-            while not vs and queue:
-                assignments.pop(k)
-                k, vs = queue.pop()
-
-            if not vs:
-                return
-
-            assignments[k] = vs.pop()
-            if problem.satisfies_constraints(k, assignments):
-                break
-
-        queue.append((k, vs))
+    q: list[Assignments[K, V]] = [{}]
+    while q:
+        assignments = q.pop()
+        for local in _possible(problem, assignments):
+            if ([k for k in problem.map if k not in local]):
+                q.append(local)
+            else:
+                yield local
 
 
-def _next_k_and_vs(
+def _possible(
     problem: Problem[K, V],
     assignments: Assignments[K, V]
-) -&gt; tuple[K, list[V]]:
-    # pick k with the (highest number of constraints, smallest domain)
+) -&gt; list[Assignments[K, V]]:
     def key(v: K) -&gt; tuple[int, int]:
         return -len(problem.map[v].constraints), len(problem.map[v].domain)
 
     unassigned = [k for k in problem.map if k not in assignments]
-    k, *_ = sorted(unassigned, key=key)
-    vs = problem.map[k].domain.copy()
-    return k, vs</code>
+    if not unassigned:
+        return []
+    # pick k with the (highest number of constraints, smallest domain)
+    k = sorted(unassigned, key=key)[0]
+    return [
+        local
+        for local in ({**assignments, k: v} for v in problem.map[k].domain)
+        if all(constraint(local) for constraint in problem.map[k].constraints)
+    ]</code>
 </pre>
         <p>
 
