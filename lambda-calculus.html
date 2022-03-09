@@ -1,0 +1,470 @@
+<html>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <head>
+        <title>
+            leontrolski -             Lambda calculus succinctly
+        </title>
+        <style>
+            
+            body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 63%;}
+            @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+            pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
+            a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
+            a:hover {border-bottom: 0;}
+            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em; white-space: nowrap;}
+            blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
+            details {border-bottom:solid 5px gray;}
+        
+        </style>
+        <link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js">
+
+        </script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js">
+
+        </script>
+
+    </head>
+    <body>
+        <a href="index.html">
+            <img src="pic.png" style="height:2em">
+            ⇦
+        </a>
+        <h1>
+            Lambda calculus succinctly in modern JavaScript
+        </h1>
+        <script>
+            const toInt = a => a(n => n + 1)(0)
+const toBool = a => a(true)(false)
+
+const True = a => b => a
+const False = a => b => b
+const not = a => a(False)(True)
+const and = a => b => a(b)(a)
+const or = a => b => a(a)(b)
+// Note someBool ? a : b
+// is equivalent to someBool(_ => a)(_ => b)(_)
+
+const _0 = f => a => a
+const _1 = f => a => f(a)
+const _2 = f => a => f(f(a))
+const _3 = f => a => f(f(f(a)))
+const inc = n => f => a => f(n(f)(a))
+const plus = n => m => n(inc)(m)
+const mult = n => m => a => n(m(a))
+const isEven = n => n(not)(True)
+const isZero = n => n(True(False))(True)
+
+const pair = a => b => f => f(a)(b)
+const first = p => p(True)
+const second = p => p(False)
+
+const incSecond = p => pair(second(p))(inc(second(p)))
+const dec = n => first(n(incSecond)(pair(_0)(_0)))
+const minus = n => m => m(dec)(n)
+const gte = n => m => isZero(n(dec)(m))
+const lt = n => m => not(gte(n)(m))
+const eq = n => m => and(gte(n)(m))(gte(m)(n))
+
+const incAndCall = f => p => pair(
+    inc(first(p))
+)(
+    f(first(p))(second(p))
+)
+const loop = n => m => f => a => second(
+    (minus(m)(n))(incAndCall(f))(pair(n)(a))
+)
+
+const _ = True
+const sum = n => isZero(n)(_ => _0)(_ => plus(n)(sum(dec(n))))(_)
+
+// Y-combinator
+const Y = f => (x => f(_ => x(x)))(x => f(_ => x(x)))
+// reduces to Y = f => f(_ => Y(f))
+const sum2 = Y(g => n => isZero(n)
+    (_ => _0)
+    (_ => plus(n)(g(_)(dec(n))))
+(_))
+
+// Z-combinator
+const Z = f => (x => f(v => x(x)(v)))(x => f(v => x(x)(v)))
+// reduces to Z = f => v => f(Z(f))(v)
+const sum3 = Z(g => n => isZero(n)
+    (_ => _0)
+    (_ => plus(n)(g(dec(n))))
+(_))
+
+        </script>
+        <p>
+            You can Google &#39;Lambda calculus&#39; for a deeper description, but in a nutshell it&#39;s a very small, Turing-complete, formal system for expressing computation as symbol manipulation.
+        </p>
+        <p>
+            This post rewrites some of the fundamental ideas in familiar JavaScript notation which allows us to easily evaluate them. You can try this out in your browser&#39;s console - all the assignments below are in global scope.
+        </p>
+        <br>
+        <p>
+            In lambda calculus notation, you might write something like:
+        </p>
+        <pre class="language-javascript"><code>(λf.f 4) (λx.x²)</code>
+</pre>
+        <p>
+            Let&#39;s cut straight to the Javascript version:
+        </p>
+        <pre class="language-javascript"><code>(f =&gt; f(4))(x =&gt; Math.pow(x, 2))</code>
+</pre>
+        <p>
+            Each anonymous function λ takes one argument. When you call a function, you simply replace the argument each time it occurs in the function&#39;s body with the value the function was called with.
+        </p>
+        <p>
+            It&#39;s worth noting that this process (known as β-reduction) is just a dumb mechanical one of symbol replacement - nothing else weird is happening. This is important, the programs are theorems, and by repeatedly applying β-reduction, we             <a href="https://en.wikipedia.org/wiki/Curry%E2%80%93Howard_correspondence#Natural_deduction_and_lambda_calculus">
+                prove
+            </a>
+             (or disprove) them within the system.
+        </p>
+        <p>
+            In the case of the example above:
+        </p>
+        <pre class="language-javascript"><code>(λf.f 4) (λx.x²)</code>
+</pre>
+        <p>
+            We can β-reduce the             <code class="inline">f</code>
+             away to make:
+        </p>
+        <pre class="language-javascript"><code>((λx.x²) 4)</code>
+</pre>
+        <p>
+            Then β-reduce the             <code class="inline">x</code>
+             away to make:
+        </p>
+        <pre class="language-javascript"><code>(4²)</code>
+</pre>
+        <p>
+            Which we know is 16.
+        </p>
+        <p>
+            Handily, with JavaScript notation, the interpreter will do the reduction automatically! So:
+        </p>
+        <pre class="language-javascript"><code>(f =&gt; f(4))(x =&gt; Math.pow(x, 2))</code>
+</pre>
+        <p>
+            Does the two reductions above and also evaluates to 16.
+        </p>
+        <p>
+            Because of this handy time saving property of JavaScript, we&#39;ll continue to use that as our Lambda calculus notation.
+        </p>
+        <hr>
+        <h2>
+            Integers
+        </h2>
+        <p>
+            In the example above, we had high level concepts as &#39;4&#39; and &#39;x²&#39; - these are a bit cheaty, instead, we&#39;re going start from nothing except the rules of the calculus.
+        </p>
+        <p>
+            For integers, we&#39;re going to use a system called &#39;Church numerals&#39;. These aren&#39;t nouns like &#39;one&#39; and &#39;two&#39;, but adverbs like &#39;call             <code class="inline">f</code>
+             with             <code class="inline">a</code>
+             one time&#39; or &#39;call             <code class="inline">f</code>
+             on             <code class="inline">a</code>
+             two times&#39;. If that&#39;s a bit abstract, let&#39;s define 4 integers:
+        </p>
+        <pre class="language-javascript"><code>const _0 = f =&gt; a =&gt; a
+const _1 = f =&gt; a =&gt; f(a)
+const _2 = f =&gt; a =&gt; f(f(a))
+const _3 = f =&gt; a =&gt; f(f(f(a)))</code>
+</pre>
+        <details>
+            <summary>
+                Here&#39;s a helper function so we can print these as good ol&#39; fashioned JavaScript numbers.                <br>
+                <em>
+                    This section is folded as it isn&#39;t written in formal Lambda calculus.
+                </em>
+
+            </summary>
+            <pre class="language-javascript"><code>const toInt = a =&gt; a(n =&gt; n + 1)(0)</code>
+</pre>
+
+        </details>
+        <p>
+            Now let&#39;s add in some functions that operate on integers:
+        </p>
+        <pre class="language-javascript"><code>const inc  = n =&gt; f =&gt; a =&gt; f(n(f)(a))  // n + 1
+const plus = n =&gt; m =&gt; n(inc)(m)       // n + m
+const mult = n =&gt; m =&gt; a =&gt; n(m(a))    // n * m</code>
+</pre>
+        <p>
+            We can test these in our browser&#39;s console using the helper from above, try running:
+        </p>
+        <pre class="language-javascript"><code>toInt(plus(_1)(_2))</code>
+</pre>
+        <p>
+            Neat?
+        </p>
+        <p>
+            Let&#39;s see how that happened by filling in the variables, then repeatedly applying β-reduction:
+        </p>
+        <pre class="language-javascript"><code>plus(_1)(_2)                                                   // replace plus, _1, _2
+(n =&gt; m =&gt; n(inc)(m))(f =&gt; a =&gt; f(a))(f =&gt; a =&gt; f(f(a)))       // β n
+(m =&gt; (f =&gt; a =&gt; f(a))(inc)(m))(f =&gt; a =&gt; f(f(a)))             // β m
+(f =&gt; a =&gt; f(a))(inc)(f =&gt; a =&gt; f(f(a)))                       // replace inc
+(f =&gt; a =&gt; f(a))(n =&gt; f =&gt; a =&gt; f(n(f)(a)))(f =&gt; a =&gt; f(f(a))) // β first f
+(a =&gt; (n =&gt; f =&gt; a =&gt; f(n(f)(a)))(a))(f =&gt; a =&gt; f(f(a)))       // β first a
+(n =&gt; f =&gt; a =&gt; f(n(f)(a)))(f =&gt; a =&gt; f(f(a)))                 // β n
+f =&gt; a =&gt; f((f =&gt; a =&gt; f(f(a)))(f)(a))                         // β second f
+f =&gt; a =&gt; f((a =&gt; f(f(a)))(a))                                 // β second a
+f =&gt; a =&gt; f(f(f(a)))</code>
+</pre>
+        <p>
+            Phewph, that was long, but we did end up with             <code class="inline">f =&gt; a =&gt; f(f(f(a)))</code>
+            , which is the Church numeral for &#39;3&#39;, so we&#39;ve             <b>
+                proven
+            </b>
+             1 + 2 = 3, yay!
+        </p>
+        <p>
+            We can see intuitively how we came up with some of the definitions. Remember earlier, we said the Church numeral 2 is the adverb &#39;call             <code class="inline">f</code>
+             on             <code class="inline">a</code>
+             two times&#39;, the definition for             <code class="inline">plus</code>
+             should make sense with that in mind:
+        </p>
+        <pre class="language-javascript"><code>const plus = n =&gt; m =&gt; n(inc)(m)</code>
+</pre>
+        <p>
+            Just says &#39;call             <code class="inline">inc</code>
+             on             <code class="inline">m</code>
+                         <code class="inline">n</code>
+             times&#39;
+        </p>
+        <h2>
+            Booleans
+        </h2>
+        <p>
+            Now we have a representation of integers based just on the calculus, let&#39;s define True and False:
+        </p>
+        <pre class="language-javascript"><code>const True  = a =&gt; b =&gt; a
+const False = a =&gt; b =&gt; b</code>
+</pre>
+        <p>
+            These are, like our integers, very abstract. It&#39;s important to consider that the choice is somewhat arbitrary - we&#39;re just going to do β-reduction on expressions involving these, and if an expression reduces to             <code class="inline">a =&gt; b =&gt; a</code>
+             then we consider it True.
+        </p>
+        <details>
+            <summary>
+                Here&#39;s a helper function so we can print these as good ol&#39; fashioned JavaScript booleans.
+            </summary>
+            <pre class="language-javascript"><code>const toBool = a =&gt; a(true)(false)</code>
+</pre>
+
+        </details>
+        <p>
+            Now let&#39;s add some functions that operate on boolean values:
+        </p>
+        <pre class="language-javascript"><code>const not = a =&gt; a(False)(True)
+const and = a =&gt; b =&gt; a(b)(a)
+const or  = a =&gt; b =&gt; a(a)(b)</code>
+</pre>
+        <p>
+            Again, try them in your browser&#39;s console like:
+        </p>
+        <pre class="language-javascript"><code>toBool(or(False)(True))</code>
+</pre>
+        <br>
+        <details id="ternary">
+            <summary>
+                Aside on the ternary operator.
+            </summary>
+            <p>
+                The ternary operator in JavaScript looks like
+            </p>
+            <pre class="language-javascript"><code>someBool ? a : b</code>
+</pre>
+            <p>
+                Note that neither                 <code class="inline">a</code>
+                 nor                 <code class="inline">b</code>
+                 are actually evaluated until the truthiness of                 <code class="inline">someBool</code>
+                 has been evaluated. For example, when running:
+            </p>
+            <pre class="language-javascript"><code>false ? console.log(1) : console.log(2)</code>
+</pre>
+            <p>
+                Only                 <code class="inline">2</code>
+                 gets logged.
+            </p>
+            <p>
+                This means for the equivalent in our Lambda calculus, we need to do:
+            </p>
+            <pre class="language-javascript"><code>const _ = True  // stands in for &#39;any value&#39;
+
+someBool(_ =&gt; a)(_ =&gt; b)(_)</code>
+</pre>
+            <p>
+                In a language like Haskell, we don&#39;t need to do this as every expression is &#39;lazy&#39; like the ternary expression is in JavaScript.
+            </p>
+
+        </details>
+        <br>
+        <p>
+            We&#39;re also going to define some functions that take an integer and return a boolean:
+        </p>
+        <pre class="language-javascript"><code>const isEven = n =&gt; n(not)(True)
+const isZero = n =&gt; n(True(False))(True)</code>
+</pre>
+        <h2>
+            Composite data
+        </h2>
+        <p>
+            Let&#39;s create a function to bundle two pieces of data into one, similar to what we might do with an Array in JavaScript.
+        </p>
+        <pre class="language-javascript"><code>const pair = a =&gt; b =&gt; f =&gt; f(a)(b)</code>
+</pre>
+        <p>
+            That&#39;s great, but how do we get anything out of it?
+        </p>
+        <pre class="language-javascript"><code>const first  = p =&gt; p(True)
+const second = p =&gt; p(False)</code>
+</pre>
+        <p>
+            Try this in your browser&#39;s console:
+        </p>
+        <pre class="language-javascript"><code>const myPair = pair(_2)(_0)
+toInt(second(myPair))</code>
+</pre>
+        <p>
+            We&#39;re in effect using the             <code class="inline">pair</code>
+            function&#39;s closure to store information
+        </p>
+        <br>
+        <p>
+            What can we do that&#39;s useful with this? We already have             <code class="inline">inc</code>
+             that returns the next integer, let&#39;s write a             <code class="inline">dec</code>
+             that returns the previous integer.
+        </p>
+        <pre class="language-javascript"><code>const incSecond = p =&gt; pair(second(p))(inc(second(p)))
+const dec       = n =&gt; first(n(incSecond)(pair(_0)(_0)))</code>
+</pre>
+        <p>
+            Huh? Let&#39;s consider just             <code class="inline">n(incSecond)(pair(_0)(_0))</code>
+
+        </p>
+        <p>
+            This says &#39;call             <code class="inline">incSecond</code>
+             on             <code class="inline">pair(_0)(_0)</code>
+                         <code class="inline">n</code>
+             times&#39;
+        </p>
+        <p>
+            So if             <code class="inline">n</code>
+             were 3, then             <code class="inline">incSecond(incSecond(incSecond(pair(_0)(_0))))</code>
+
+        </p>
+        <p>
+            Let&#39;s run through that (you might want to write your own helper function to             <code class="inline">console.log</code>
+                         <code class="inline">pair</code>
+            s):
+        </p>
+        <pre class="language-javascript"><code>incSecond(pair(_0)(_0))                        // pair(_0)(_1)
+incSecond(incSecond(pair(_0)(_1)))             // pair(_1)(_2)
+incSecond(incSecond(incSecond(pair(_1)(_2))))  // pair(_2)(_3)</code>
+</pre>
+        <p>
+            Then we take the             <code class="inline">first</code>
+             of             <code class="inline">pair(_2)(_3)</code>
+             which is             <code class="inline">_2</code>
+             - groovy!
+        </p>
+        <br>
+        <p>
+            Now we&#39;ve got all the pieces to add a few other useful functions:
+        </p>
+        <pre class="language-javascript"><code>const minus = n =&gt; m =&gt; m(dec)(n)
+const gte   = n =&gt; m =&gt; isZero(n(dec)(m))
+const lt    = n =&gt; m =&gt; not(gte(n)(m))
+const eq    = n =&gt; m =&gt; and(gte(n)(m))(gte(m)(n))</code>
+</pre>
+        <br>
+        <hr>
+        <h2>
+            Loops
+        </h2>
+        <p>
+            We&#39;ve got a load of handy bits and bobs, now we can start making something that looks like a useful bit of code. In this case, we&#39;re going to recreate this JavaScript looping construct using just Lambda calculus:
+        </p>
+        <pre class="language-javascript"><code>const loop = (n, m, f, a) =&gt; {
+    let k = a
+    for (let i = n; i &lt; m; i++){
+        k = f(i, k)
+    }
+    return k
+}</code>
+</pre>
+        <p>
+            I&#39;ll leave it to the reader to work out the meaning of it:
+        </p>
+        <pre class="language-javascript"><code>const incAndCall = f =&gt; p =&gt; pair(
+    inc(first(p))
+)(
+    f(first(p))(second(p))
+)
+
+const loop = n =&gt; m =&gt; f =&gt; a =&gt; second(
+    (minus(m)(n))(incAndCall(f))(pair(n)(a))
+)</code>
+</pre>
+        <br>
+        <hr>
+        <h2>
+            Combinators
+        </h2>
+        <p>
+            Now for a sum function, in conventional JavaScript:
+        </p>
+        <pre class="language-javascript"><code>const sum = (n) =&gt; {
+    if (n == 0) return 0
+    else return sum(n - 1) + n
+}</code>
+</pre>
+        <p>
+            And in (nearly) pure Lambda calculus:
+        </p>
+        <pre class="language-javascript"><code>const sum = n =&gt; isZero(n)(_ =&gt; _0)(_ =&gt; plus(n)(sum(dec(n))))(_)</code>
+</pre>
+        <em>
+            <code class="inline">_ = True</code>
+             and stands for &#39;any variable&#39;, we just use it because of the reasons outlined             <a href="#ternary">
+                above
+            </a>
+            .
+        </em>
+        <p>
+            This works, but is only &#39;nearly&#39; pure Lambda calculus because             <code class="inline">sum</code>
+             is referred to within the             <code class="inline">sum</code>
+             function itself. It only works because that&#39;s how our JavaScript interpreter works, and is not built in syntax of the Lambda calculus.
+        </p>
+        <p>
+            To make it work without refering to itself, we define the &#39;Y-combinator&#39;:
+        </p>
+        <pre class="language-javascript"><code>const Y = f =&gt; (x =&gt; f(_ =&gt; x(x)))(x =&gt; f(_ =&gt; x(x)))</code>
+</pre>
+        <em>
+            Note again the             <code class="inline">_ =&gt;</code>
+            <a href="#ternary">
+                faff
+            </a>
+             to avoid infinite recursion.
+        </em>
+        <p>
+            If you work through the β-reduction, this is equivalent to:
+        </p>
+        <pre class="language-javascript"><code>Y = f =&gt; f(_ =&gt; Y(f))</code>
+</pre>
+        <p>
+            Now we&#39;re able to redefine             <code class="inline">sum</code>
+             without self-reference as:
+        </p>
+        <pre class="language-javascript"><code>const sum = Y(g =&gt; n =&gt; isZero(n)
+    (_ =&gt; _0)
+    (_ =&gt; plus(n)(g(_)(dec(n))))
+(_))</code>
+</pre>
+
+    </body>
+
+</html>
