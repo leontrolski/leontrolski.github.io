@@ -103,7 +103,7 @@ const sum3 = Z(g => n => isZero(n)
         </p>
         <br>
         <p>
-            In lambda calculus notation, you might write something like:
+            In Lambda calculus notation, you might write something like:
         </p>
         <pre class="language-javascript"><code>(λf.f 4) (λx.x²)</code>
 </pre>
@@ -157,7 +157,7 @@ const sum3 = Z(g => n => isZero(n)
             Integers
         </h2>
         <p>
-            In the example above, we had high level concepts as &#39;4&#39; and &#39;x²&#39; - these are a bit cheaty, instead, we&#39;re going start from nothing except the rules of the calculus.
+            In the example above, we had such high level concepts as &#39;4&#39; and &#39;x²&#39; - these are a bit cheaty, instead, we&#39;re going start from nothing except the rules of the calculus.
         </p>
         <p>
             For integers, we&#39;re going to use a system called &#39;Church numerals&#39;. These aren&#39;t nouns like &#39;one&#39; and &#39;two&#39;, but adverbs like &#39;call             <code class="inline">f</code>
@@ -186,7 +186,7 @@ const _3 = f =&gt; a =&gt; f(f(f(a)))</code>
         <p>
             Now let&#39;s add in some functions that operate on integers:
         </p>
-        <pre class="language-javascript"><code>const inc  = n =&gt; f =&gt; a =&gt; f(n(f)(a))  // n + 1
+        <pre class="language-javascript"><code>const inc  = n =&gt; f =&gt; a =&gt; f(n(f)(a)) // n + 1
 const plus = n =&gt; m =&gt; n(inc)(m)       // n + m
 const mult = n =&gt; m =&gt; a =&gt; n(m(a))    // n * m</code>
 </pre>
@@ -329,7 +329,7 @@ toInt(second(myPair))</code>
 </pre>
         <p>
             We&#39;re in effect using the             <code class="inline">pair</code>
-            function&#39;s closure to store information
+            function&#39;s closure to store information.
         </p>
         <br>
         <p>
@@ -428,7 +428,7 @@ const loop = n =&gt; m =&gt; f =&gt; a =&gt; second(
 </pre>
         <em>
             <code class="inline">_ = True</code>
-             and stands for &#39;any variable&#39;, we just use it because of the reasons outlined             <a href="#ternary">
+             and stands for &#39;any variable&#39;, we use it because of the reasons outlined             <a href="#ternary">
                 above
             </a>
             .

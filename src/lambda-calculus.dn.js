@@ -68,7 +68,7 @@ const sum3 = Z(g => n => isZero(n)
     m("p", "You can Google 'Lambda calculus' for a deeper description, but in a nutshell it's a very small, Turing-complete, formal system for expressing computation as symbol manipulation."),
     m("p", "This post rewrites some of the fundamental ideas in familiar JavaScript notation which allows us to easily evaluate them. You can try this out in your browser's console - all the assignments below are in global scope."),
     m("br"),
-    m("p", "In lambda calculus notation, you might write something like:"),
+    m("p", "In Lambda calculus notation, you might write something like:"),
     js("(λf.f 4) (λx.x²)"),
     m("p", "Let's cut straight to the Javascript version:"),
     js("(f => f(4))(x => Math.pow(x, 2))"),
@@ -88,7 +88,7 @@ const sum3 = Z(g => n => isZero(n)
 
     m("hr"),
     m("h2", "Integers"),
-    m("p", "In the example above, we had high level concepts as '4' and 'x²' - these are a bit cheaty, instead, we're going start from nothing except the rules of the calculus."),
+    m("p", "In the example above, we had such high level concepts as '4' and 'x²' - these are a bit cheaty, instead, we're going start from nothing except the rules of the calculus."),
     m("p", "For integers, we're going to use a system called 'Church numerals'. These aren't nouns like 'one' and 'two', but adverbs like 'call ", inline("f"), " with ", inline("a"), " one time' or 'call ", inline("f"), " on ", inline("a"), " two times'. If that's a bit abstract, let's define 4 integers:"),
     js(`const _0 = f => a => a
 const _1 = f => a => f(a)
@@ -96,7 +96,7 @@ const _2 = f => a => f(f(a))
 const _3 = f => a => f(f(f(a)))`),
     m("details", m("summary", "Here's a helper function so we can print these as good ol' fashioned JavaScript numbers.", m("br"), m("em", "This section is folded as it isn't written in formal Lambda calculus.")), js(`const toInt = a => a(n => n + 1)(0)`)),
     m("p", "Now let's add in some functions that operate on integers:"),
-    js(`const inc  = n => f => a => f(n(f)(a))  // n + 1
+    js(`const inc  = n => f => a => f(n(f)(a)) // n + 1
 const plus = n => m => n(inc)(m)       // n + m
 const mult = n => m => a => n(m(a))    // n * m`),
     m("p", "We can test these in our browser's console using the helper from above, try running:"),
@@ -158,7 +158,7 @@ const second = p => p(False)`),
     m("p", "Try this in your browser's console:"),
     js(`const myPair = pair(_2)(_0)
 toInt(second(myPair))`),
-    m("p", "We're in effect using the ", inline("pair"), "function's closure to store information"),
+    m("p", "We're in effect using the ", inline("pair"), "function's closure to store information."),
     m("br"),
     m("p", "What can we do that's useful with this? We already have ", inline("inc"), " that returns the next integer, let's write a ", inline("dec"), " that returns the previous integer."),
     js(`const incSecond = p => pair(second(p))(inc(second(p)))
@@ -209,7 +209,7 @@ const loop = n => m => f => a => second(
 }`),
     m("p", "And in (nearly) pure Lambda calculus:"),
     js(`const sum = n => isZero(n)(_ => _0)(_ => plus(n)(sum(dec(n))))(_)`),
-    m("em", inline("_ = True"), " and stands for 'any variable', we just use it because of the reasons outlined ", m("a", {href: "#ternary"}, "above"), "."),
+    m("em", inline("_ = True"), " and stands for 'any variable', we use it because of the reasons outlined ", m("a", {href: "#ternary"}, "above"), "."),
 
     m("p", "This works, but is only 'nearly' pure Lambda calculus because ", inline("sum"), " is referred to within the ", inline("sum"), " function itself. It only works because that's how our JavaScript interpreter works, and is not built in syntax of the Lambda calculus."),
     m("p", "To make it work without refering to itself, we define the 'Y-combinator':"),
