@@ -65,15 +65,22 @@ const sum3 = Z(g => n => isZero(n)
     (_ => plus(n)(g(dec(n))))
 (_))
 `)),
-    m("p", "You can Google 'Lambda calculus' for a deeper description, but in a nutshell it's a very small, Turing-complete, formal system for expressing computation as symbol manipulation."),
-    m("p", "This post rewrites some of the fundamental ideas in familiar JavaScript notation which allows us to easily evaluate them. You can try this out in your browser's console - all the assignments below are in global scope."),
+    m("p", "The aim of this blog post is to give a flavour of how one might build a useful programming language  (or for that matter mathematical system) from a really really small foundation. In our JavaScript notation, the building blocks are just:"),
+    js(`f = x => M  // function definition
+f(y)        // function application`),
+    m("p", "That's it - no numbers, no lists, no loops, no boolean switches, no strings, no objects."),
+    m("p", "Instead, we'll give a flavour of how you might conjure up these things seemingly out of the ether."),
     m("br"),
-    m("p", "In Lambda calculus notation, you might write something like:"),
+    m("hr"),
+    m("br"),
+    m("h2", "Doing Lambda calculus with JavaScript notation"),
+    m("p", "You can Google 'Lambda calculus' for a deeper description, but in a nutshell it's a very small, Turing-complete, formal system for expressing computation as symbol manipulation. We're going to rewrite some of the fundamental ideas in familiar JavaScript notation which allows us to easily evaluate them. You can try this out in your browser's console - all the assignments below are in global scope."),
+    m("p", "In Lambda calculus notation, you might write something kinda like:"),
     js("(λf.f 4) (λx.x²)"),
     m("p", "Let's cut straight to the Javascript version:"),
     js("(f => f(4))(x => Math.pow(x, 2))"),
     m("p", "Each anonymous function λ takes one argument. When you call a function, you simply replace the argument each time it occurs in the function's body with the value the function was called with."),
-    m("p", "It's worth noting that this process (known as β-reduction) is just a dumb mechanical one of symbol replacement - nothing else weird is happening. This is important, the programs are theorems, and by repeatedly applying β-reduction, we ", m("a", {href: "https://en.wikipedia.org/wiki/Curry%E2%80%93Howard_correspondence#Natural_deduction_and_lambda_calculus"}, "prove"), " (or disprove) them within the system."),
+    m("p", "It's worth noting that this process (known as β-reduction) is just a dumb mechanical one of symbol replacement - nothing else weird is happening. This is important - ", m("a", {href: "https://en.wikipedia.org/wiki/Curry%E2%80%93Howard_correspondence#Natural_deduction_and_lambda_calculus"}, "programs are proofs"), " and by repeatedly applying β-reduction, we can verify them."),
     m("p", "In the case of the example above:"),
     js("(λf.f 4) (λx.x²)"),
     m("p", "We can β-reduce the ", inline("f"), " away to make:"),
@@ -114,7 +121,7 @@ f => a => f((f => a => f(f(a)))(f)(a))                         // β second f
 f => a => f((a => f(f(a)))(a))                                 // β second a
 f => a => f(f(f(a)))
 `),
-    m("p", "Phewph, that was long, but we did end up with ", inline("f => a => f(f(f(a)))"), ", which is the Church numeral for '3', so we've ", m("b", "proven"), " 1 + 2 = 3, yay!"),
+    m("p", "Phewph, that was long, but we did end up with ", inline("f => a => f(f(f(a)))"), ", which is the Church numeral for '3', so we've shown definitively 1 + 2 = 3, yay!"),
     m("p", "We can see intuitively how we came up with some of the definitions. Remember earlier, we said the Church numeral 2 is the adverb 'call ", inline("f"), " on ", inline("a"), " two times', the definition for ", inline("plus"), " should make sense with that in mind:"),
     js(`const plus = n => m => n(inc)(m)`),
     m("p", "Just says 'call ", inline("inc"), " on ", inline("m"), " ", inline("n"), " times'"),
