@@ -1,3 +1,13 @@
+<!--
+TODO
+- typed lambda calculus
+- ask someone about where 1 + 1 = 2 is a proof
+- the energy industry and paying for stuff
+- incidental complexity and caching
+- cyling in the south east
+- proper write up of leet gist
+
+ -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <head>
     <title>leontrolski - index</title>
@@ -13,17 +23,25 @@
 <body>
     <a><img style="height:2em" src="pic.png"/></a>
     <p>
-        I'm Oliver Russell, a Python dev (amongst other things) based in London, reach me at ojhrussell[at]gmail.com, subscribe via <a href="https://leontrolski.github.io/leontrolski.rss">rss</a>, read my <a href="oliver-russell-cv.pdf">CV</a>.
+        I'm <b>Oliver Russell</b>, a Python dev (amongst other things) based in London, reach me at ojhrussell[at]gmail.com, subscribe via <a href="https://leontrolski.github.io/leontrolski.rss">rss</a>, read my <a href="oliver-russell-cv.pdf">CV</a>.
     </p>
     <p>
-        Here are a series of posts where I reimplement a minimal version of something to demonstrate how it works.
+        Handy <b>database tips</b>. <em>According to Google, these are way more interesting than anything else here</em>.
+        <ul>
+            <li>SQLAlchemy <a href="sqlalchemy-relationships.html">relationship loading</a> techniques with examples</li>
+            <li>Everyone should use <a href="postgres-advisory-locks.html">postgres advisory locks</a>!</li>
+            <li>Don't get bitten by missing <a href="foreign-key-indexes.html">foreign key indexes</a></li>
+        </ul>
+    </p>
+    <p>
+        A series of posts where I reimplement a <b>minimal version</b> of something to demonstrate how it works.
         <ul>
             <li><a href="33-line-react.html">33 line React</a>-like library, and <a href="33-line-react-thoughts.html">followup</a>, also a <a href="96-line-react-jsx.html">96 line React with JSX</a></li>
             <li>Ever wondered what the hell is going on with your <code>pandas.DataFrame</code>, check <a href="fake-data-frame.html">this</a> out</li>
         </ul>
     </p>
     <p>
-        Weenie posts reducing some CS concept down to its essentials. <em>There are many different takes on these topics scattered across the internet.</em>
+        Weenie posts reducing some <b>computer science</b> concept down to its essentials. <em>There are many different takes on these topics scattered across the internet.</em>
         <ul>
             <li>Sudoku <a href="constraint-sudoku.html">solving</a> using a custom backtracking constraint solver</li>
             <li><a href="lambda-calculus.html">Lambda calculus</a> in modern JavaScript</li>
@@ -32,7 +50,7 @@
         </ul>
     </p>
     <p>
-        Some python/js bits and bobs.
+        <b>Python/JavaScript/TypeScript</b> and bobs.
         <ul>
             <li><a href="strongly-typed-http.html">Strongly type</a> your Web 1.0 interfaces</li>
             <li>Python <a href="virtualenvs-for-node-devs.html">virtualenvs</a> for Node devs</li>
@@ -40,32 +58,33 @@
             <li>While you're there, just <a href="mostly-pointless.html">stop doing OO so much</a></li>
             <li>A <a href="recursing-with-yield.html">tiny</a> bit about recursing with the yield statement</li>
             <li>I can never remember how to <a href="git-bisect.html">git bisect</a></li>
-            <li>SQLAlchemy <a href="sqlalchemy-relationships.html">relationship loading</a> techniques with examples</li>
             <li><a href="semi-isomorphic.html">Evolving</a> backend → frontend rendered Python/JS apps with dnjs</li>
         </ul>
     </p>
     <p>
-        Postgres things.
+        <b>What-ifs</b>.
         <ul>
-            <li>Everyone should use <a href="postgres-advisory-locks.html">postgres advisory locks</a>!</li>
-            <li>Don't get bitten by missing <a href="foreign-key-indexes.html">foreign key indexes</a></li>
+            <li>What if we'd had <a href="dom-syntax.html">nice html-in-js syntax</a> from the beginning?</li>
+            <li>Can we add syntax to <a href="alter.html">contain mutations</a></li>
+            <li><a href="contrair-articles.html">Contrair articles</a> countering certain premises</li>
             <li>A piece about potential <a href="nested-sql.html">nested SQL queries</a></li>
         </ul>
     </p>
+    <br>
     <p>
-        Here are some other thoughts.
+        Random <b><a href="https://gist.github.com/leontrolski">gists</a></b>.
+    </p>
+    <br>
+    <p>
+        <b>Non-programming</b>.
         <ul>
-            <li>What if we'd had <a href="dom-syntax.html">nice html-in-js syntax</a> from the beginning?</li>
-            <li>Can we <a href="alter.html">contain mutations</a></li>
-            <li><a href="contrair-articles.html">Contrair articles</a> countering certain premises</li>
             <li>A <a href="consciousness.html">summary</a> of the book "Consciousness and the Social Brain"</li>
+            <li>Check out my weird <a href="https://soundcloud.com/leontrolski">music</a>.</li>
         </ul>
     </p>
+    <br>
     <p>
-        Check out my <a href="https://soundcloud.com/leontrolski">music</a>.
-    </p>
-    <p>
-        Here are some of my projects, none of them are particularly prod-ready, just things that have scratched various itches over the years.
+        Here are some of my <b>projects</b>, none of them are particularly prod-ready, just things that have scratched various itches over the years.
         <ul>
             <li><a href="https://github.com/leontrolski/sqlski">sqlski</a> - postgres-side nesting of data for Python</li>
             <li><a href="https://github.com/leontrolski/dnjs">dnjs</a> - a Python interpreter for a useful subset of JS</li>
@@ -75,6 +94,8 @@
             <li><a href="https://github.com/leontrolski/fussball">fussball</a> - a Bayesian-ly founded table-football scoreboard (would work for ping-pong too)</li>
         </ul>
     </p>
+    <br>
+    <br>
     <p>Below is a minimalist blocks game, see the page source to see how it works!</p>
     <div id="blocks"></div>
     <style>
