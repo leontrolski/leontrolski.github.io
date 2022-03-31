@@ -1,0 +1,97 @@
+<html>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <head>
+        <title>
+            leontrolski -             interview patterns
+        </title>
+        <style>
+            
+            body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 63%;}
+            @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+            pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
+            a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
+            a:hover {border-bottom: 0;}
+            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em; white-space: nowrap;}
+            blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
+            details {border-bottom:solid 5px gray;}
+        
+        </style>
+        <link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js">
+
+        </script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js">
+
+        </script>
+
+    </head>
+    <body>
+        <a href="index.html">
+            <img src="pic.png" style="height:2em">
+            ⇦
+        </a>
+        <h1>
+            Interview patterns in Python
+        </h1>
+        <p>
+            Not necessarily fastest, but hopefully neatest. Recursive problems can be converted to while loops.
+        </p>
+        <details id="top">
+            <summary>
+                Variable naming conventions.
+            </summary>
+            <pre class="language-python"><code>x  y  z      # values
+i  j  k      # corresponding indices
+xs ys zs     # lists of values
+t            # a target to aim for
+w            # the path to something
+a            # something we accumulate
+f            # a function used for recursion
+n            # a node in a tree or graph
+b            # a place to mark things we&#39;ve already done
+l            # an input list
+s            # an input string
+p            # an input pattern
+.v .l .r .n  # the value, left, right, next of a node in a tree
+.._prev      # the previous of something
+.._next      # the next of something
+.._new       # a new version of something</code>
+</pre>
+
+        </details>
+        <details>
+            <summary>
+                Imports required to run the examples.
+            </summary>
+            <pre class="language-python"><code>from __future__ import annotations
+from collections import defaultdict
+from dataclasses import dataclass
+from functools import cache  # a lot of the `f(...)` below can be memoized
+from itertools import count
+from types import SimpleNamespace</code>
+</pre>
+
+        </details>
+        <br>
+        <div id="root">
+
+        </div>
+        <style>
+            
+.tag{margin:0.25rem 0.5rem 0.25rem 0;padding:0.25rem 0.5rem 0.25rem 0.5rem;}
+.tag-selected{font-weight:bold;}
+.problem{margin-top:4rem;}
+.no-border{border:none;}
+.description{padding:1rem;}
+
+        </style>
+        <script src="33-line-react.js">
+
+        </script>
+        <script src="leet.js">
+
+        </script>
+
+    </body>
+
+</html>
