@@ -26,6 +26,7 @@ const tags = {
     SORTING: "Sorting Algorithms",
     HEAP: "Heaps",
     MEDIAN: "Median",
+    MISC: "Miscellaneous",
 }
 const ids = {
     LEETCODE_22: "LEETCODE_22",
@@ -56,6 +57,7 @@ const ids = {
     LEETCODE_146: "LEETCODE_146",
     SORTING_HANDY: "SORTING_HANDY",
     LEETCODE_295: "LEETCODE_295",
+    MISC: "MISC",
 }
 
 
@@ -282,7 +284,7 @@ assert f(6249) == 20`,
 problems.push({
     id: ids.LEETCODE_102,
     summary: "List of (list of values at each level)",
-    tags: [tags.DP_SUM],
+    tags: [tags.TREE],
     href: "https://leetcode.com/problems/binary-tree-level-order-traversal",
     description: ``,
     code: `@dataclass
@@ -814,6 +816,46 @@ assert [x.addNum(1), x.addNum(2), x.findMedian(), x.addNum(3), x.findMedian()] =
 `,
 })
 
+problems.push({
+    id: ids.MISC,
+    summary: "Miscellaneous notes",
+    tags: [tags.MISC],
+    href: "",
+    description: ``,
+    code: `Threads and Processes
+
+- The GIL prevents race conditions on Python objects
+    - Careful of gotchas like d[k] += 1
+- Threads are used for eg. UIs - they're not CPU heavy
+- Multiprocessing is for CPU heavy stuff
+    - Bypasses the GIL
+    - Slower to start + take more memory
+    - Harder to share data (no memory is shared)
+    - Share data with d = Manager.dict() - see docs
+- A Semaphore is like a Lock, but it counts, can do \`with semaphore:\`
+              a process Lock is a mutex
+
+System Design
+
+- Things to consider/revisit
+    - Sources sys design book, Warthog book
+    - Remember CAP theorem
+    - Graceful degredation
+    - Round the world
+    - Scalability
+- Lots of clarifying questions
+- Quantifiable - eg. images per second
+- Random 'per second' numbers
+    - Python
+        - Loops/Dict inserts 10-100 million
+        - HTTP parses/indexed SQLite queries 10 thousand
+        - Bytes written to disk 100MB (hashing is similarly quick, password hashing is slowww)
+        - JSON parsed 1 thousand (a better format: 10 thousand) - 64KB of JSON
+        - List.sort() is O(n log n)
+    - Memory   access 0.1µs, read 1MB 250µs
+    - SSD random read 100µs, read 1MB 1000µs
+    - Return network trip to Europe 0.1s`,
+})
 
 
 const root = document.getElementById('root')
