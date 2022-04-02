@@ -1,4 +1,4 @@
-
+// Make a map of type of problem to tags, then Luu, then Dijkstra(?) + PageRank
 const inline = (content) => m("code.inline", content)
 const python = (content) => m("pre.language-python", m("code", content))
 
@@ -82,12 +82,32 @@ const Tag = (tag) => m("button.tag",
 const View = () => m("",
     m("h3", "Tags"),
     Object.values(tags).map(Tag),
+    m("br"),
+    m("br"),
+    m("details", m("summary", m("b", "Picking the relevant technique")),
+        m(".question", "It's probably ", Tag(tags.DP)),
+        m(".question", "Find all the values in this list that sum to ...? ", Tag(tags.DP_SUM)),
+        m(".question", "Are you traversing a grid or checking for depency loops? ", Tag(tags.MARKY)),
+        m(".question", "Give me all of the permutations/combinations/subsets of some intial list? ", Tag(tags.PERMUTATIONS)),
+        m(".question", "Is the structure a binary tree? ", Tag(tags.TREE)),
+        m(".question", "Does there seem to be some undirected graph where you care about distance to the extremities? ", Tag(tags.GRAPH)),
+        m(".question", "Are you being asked for the longest/shortest subsequence where you can easily recompute some accumulator given a new value? ", Tag(tags.SLIDING_WINDOW)),
+        m(".question", "Does it feel like a 'buy low, sell high' type of problem? ", Tag(tags.TWO_POINTERS)),
+        m(".question", "Find the nearest sum of any three numbers? ", Tag(tags._3SUM)),
+        m(".question", "Find the index of some value in a sorted (potentially rotated) list? ", Tag(tags.BINARY_SEARCH)),
+        m(".question", "Are there some switches involved? ", Tag(tags.BITWISE)),
+        m(".question", "Do these words start/end with ...? ", Tag(tags.TRIE)),
+        m(".question", "Implement an LRU cache? ", Tag(tags.DOUBLY_LINKED_LIST)),
+        m(".question", "Keep a running track of some percentile value? ", Tag(tags.HEAP)),
+    ),
     problems
         .filter(problem => state.tagSelected === null || problem.tags.includes(state.tagSelected))
         .map(({id, summary, tags, href, description, code}) => m(".problem",
             {id},
-            m("details.no-border", m("summary", m("b", summary), " ┄ ", m("a", {href}, m("span", "original problem"))),
-                m(".description", description.length ? description : m("em", "Description  to follow"))),
+            description.length === 0
+                ? m("", m("b", summary), " ┄ ", m("a", {href}, m("span", "original problem")))
+                :  m("details.no-border", m("summary", m("b", summary), " ┄ ", m("a", {href}, m("span", "original problem"))),
+                    m(".description", description)),
             tags.map(Tag),
             python(code),
             m("a", {href: "#top"}, m("small", "↑ back to top")),
@@ -102,7 +122,15 @@ problems.push({
     summary: "All the permutations of i pairs of parentheses (())",
     tags: [tags.PERMUTATIONS, tags.DP],
     href: "https://leetcode.com/problems/generate-parentheses",
-    description: ``,
+    description: [
+        m("em", "This is the one thing on this list where I don't have a good intuition as to why it works."),
+        m("ul",
+            m("li", "Zero brackets is just a list of an empty string"),
+            m("li", "Get a list of lists of all the previous brackets"),
+            m("li", "Zip that to itself, reversed"),
+            m("li", "For x, y in the cross product of the previous step, append (x)y"),
+        )
+    ],
     code: `def f(i):
     if i == 0:
         return [""]
@@ -122,7 +150,14 @@ problems.push({
     summary: "Possible subsets of unique l",
     tags: [tags.PERMUTATIONS],
     href: "https://leetcode.com/problems/subsets",
-    description: ``,
+    description: [
+        m("ul",
+            m("li", "With subsets questions, always start with the empty subset"),
+            m("li", "For x in the original list"),
+            m("li", "For ys in the accumulator"),
+            m("li", "Append the accumulator with ys + [x]"),
+        )
+    ],
     code: `l = [4, 6, 8]
 a = [[]]
 for x in l:
@@ -137,11 +172,19 @@ problems.push({
     summary: "Find all the permutations",
     tags: [tags.PERMUTATIONS],
     href: "https://leetcode.com/problems/permutations-ii",
-    description: ``,
+    description: [
+        m("ul",
+            m("li", "With permutations questions, always start with the empty subset"),
+            m("li", "For x in the original list"),
+            m("li", "For ys in the accumulator"),
+            m("li", "Reset the accumulator to an empty set"),
+            m("li", "Add to the accumulator with x inserted in each possible position in ys"),
+        )
+    ],
     code: `l = [1, 1, 2]
 a = {()}
 for x in l:
-    a = {(*y[:i], x, *y[i:]) for y in a for i in range(len(y) + 1)}
+    a = {(*ys[:i], x, *ys[i:]) for ys in a for i in range(len(ys) + 1)}
 
 assert a == {(1, 2, 1), (2, 1, 1), (1, 1, 2)}`,
 })
@@ -152,7 +195,18 @@ problems.push({
     summary: "Regex style - do letters s[:i + 1] match pattern p[:j + 1]",
     tags: [tags.DP, tags.DP_CLASSIC],
     href: "https://leetcode.com/problems/wildcard-matching",
-    description: ``,
+    description: [
+        m("ul",
+            m("li", "For string s and pattern p"),
+            m("li", "Set up a function that asks: do letters s[:i + 1] match pattern p[:j + 1]?"),
+            m("li", "If we ask for something totally out of bounds, return False"),
+            m("li", "Get the x and y of s and p respectively, an index of -1 is just the empty string"),
+            m("li", "If x and y are the empty string, return True"),
+            m("li", "If y is a '*' (0 or more of anything), did either the previous bit of string match the current pattern, or did the previous bit of pattern match the current string?"),
+            m("li", "If y is a '?', did the previous bit of pattern match the previous bit of string?"),
+            m("li", "Else did x equal y and did the previous bit of pattern match the previous bit of string?"),
+        )
+    ],
     code: `s, p = "xaylmz", "x?y*z"
 def f(i, j):
     if i < -1:
@@ -173,7 +227,14 @@ problems.push({
     summary: "Max-rob non-adjacent houses",
     tags: [tags.DP, tags.DP_CLASSIC],
     href: "https://leetcode.com/problems/house-robber",
-    description: ``,
+    description: [
+        m("ul",
+            m("li", "Set up a function that asks: what's the maximum we can rob from houses 0 -> i?"),
+            m("li", "If i is out of bounds, return 0"),
+            m("li", "If i is 0, just return the amount of money in that house"),
+            m("li", "Else, return the max out of 'this house plus the max we could rob from everything up to the next-next-door-neighbour' or 'the max we could rob from the everything up to the next-door-neighbour'"),
+        )
+    ],
     code: `l = [2, 7, 9, 3, 1]
 def f(i):
     if i == -1:
@@ -191,7 +252,17 @@ problems.push({
     summary: "Longest increasing subsequence",
     tags: [tags.DP, tags.SUBSEQUENCE],
     href: "https://leetcode.com/problems/longest-increasing-subsequence",
-    description: ``,
+    description: [
+        m("ul",
+            m("li", "Set up a function that asks: what's the longest increasing subsequence from i to the end?"),
+            m("li", "Return 1 + the maximum out of:"),
+            m("ul",
+                m("li", "For each j from i to the end"),
+                m("li", "Where y > x"),
+                m("li", "The longest increasing subsequence from j to the end"),
+            ),
+        )
+    ],
     code: `l = [10, 9, 2, 5, 3, 7, 101, 18]
 def f(i):
     return max((f(j) for j in range(i + 1, len(l)) if l[i] > l[j]), default=0) + 1
@@ -204,7 +275,17 @@ problems.push({
     summary: "How much water?",
     tags: [tags.DP, tags.DP_CLASSIC],
     href: "https://leetcode.com/problems/container-with-most-water",
-    description: ``,
+    description: [
+        m("ul",
+            m("li", "Set up a function that asks: what's the most water we could hold between any of the bars from 0 -> j?"),
+            m("li", "Return the maximum out of:"),
+            m("ul",
+                m("li", "For each i from 0 -> j"),
+                m("li", "The width between i and j"),
+                m("li", "Multiplied by the smaller out of x and y"),
+            ),
+        )
+    ],
     code: `l = [1,8,6,2,5,4,8,3,7]
 def f(j):
     return max(((j - i) * min(l[i], l[j]) for i in range(j)), default=0)
@@ -218,7 +299,20 @@ problems.push({
     summary: "Unique l, unique sum to t, allow repeats",
     tags: [tags.DP, tags.DP_SUM],
     href: "https://leetcode.com/problems/combination-sum",
-    description: ``,
+    description: [
+        m("ul",
+            m("li", "Set up a function that for a given list, will yield paths that sum to t"),
+            m("li", "For each item of the list:"),
+            m("ul",
+                m("li", "The new list is from the current item to the end (this will allow repeats)"),
+                m("li", "The new target is the target minus the item"),
+                m("li", "The new path is the path appended by the item"),
+                m("li", "If we've overshot the target, continue"),
+                m("li", "If we've hit the target, yield the new path and continue"),
+                m("li", "Else yield paths that sum to the new list, target and path"),
+            ),
+        )
+    ],
     code: `t, l = 7, [2, 3, 6, 7]
 def f(l, t, w):
     for i, x in enumerate(l):
@@ -241,7 +335,21 @@ problems.push({
     summary: "Unique l, unique sum to t, len == m, no repeats",
     tags: [tags.DP, tags.DP_SUM],
     href: "https://leetcode.com/problems/combination-sum-iii",
-    description: ``,
+    description: [
+        m("ul",
+            m("li", "Set up a function that for a given list, will yield paths that sum to t"),
+            m("li", "For each item of the list:"),
+            m("ul",
+                m("li", "The new list is from the next item to the end (this will prevent repeats)"),
+                m("li", "The new target is the target minus the item"),
+                m("li", "The new path is the path appended by the item"),
+                m("li", "If we've overshot the target, continue"),
+                m("li", "If the path is too long, continue"),
+                m("li", "If the path is the right length and we've hit the target, yield the new path and continue"),
+                m("li", "Else yield paths that sum to the new list, target and path"),
+            ),
+        )
+    ],
     code: `t, m, l = 9, 3, [1, 2, 3, 4, 5, 6, 7, 8, 9]
 def f(l, t, w):
     for i, x in enumerate(l):
@@ -266,7 +374,21 @@ problems.push({
     summary: "Min number of coins to make t, allow repeats",
     tags: [tags.DP, tags.DP_SUM],
     href: "https://leetcode.com/problems/coin-change",
-    description: ``,
+    description: [
+        m("ul",
+            m("li", "Set up a function that will return the smallest number of coins that will sum to t"),
+            m("li", "Unlike other 'sum within a list' questions, we can reuse items from the original list, so we always consider it in its entirety"),
+            m("li", "If we've overshot the target, return None to signal failure"),
+            m("li", "If we've hit the target, return 0"),
+            m("li", "Return 1 + the minimum out of:"),
+            m("ul",
+                m("li", "For each coin"),
+                m("li", "The smallest number of coins that it takes to hit the target minus that particular coin"),
+                m("li", "(Given the target can be hit at all with that coin)"),
+            ),
+            m("li", "Or if we failed hit the target with any extra coins, return None to signal failure"),
+        )
+    ],
     code: `l = [83, 186, 408, 419]
 @cache
 def f(t):
@@ -286,7 +408,7 @@ problems.push({
     summary: "List of (list of values at each level)",
     tags: [tags.TREE],
     href: "https://leetcode.com/problems/binary-tree-level-order-traversal",
-    description: ``,
+    description: m("p", "Write a function that given a node and a level, will append the node's value to the list at that level, then recurse through its children"),
     code: `@dataclass
 class N:
     v: int
@@ -313,7 +435,17 @@ problems.push({
     summary: "Connect each level",
     tags: [tags.TREE],
     href: "https://leetcode.com/problems/populating-next-right-pointers-in-each-node",
-    description: ``,
+    description: [
+        m("ul",
+            m("li", "Start with a node and a leftmost node"),
+            m("li", "While the node we're considering has any children:"),
+            m("ul",
+                m("li", "Connect the node's left child with its right child"),
+                m("li", "If the node itself has already been connected, connect its right child to its connected node's left child, then traverse to the right"),
+                m("li", "Else go down a level by setting the node we're considering and the leftmost node"),
+            ),
+        )
+    ],
     code: `@dataclass
 class N:
     v: int
@@ -332,8 +464,8 @@ while n.l:
     else:  # go down
         n = n_leftmost
         n_leftmost = n.l
-bottom_left = original.l.l
 
+bottom_left = original.l.l
 assert [bottom_left.v, bottom_left.n.v, bottom_left.n.n.v, bottom_left.n.n.n.v] ==  [4, 5, 6, 7]`,
 })
 
@@ -341,9 +473,17 @@ assert [bottom_left.v, bottom_left.n.v, bottom_left.n.n.v, bottom_left.n.n.n.v] 
 problems.push({
     id: ids.LEETCODE_236,
     summary: "Common ancestor of t and m",
-    tags: [tags.TREE],
+    tags: [tags.DP, tags.TREE],
     href: "https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-tree",
-    description: ``,
+    description: [
+        m("ul",
+            m("li", "Set up a function that for a given node, will:"),
+            m("li", "If its value matches either t or m, will return the node"),
+            m("li", "If on both sides any descendants match, will return the node"),
+            m("li", "If any descendants match on the left side, will return the node's left child"),
+            m("li", "If any descendants match on the right side, will return the node's right child"),
+        )
+    ],
     code: `@dataclass
 class N:
     v: int
@@ -365,9 +505,17 @@ assert f(n).v == 3`,
 problems.push({
     id: ids.LEETCODE_124,
     summary: "Max sum path, up and down",
-    tags: [tags.TREE],
+    tags: [tags.DP, tags.TREE],
     href: "https://leetcode.com/problems/binary-tree-maximum-path-sum",
-    description: ``,
+    description: [
+        m("ul",
+            m("li", "Set up a function that for a given node, will:"),
+            m("li", "Set x to be the max-sum from the node's left child down"),
+            m("li", "Set y to be the max-sum from the node's right child down"),
+            m("li", "Potentially increase the accumulator to be the node's value plus the max non-negative value of x and y"),
+            m("li", "Return the max out of the node's value, the node's value plus x, the node's value plus y"),
+        )
+    ],
     code: `@dataclass
 class N:
     v: int
@@ -393,7 +541,20 @@ problems.push({
     summary: "Find the starting nodes for the minimum height-ed trees (topological sort)",
     tags: [tags.GRAPH],
     href: "https://leetcode.com/problems/minimum-height-trees",
-    description: ``,
+    description: [
+        m("p", "This problem can be construed as 'iteratively remove all the leaves from the graph until there are only the core nodes'"),
+        m("ul",
+            m("li", "Construct a directed graph of all node -> nodes"),
+            m("li", "b is a map of the number of edges a node has to other nodes"),
+            m("li", "xs is the nodes at the edge of the graph (leaves)"),
+            m("li", "While we have any nodes to consider:"),
+            m("ul",
+                m("li", "For each leaf, remove it by globally decrementing the count of any edges to it"),
+                m("li", "Recalculate what the leaves are"),
+                m("li", "Clean up by removing the leaves from b and removing any non-existant edges from the graph"),
+            ),
+        )
+    ],
     code: `n, l = 6, [[3, 0], [3, 1], [3, 2], [3, 4], [5, 4]]
 a = {x: set() for x in range(n)}
 for x, y in l:
@@ -418,9 +579,20 @@ assert xs == [3, 4]`,
 problems.push({
     id: ids.LEETCODE_210,
     summary: "Courses depend on each other, can you complete them?",
-    tags: [tags.DP, tags.MARKY],
+    tags: [tags.DP, tags.MARKY, tags.GRAPH],
     href: "https://leetcode.com/problems/course-schedule-ii",
-    description: ``,
+    description: [
+        m("em", "This includes the optional bit of returning the order in which to complete the courses. This relies on the fact the the deeper in the recursion stack, the earlier it will append to the order of courses."),
+        m("ul",
+            m("li", "Construct a directed graph of which course depends on which courses"),
+            m("li", "Set up a function that for a given course, will return whether the course has any recursive dependencies (loops)"),
+            m("li", "If we've seen the course before, return that there are loops"),
+            m("li", "Mark globally that we've seen the course"),
+            m("li", "If any of the course's dependencies have loops, return that there are loops"),
+            m("li", "Stop marking that we've seen the course"),
+            m("li", "Return that there are no loops"),
+        )
+    ],
     code: `t, l = 4, [[1, 0], [2, 0], [3, 1], [3, 2]]
 d = {x: set() for x in range(t)}
 for x, y in l:
@@ -447,7 +619,17 @@ problems.push({
     summary: "Shortest subsequence with sum >= t",
     tags: [tags.SLIDING_WINDOW, tags.SUBSEQUENCE],
     href: "https://leetcode.com/problems/minimum-size-subarray-sum",
-    description: ``,
+    description: [
+        m("p", "One way of solving these sliding window problems is to set up a class with methods that increment whilst also updating an accumulator. For debugging, it can be nice to add a method to print which bit of list is being considered and what the value of the accumulator is."),
+        m("ul",
+            m("li", "Construct said class"),
+            m("li", "While there is still list to consider:"),
+            m("ul",
+                m("li", "Increment the end pointer"),
+                m("li", "While the predicate is still satisfied, increment the start pointer and potentially decrease the global accumulator"),
+            )
+        )
+    ],
     code: `@dataclass
 class S:
     l: list[int]
@@ -482,7 +664,14 @@ problems.push({
     summary: "Longest subsequence with no repeats",
     tags: [tags.SLIDING_WINDOW, tags.SUBSEQUENCE],
     href: "https://leetcode.com/problems/longest-substring-without-repeating-characters",
-    description: ``,
+    description: [
+        m("ul",
+            m("li", "For each end pointer in the list (j)"),
+            m("li", "For each start pointer in the list (i) from the existing i up to j"),
+            m("li", "If the predicate is still satisfied, increment i and break"),
+            m("li", "Potentially increase the accumulator"),
+        )
+    ],
     code: `s = "pwwkew"
 i, a = 0, 0
 for j in range(len(s)):
@@ -501,7 +690,9 @@ problems.push({
     summary: "Buy low, sell high, max profit",
     tags: [tags.FAST_AND_SLOW],
     href: "https://leetcode.com/problems/best-time-to-buy-and-sell-stock",
-    description: ``,
+    description: [
+        m("p", "Similiar to a ", Tag(tags.SLIDING_WINDOW), " solution, but instead of incrementing the start pointer while the predicate remains true, we just set it to the end pointer when the predicate becomes false. We're not trying to find the longest subsequence matching a predicate, just some maximum of two in-order values that satisfy a predicate."),
+    ],
     code: `l = [7, 2, 5, 1, 3, 6, 4]
 i, a = 0, 0
 for j, y in enumerate(l):
@@ -518,7 +709,36 @@ problems.push({
     summary: "Closest 3SUM",
     tags: [tags.TWO_POINTERS, tags._3SUM],
     href: "https://leetcode.com/problems/3sum-closest",
-    description: ``,
+    description: [
+        m("ul",
+            m("li", "Sort the values - O(n log n)"),
+            m("li", "Set the accumulator to the sum of the first 3 values"),
+            m("li", "For each i in the list"),
+            m("li", "Set j and k to the start and the end indices (from i onwards)"),
+            m("li", "While j is less than k"),
+            m("ul",
+                m("li", "Potentially update the accumulator"),
+                m("li", "Traverse the remaining list towards the target by incrementing j or decrementing k"),
+                m("li", "Remember the following"),
+                python(`Given the remaining list:
+[-2, -2, 0, 1, 4, 5, 10, 25]
+  j                       k
+
+right is always >=
+down  is always <=
+
+    j:   0  1  2  3  4 ...
+k       -2 -2  0  1  4 ...
+7  25 | 23 23 25 26 29
+6  10 |  8  8 10 11 14
+5   5 |  3  3  5  6  9
+4   4 |  2  2  4  5  x
+3   1 | -1 -1  1  x
+2   0 | -2 -2  x
+...`)
+            )
+        )
+    ],
     code: `t, l = 0, [-2, -1, -1, 0, 4, 5, 5, 6]
 l.sort()
 a = l[0] + l[1] + l[2]
@@ -542,7 +762,9 @@ problems.push({
     summary: "Find t in ordered, rotated l",
     tags: [tags.BINARY_SEARCH],
     href: "https://leetcode.com/problems/search-in-rotated-sorted-array",
-    description: ``,
+    description: [
+        m("p", "Binary search is pretty easy - set i and k, while some condition, set j to the middle, set the most appropriate of i or k to equal j."),
+    ],
     code: `t, l = 1, [4, 5, 6, 7, 0, 1, 2]
 i, k, a = 0, len(l) - 1, -1
 while True:
@@ -567,7 +789,9 @@ problems.push({
     summary: "Sieve of Eratosthenes",
     tags: [tags.PRIMES],
     href: "https://en.wikipedia.org/wiki/Sieve_of_Eratosthenes",
-    description: ``,
+    description: [
+        m("p", "A prime number has no divisors. You can save some work by just checking the divisors <= √n"),
+    ],
     code: `primes = (x for x in count(start=2) if all(x % y for y in range(2, int(x ** 0.5) + 1)))
 
 assert [x for x, _ in zip(primes, range(10))] == [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]`,
@@ -603,7 +827,19 @@ problems.push({
     summary: "Wordsearch, many words",
     tags: [tags.TRIE, tags.WORDSEARCH, tags.MARKY],
     href: "https://leetcode.com/problems/word-search-ii",
-    description: ``,
+    description: [
+        m("p", "This is a fancy efficient wordsearch solution for when there are many words to check. When there is just one word, you can ignore all the trie stuff."),
+        m("ul",
+            m("li", "Make a map of all the coordinates to their value"),
+            m("li", "Make a trie from all the words. A trie is just a tree from the starting letters - kinda like an index"),
+            m("li", "Set up a function that for a given node in the trie, a target word (we'll initially call this with an empty string) and coordinates, will yield the word if it's in the wordsearch"),
+            m("li", "If we've reached a word in the trie, yield it and remove it from the trie so we don't bother revisiting it"),
+            m("li", "If the letter at the coordinates isn't in the given trie node, break"),
+            m("li", "Globally mark the coordinate as seen"),
+            m("li", "Recurse into neighbouring cooridnates with the next node in the trie, and the word plus the new letter."),
+            m("li", "Globally unmark the coordinate as seen"),
+        )
+    ],
     code: `l = [
     ["o","a","a","n"],
     ["e","t","a","e"],
@@ -645,7 +881,17 @@ problems.push({
     summary: "LRU cache",
     tags: [tags.LRU_CACHE, tags.DOUBLY_LINKED_LIST],
     href: "https://leetcode.com/problems/lru-cache",
-    description: ``,
+    description: [
+        m("ul",
+            m("li", "Make a map of keys to nodes in our doubly linked list"),
+            m("li", "Initally the doubly linked list has an empty head an empty tail that point to each other - we will never change the values of these"),
+            m("li", "To splice a node from the list is to remove it and connect its neighbours together"),
+            m("li", "To add a node to the list is to connect it between the most recent and the tail"),
+            m("li", "When we get something from the cache, we splice it from wherever it is in the doubly linked list, then add it to the end"),
+            m("li", "When we put something into the cache, we splice it if it already exists, else make a new one, then add it to the end"),
+            m("li", "If cache is over capacity, we splice the least recent node"),
+        )
+    ],
     code: `@dataclass
 class N:
     k: int
@@ -695,9 +941,15 @@ assert [c.put(1, 1), c.put(2, 2), c.get(1), c.put(3, 3), c.get(2), c.put(4, 4), 
 problems.push({
     id: ids.SORTING_HANDY,
     summary: "Quicksort algorithm",
-    tags: [tags.SORTING],
+    tags: [tags.SORTING, tags.DP],
     href: "https://lamfo-unb.github.io/img/Sorting-algorithms/Quicksort-example.gif",
-    description: ``,
+    description: [
+        m("ul",
+            m("li", "For each item in the list"),
+            m("li", "Append it to one of three lists: a list of items less than the first element, a list of items equal to it, or a list of items greater than it"),
+            m("li", "Recursively sort the less than list and the greater than list"),
+        )
+    ],
     code: `# O(n log(n)) -> O(n ** 2)
 def quick(l):
     if len(l) == 0:
@@ -716,11 +968,19 @@ problems.push({
     summary: "Calculate median from a stream",
     tags: [tags.HEAP, tags.MEDIAN],
     href: "https://leetcode.com/problems/find-median-from-data-stream",
-    description: ``,
+    description: [
+        m("p", "A heap is a binary tree that always keep the largest item at the tip (according to some definition of largest). Python has a module in the standard library called heapq that has a very similar interface to the Heap class defined below. For this reason, I'm not going to describe the inner workings of the Heap class."),
+        m("ul",
+            m("li", "Make two heaps, one that has the largest item at the tip, one that has the smallest item at the tip"),
+            m("li", "If there are an even number of items in the MedianFinder, push the new value somewhere into the 'largest item at the tip' heap, then pop the new largest value from that heap and add push it somewhere into the 'smallest item at the tip' heap"),
+            m("li", "If there are an odd number of items in the MedianFinder, push the new value somewhere into the 'smallest item at the tip' heap, then pop the new smallest value from that heap and add push it somewhere into the 'largest item at the tip' heap"),
+            m("li", "Switching between heaps like this keeps them balanced and keeps the median values at the tips of the two heaps"),
+        )
+    ],
     code: `def MedianFinder():
     even = True
-    largest_at_tip = Heap(lambda a, b: a < b)
-    smallest_at_tip = Heap(lambda a, b: a >= b)
+    largest_at_tip = Heap(lambda child, parent: child < parent)
+    smallest_at_tip = Heap(lambda child, parent: child >= parent)
 
     def add(x):
         nonlocal even
@@ -856,7 +1116,6 @@ System Design
     - SSD random read 100µs, read 1MB 1000µs
     - Return network trip to Europe 0.1s`,
 })
-
 
 const root = document.getElementById('root')
 const render = () => m.render(root, {children: [View()]})

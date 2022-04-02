@@ -5,7 +5,7 @@ const title = "interview patterns"
 const h1 = "Interview patterns in Python"
 
 export default page(title, h1, [
-    m("p", "Not necessarily fastest, but hopefully neatest. Recursive problems can be converted to while loops."),
+    m("p", "Not necessarily fastest, but hopefully neatest. Recursive problems can be generically converted to while loops to circumvent recursion limit."),
     m("details", {id: "top"}, m("summary", "Variable naming conventions."),
         python(`x  y  z      # values
 i  j  k      # corresponding indices
@@ -39,7 +39,8 @@ from types import SimpleNamespace`)
 .tag-selected{font-weight:bold;}
 .problem{margin-top:4rem;}
 .no-border{border:none;}
-.description{padding:1rem;}
+.description{padding-left:1rem;}
+.question{padding-bottom:0.5rem;}
 `),
     m("script", {src: "33-line-react.js"}),
     m("script", {src: "leet.js"}),
