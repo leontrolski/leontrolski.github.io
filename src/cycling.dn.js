@@ -96,7 +96,7 @@ export default page(title, h1, [
     m("h3", "Peaslake (Surrey Hills)"),
     m("p", "As far as I know, the only really good purpose-built trails in the south east (forget Swinley forest - it's way too flat). Look on Trailforks for routes, but also try trudging through Strava segments - things change fast and there's lots of secret bits."),
     img("images/cycling/peaslake.jpeg", "https://www.mbr.co.uk/mountain-bike-routes/south-east-england/surrey-hills-gps-route-download-2-324674"),
-    m("p", "Get the train to Guildford or Dorking (both pretty frequent and quick) and take whatever bridleways you fancy - they're all prety decent. If you want a big day out, do one to the other, joining up trails. For some reason, the ticket inspectors seem happy if you have a return to either station."),
+    m("p", "Get the train to Guildford or Dorking (both pretty frequent and quick) and take whatever bridleways you fancy - they're all pretty decent. If you want a big day out, do one to the other, joining up trails. For some reason, the ticket inspectors seem happy if you have a return to either station."),
 
     m("h3", "Cwmcarn (Wales)"),
     m("p", "Definitely not in the South East, but Newport is only 1 hour 40 away from Paddington (although you have to book bike slots), so it's feasible to do a day trip. Cwmcarn has two really excellent and long purpose-built trails, you can ride to the start and do both in 5-7 hours. There's also some off-piste stuff (trawl through Strava segments)."),
