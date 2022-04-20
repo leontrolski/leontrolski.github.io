@@ -1,0 +1,91 @@
+\documentclass[11pt,a4paper]{article}
+
+% see https://www.overleaf.com/learn/latex/Font_typefaces
+\usepackage[T1]{fontenc}
+\usepackage{palatino}
+
+\usepackage[parfill]{parskip}
+\usepackage{array}
+\usepackage{ifthen}
+\usepackage{xcolor}
+\definecolor{linkcolour}{rgb}{0.0, 0.18, 0.39}
+\usepackage[colorlinks=true,urlcolor=linkcolour]{hyperref}
+\usepackage[left=0.8in,top=0.6in,right=0.8in,bottom=0.6in]{geometry}
+\pagestyle{empty}
+\newcommand{\tab}[1]{\hspace{.2667\textwidth}\rlap{#1}}
+\newcommand{\itab}[1]{\hspace{0em}\rlap{#1}}
+\setlength{\parskip}{0.5em}
+
+\newenvironment{rSection}[1]{
+  \smallskip
+  {\bf #1}
+%   \MakeUppercase{\bf #1} 
+  \medskip
+  \hrule
+  \medskip
+  \begin{list}{}{
+    \setlength{\leftmargin}{1.2em}
+  }
+  \item[]
+}{
+  \end{list}
+}
+
+\begin{document}
+
+\centerline{\bf Oliver Russell $\bullet$ Developer}
+\centerline{\href{https://leontrolski.github.io}{leontrolski.github.io} $\bullet$ +44 7906 661336 $\bullet$ \href{mailto:ojhrussell@gmail.com}{ojhrussell@gmail.com}}
+\par
+\smallskip
+
+\begin{rSection}{Work}
+
+{\bf Bulb Energy, London - Senior Developer} \hfill{\em 2019 -} 
+\\ First full-time \texttt{Python} developer on Bulb's international team. Over a fairly short period, the team successfully built services to handle billing, account management, interaction with external energy providers/payment processors, statement generation/scheduling, along with internal tooling for energy specialists.
+
+\par Services were all \texttt{Flask}/\texttt{FastAPI} services (with automated \texttt{APISpec} docs) running with \texttt{SQLAlchemy} on \texttt{Postgres} DBs. They communicate via \texttt{REST}/\texttt{Google PubSub}, are all deployed on \texttt{Kubernetes} running on \texttt{GCP} with assorted logging/monitoring solutions in place. Lasting contributions to the team include:
+\setlength{\parskip}{0.2em}
+\begin{itemize}
+\item Codebase with a simple, consistent, modern, well-typed approach and style.
+\item Comprehensive testing - from low level contract tests up to multi-service integration tests.
+\item Performant and flexible database design using some advanced locking/indexing techniques.
+\item Fostered a friendly, engaged and collaborative team dynamic, particularly with new starters.
+\end{itemize}
+\setlength{\parskip}{0.5em}
+
+\par Spent 6 months working with Bulb's billing team across various backend/frontend \texttt{TypeScript} services with the aim of reducing customer debt.
+
+\smallskip
+{\bf YouView, London - Python Developer} \hfill{\em 2016 - 2019} 
+\\ Built, refactored and maintained the reporting service, APIs and infrastructure for the test-automation team; the team ran constant functional, memory and timing tests on $\approx$ 200 set top boxes, generating millions of results.
+
+\par  Worked on API design, database design, building interactive data collation, search and graphing capabilities. Introduced zero-downtime rollout to the reporting service (\texttt{Ansible}). Collaborated on \texttt{TypeScript} \texttt{Selenium} testing with the YouView front-end team. Worked closely with graduate scheme. Implemented machine-learning driven pipeline for test failure classification (\texttt{scikit-learn}).
+
+\smallskip
+\par {\bf Thales, London - Software Engineer} \hfill{\em 2014 - 2016}				    
+\\ Extended, maintained and documented an internal web based (\texttt{LAMP} stack) tool that managed hardware installation data. Also worked on the communications network infrastructure for the London Underground where responsibilities included hardware design, liaising with London Underground and contractors, and developing document management and retrieval software.
+
+\smallskip
+\par {\bf Bugudon Cola Ltd. Awaham, Ghana - Mechanical Engineer/CAD Technician} \hfill{\em 2013}
+\\ Spent first month in a small team constructing equipment to increase the running capacity of the mine. Then moved into a CAD based/supervisory role designing components and  logistics to install the upgraded machinery into an existing structure.
+
+\end{rSection}
+
+
+\begin{rSection}{Education}
+
+{\bf University of Bristol} \hfill{\em 2009 - 2013}
+\\ Upper Second Class (2:1) MEng Mechanical Engineering Degree. Studied: Systems and Control, Robotics, Smart Structures, Fluid Dynamics, Advanced Dynamics. Led a final year group project designing and building a bio-inspired electro-mechanical image stabilisation system (\texttt{Arduino} with \texttt{C}/\texttt{Matlab}).
+
+\end{rSection}
+
+
+\begin{rSection}{Other}
+
+{\bf Software} - Hobby projects have included various small \texttt{Python}/\texttt{JS} libraries \& projects, blog pieces, educational minimal implementations of existing libraries - see \href{https://leontrolski.github.io}{here} for more. Things I have studied/dipped into include relational theory, probabilistic methods, interpreters.
+\par {\bf Interests} - Cello (Grade 8 ABRSM, University of Bristol Chamber Orchestra), Double Bass (in jazz groups), electronic music (Reason/Ableton), Climbing, Hiking, Cycling, 5-a-side, Literature.
+
+\end{rSection}
+
+
+\end{document}
