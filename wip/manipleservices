@@ -1,0 +1,43 @@
+manipleservices - best of both microservices/monoliths
+
+People love microservices, people love monoliths, let's drill into why, and consider how we might write code that gives us advantages from both camps.
+
+People love microservices (and ∴ hate monoliths) because:
+
+- They only have to consider the bit of domain that the microservice pertains to, with clear inputs and outputs.
+- They can test/deploy only the part of the system that they changed.
+- They can scale up parts of the system that are getting particularly high load.
+- The system as a whole should be more resilient.
+- It should be easier to migrate smaller databases than bigger ones.
+- It's easier to do monitoring/alerting on particular parts of the system.
+- As the communication tends to be JSON over REST/some-message-bus, they can write each service in "the most appropriate language".
+- They get to draw more exciting architecture diagrams.
+
+People hate microservices (and ∴ love monoliths) because:
+
+- They can't CMD-click to function definitons with REST calls.
+- Testing/coordinating changes across services is slow and arduous.
+- Debugging when things go wrong is hard.
+- The architecture of individual services tends to fragment over time.
+- Managing many different versions of services over time is hard.
+
+We can group these into two main categories:
+
+- Development concerns - Are there well defined interfaces? How much of the system do I have to consider at one time (whether developing or debugging)? Is it easy to test? Can I deploy just the bit I changed?
+- Production concerns - Will the system scale to some load? Is it going to totally fail if some part stops working? Can I easily monitor part of the running system?
+
+
+Before we propose any solutions, let's first get ourselves into the mindset of some lowly developer proposing a move to microservices circa 2008.
+
+- We have a hundreds-of-thousands (or millions) of lines long Java Spring/Ruby on Rails codebase.
+- Our small change is taking many minutes to compile and test.
+- Due to pervasive use of OO, we're passing around pretty chunky, stateful data everywhere. The function we changed might return a Hibernate/Active Record instance, and many functions away from where we made the change, that instance might trigger some random SQL call.
+- While you're waiting on your code review, any one of hundreds of other developers might make a change that requires some hairy rebasing later.
+- We're not entirely confident that our change isn't going to introduce some performance regression somewhere, say from the database's query planner.
+
+Given this mindset, it's not too hard to see how a proposal to split up the code and enforce slow-moving, data-only interfaces looks like a good idea.
+
+
+Now, let's propose a way of structuring a system's code that attempts to have and eat our cake.
+
+Notes before we begin: I've worked on a system that was somewhat similar to this and it was pretty pleasant.
