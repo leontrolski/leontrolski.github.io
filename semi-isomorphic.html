@@ -1,5 +1,5 @@
 <html>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <head>
         <title>
             leontrolski -             semi-isomorphic apps
@@ -11,8 +11,9 @@
             pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
             a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
             a:hover {border-bottom: 0;}
-            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em;}
+            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em; white-space: nowrap;}
             blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
+            details {border-bottom:solid 5px gray;}
         
         </style>
         <link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet">
@@ -57,22 +58,22 @@
 
         </p>
         <h2>
-            What&#x27;s the problem?
+            What&#39;s the problem?
         </h2>
         <p>
-            In most worlds, when you&#x27;re building a web app, there is a very clear divide between:
+            In most worlds, when you&#39;re building a web app, there is a very clear divide between:
         </p>
         <ol>
             <li>
-                &quot;Let&#x27;s build a backend-rendered page in                 <code class="inline">Python</code>
+                &#34;Let&#39;s build a backend-rendered page in                 <code class="inline">Python</code>
                 /                <code class="inline">JS</code>
                 /... rendering the html with some funky templating language. We can sprinkle in some ad-hoc                 <code class="inline">JS</code>
-                 as we get there.&quot;
+                 as we get there.&#34;
             </li>
             <li>
-                &quot;Let&#x27;s build a fully frontend-rendered app with                 <code class="inline">React</code>
+                &#34;Let&#39;s build a fully frontend-rendered app with                 <code class="inline">React</code>
                 /                <code class="inline">Vue</code>
-                /...&quot;
+                /...&#34;
             </li>
 
         </ol>
@@ -97,7 +98,7 @@
                 .
             </li>
             <li>
-                Build chains and compile steps may eventually become necessary, but we&#x27;ll start with browser-compatible code.
+                Build chains and compile steps may eventually become necessary, but we&#39;ll start with browser-compatible code.
             </li>
 
         </ul>
@@ -118,15 +119,15 @@
             .
         </p>
         <p>
-            Let&#x27;s walk through an example where we span this transition.
+            Let&#39;s walk through an example where we span this transition.
         </p>
         <h2>
             An example app
         </h2>
         <p>
-            In this post, we will build the following simple web app, where we can add todos and check them if they&#x27;re done. The data will be persisted on the backend:
+            In this post, we will build the following simple web app, where we can add todos and check them if they&#39;re done. The data will be persisted on the backend:
         </p>
-        <video src="videos/basic.webm" controls style="
+        <video controls src="videos/basic.webm" style="
         margin: auto;
         display: block;
         max-width: calc(min(20em, 100%));
@@ -142,12 +143,12 @@
         <ul>
             <li>
                 Using just backend rendering and                 <code class="inline">&lt;form&gt;</code>
-                 elements à la 1995. This we&#x27;ll refer to as                 <code class="inline">backend</code>
+                 elements à la 1995. This we&#39;ll refer to as                 <code class="inline">backend</code>
                 .
             </li>
             <li>
                 Using a sprinkling of imperative                <code class="inline">JS</code>
-                 to dynamically add the new comment without reloading the page. This we&#x27;ll refer to as                 <code class="inline">classic</code>
+                 to dynamically add the new comment without reloading the page. This we&#39;ll refer to as                 <code class="inline">classic</code>
                 .
             </li>
             <li>
@@ -155,7 +156,7 @@
                  library (in this case                 <a href="https://mithril.js.org/">
                     mithril
                 </a>
-                ). This we&#x27;ll refer to as                 <code class="inline">declarative</code>
+                ). This we&#39;ll refer to as                 <code class="inline">declarative</code>
                  because we specify the DOM as a pure function of state.
             </li>
 
@@ -191,51 +192,51 @@ cd dnjs; python3 -m venv .env; source .env/bin/activate
 pip install dnjs fastapi uvicorn aiofiles python-multipart
 
 examples/todo/bin/serve
-open &#x27;http://localhost:8000/backend&#x27;</code>
+open &#39;http://localhost:8000/backend&#39;</code>
 </pre>
         <h2>
             Building the app with             <code class="inline">backend</code>
 
         </h2>
         <p>
-            We&#x27;re going to use the             <code class="inline">Python</code>
+            We&#39;re going to use the             <code class="inline">Python</code>
              library             <a href="https://fastapi.tiangolo.com/">
                 FastAPI
             </a>
-             for our backend. Let&#x27;s start by looking at the body of the html we want to end up with:
+             for our backend. Let&#39;s start by looking at the body of the html we want to end up with:
         </p>
-        <pre class="language-html"><code>&lt;h1 class=&quot;todo-bold todo-red&quot;&gt;Hello Ms Backend&lt;/h1&gt;
-&lt;div id=&quot;todo-list&quot;&gt;
-    &lt;form id=&quot;todoListForm&quot; method=&quot;POST&quot;&gt;
+        <pre class="language-html"><code>&lt;h1 class=&#34;todo-bold todo-red&#34;&gt;Hello Ms Backend&lt;/h1&gt;
+&lt;div id=&#34;todo-list&#34;&gt;
+    &lt;form id=&#34;todoListForm&#34; method=&#34;POST&#34;&gt;
         &lt;ul&gt;
-            &lt;li class=&quot;todo-todo&quot;&gt;
+            &lt;li class=&#34;todo-todo&#34;&gt;
                 hullo
-                &lt;input class=&quot;doneCheckbox&quot; name=&quot;doneCheckbox&quot; value=&quot;0&quot; type=&quot;checkbox&quot; /&gt;
+                &lt;input class=&#34;doneCheckbox&#34; name=&#34;doneCheckbox&#34; value=&#34;0&#34; type=&#34;checkbox&#34; /&gt;
             &lt;/li&gt;
-            &lt;li class=&quot;todo-todo&quot;&gt;
+            &lt;li class=&#34;todo-todo&#34;&gt;
                 goodbye
-                &lt;input class=&quot;doneCheckbox&quot; name=&quot;doneCheckbox&quot; value=&quot;1&quot; type=&quot;checkbox&quot; checked /&gt;
+                &lt;input class=&#34;doneCheckbox&#34; name=&#34;doneCheckbox&#34; value=&#34;1&#34; type=&#34;checkbox&#34; checked /&gt;
             &lt;/li&gt;
         &lt;/ul&gt;
-        &lt;input name=&quot;newMessage&quot; value=&quot;&quot; placeholder=&quot;message&quot; autocomplete=&quot;off&quot; /&gt;
+        &lt;input name=&#34;newMessage&#34; value=&#34;&#34; placeholder=&#34;message&#34; autocomplete=&#34;off&#34; /&gt;
         &lt;button&gt;add todo&lt;/button&gt;
     &lt;/form&gt;
 &lt;/div&gt;</code>
 </pre>
         <p>
-            As you can see, we&#x27;re going to render just a normal html             <code class="inline">&lt;form&gt;</code>
+            As you can see, we&#39;re going to render just a normal html             <code class="inline">&lt;form&gt;</code>
             . When we submit the form, it will POST one             <code class="inline">newMessage</code>
-             with             <code class="inline">value=&quot;some message&quot;</code>
+             with             <code class="inline">value=&#34;some message&#34;</code>
              and many             <code class="inline">doneCheckbox</code>
-            s, each with             <code class="inline">value=&quot;index&quot;</code>
+            s, each with             <code class="inline">value=&#34;index&#34;</code>
              - the indexes of todos that are checked.
         </p>
         <h3>
             An aside on html forms
         </h3>
         <p>
-            Html forms are really not a thing of beauty, they map poorly to json structures, you can&#x27;t nest them, they can only convey strings, etc. Lots of frontend devs in particular seem to have forgotten the weirdo ins and outs of how they work, for example: that             <code class="inline">&lt;button&gt;</code>
-            s and             <code class="inline">&lt;input type=&quot;checkbox&quot;&gt;</code>
+            Html forms are really not a thing of beauty, they map poorly to json structures, you can&#39;t nest them, they can only convey strings, etc. Lots of frontend devs in particular seem to have forgotten the weirdo ins and outs of how they work, for example: that             <code class="inline">&lt;button&gt;</code>
+            s and             <code class="inline">&lt;input type=&#34;checkbox&#34;&gt;</code>
             s have             <code class="inline">(name, value)</code>
             s             <em>
                 that are only are POSTed when they are clicked/checked.
@@ -253,7 +254,7 @@ open &#x27;http://localhost:8000/backend&#x27;</code>
             Back to the app
         </h3>
         <p>
-            Let&#x27;s have a look at the             <code class="inline">dnjs</code>
+            Let&#39;s have a look at the             <code class="inline">dnjs</code>
              templating code we use to render the page from            <code class="inline">Python</code>
             , the base page is in             <a href="https://github.com/leontrolski/dnjs/tree/master/examples/todo/templates/page.dn.js">
                 <code class="inline">examples/todo/templates/page.dn.js</code>
@@ -261,14 +262,14 @@ open &#x27;http://localhost:8000/backend&#x27;</code>
             </a>
              and looks like:
         </p>
-        <pre class="language-javascript"><code>import { TodoList } from &quot;../shared/components.dn.js&quot;
+        <pre class="language-javascript"><code>import { TodoList } from &#34;../shared/components.dn.js&#34;
 
 const title = [classes.bold, classes.red]
 
 export default (data) =&gt; (
     ...
-    m(&quot;h1&quot;, {class: title}, &quot;Hello &quot;, data.username),
-    m(&quot;#todo-list&quot;, TodoList(data.state)),
+    m(&#34;h1&#34;, {class: title}, &#34;Hello &#34;, data.username),
+    m(&#34;#todo-list&#34;, TodoList(data.state)),
     ...
 )</code>
 </pre>
@@ -279,34 +280,34 @@ export default (data) =&gt; (
             </a>
              and look a bit like:
         </p>
-        <pre class="language-javascript"><code>export const Todo = (todo) =&gt; m(&quot;li&quot;,
+        <pre class="language-javascript"><code>export const Todo = (todo) =&gt; m(&#34;li&#34;,
     todo.message,
-    m(&quot;input.doneCheckbox&quot;, {name: &quot;doneCheckbox&quot;, value: todo.i, checked: todo.done, type: &quot;checkbox&quot;}),
+    m(&#34;input.doneCheckbox&#34;, {name: &#34;doneCheckbox&#34;, value: todo.i, checked: todo.done, type: &#34;checkbox&#34;}),
 )
 
-export const TodoList = (state) =&gt; m(&quot;form#todoListForm&quot;,
-    {method: &quot;POST&quot;},
-    m(&quot;ul&quot;, state.todos.map((todo, i) =&gt;Todo({...todo, i: i}))),
-    m(&quot;input&quot;, {name: &quot;newMessage&quot;, value: state.new}),
-    m(&quot;button&quot;, &quot;add todo&quot;),
+export const TodoList = (state) =&gt; m(&#34;form#todoListForm&#34;,
+    {method: &#34;POST&#34;},
+    m(&#34;ul&#34;, state.todos.map((todo, i) =&gt;Todo({...todo, i: i}))),
+    m(&#34;input&#34;, {name: &#34;newMessage&#34;, value: state.new}),
+    m(&#34;button&#34;, &#34;add todo&#34;),
 )</code>
 </pre>
         <details>
             <summary>
                 The equivalent handlebars code would look something like this.
             </summary>
-            <pre class="language-html"><code>&lt;h1 class=&quot;{{classes.bold}} {{classes.red}}&quot;&gt;Hello {{data.username}}&lt;/h1&gt;
-&lt;div id=&quot;todo-list&quot;&gt;
-    &lt;form id=&quot;todoListForm&quot; method=&quot;POST&quot;&gt;
+            <pre class="language-html"><code>&lt;h1 class=&#34;{{classes.bold}} {{classes.red}}&#34;&gt;Hello {{data.username}}&lt;/h1&gt;
+&lt;div id=&#34;todo-list&#34;&gt;
+    &lt;form id=&#34;todoListForm&#34; method=&#34;POST&#34;&gt;
         &lt;ul&gt;
             {{#each state.todos}}
                 &lt;li&gt;
                     {{message}}
-                    &lt;input class=&quot;doneCheckbox&quot; name=&quot;doneCheckbox&quot; value=&quot;{{@index}}&quot; {{#if done}}checked{{/if}} type=&quot;checkbox&quot; /&gt;
+                    &lt;input class=&#34;doneCheckbox&#34; name=&#34;doneCheckbox&#34; value=&#34;{{@index}}&#34; {{#if done}}checked{{/if}} type=&#34;checkbox&#34; /&gt;
                 &lt;/li&gt;
             {{/each}}
         &lt;/ul&gt;
-        &lt;input name=&quot;newMessage&quot; value=&quot;{{state.new}}&quot; /&gt;
+        &lt;input name=&#34;newMessage&#34; value=&#34;{{state.new}}&#34; /&gt;
         &lt;button&gt;add todo&lt;/button&gt;
     &lt;/form&gt;
 &lt;/div&gt;</code>
@@ -320,18 +321,18 @@ export const TodoList = (state) =&gt; m(&quot;form#todoListForm&quot;,
             </a>
              with:
         </p>
-        <pre class="language-python"><code>@app.get(&quot;/backend&quot;, response_class=HTMLResponse)
+        <pre class="language-python"><code>@app.get(&#34;/backend&#34;, response_class=HTMLResponse)
 def get_backend() -&gt; str:
     return dnjs.render(
-        templates / &quot;page.dn.js&quot;,
+        templates / &#34;page.dn.js&#34;,
         PageData(
-            username=&quot;Ms Backend&quot;,
-            state=State(todos=_todos.todos, new=&quot;&quot;),
+            username=&#34;Ms Backend&#34;,
+            state=State(todos=_todos.todos, new=&#34;&#34;),
         )
     )</code>
 </pre>
         <p>
-            We&#x27;re rendering the             <code class="inline">dnjs</code>
+            We&#39;re rendering the             <code class="inline">dnjs</code>
              (a subset of             <code class="inline">JS</code>
             ) with             <code class="inline">Python</code>
              ... 🤯
@@ -340,7 +341,7 @@ def get_backend() -&gt; str:
             In the same file, we handle             <code class="inline">POST</code>
             s with:
         </p>
-        <pre class="language-python"><code>@app.post(&quot;/backend&quot;, response_class=HTMLResponse)
+        <pre class="language-python"><code>@app.post(&#34;/backend&#34;, response_class=HTMLResponse)
 def post_backend(newMessage: str, doneCheckbox: List[int]) -&gt; str:
     if newMessage:
         _todos.todos.append(Todo(message=newMessage, done=False))
@@ -355,10 +356,10 @@ def post_backend(newMessage: str, doneCheckbox: List[int]) -&gt; str:
             .
         </em>
         <p>
-            In case you can&#x27;t be bothered to run the example application, here&#x27;s a video of me clicking around the             <code class="inline">backend</code>
+            In case you can&#39;t be bothered to run the example application, here&#39;s a video of me clicking around the             <code class="inline">backend</code>
              app with the console on.
         </p>
-        <video src="videos/backend.webm" controls style="
+        <video controls src="videos/backend.webm" style="
         margin: auto;
         display: block;
         max-width: calc(min(20em, 100%));
@@ -373,7 +374,7 @@ def post_backend(newMessage: str, doneCheckbox: List[int]) -&gt; str:
 
         </h2>
         <p>
-            The users of our app were posting lots of frequent comments, we decided it wasn&#x27;t acceptable to have a page reload every time it happened. This means we had to add a sprinkling (23 lines) of            <code class="inline">JS</code>
+            The users of our app were posting lots of frequent comments, we decided it wasn&#39;t acceptable to have a page reload every time it happened. This means we had to add a sprinkling (23 lines) of            <code class="inline">JS</code>
             to:
         </p>
         <ul>
@@ -398,7 +399,7 @@ def post_backend(newMessage: str, doneCheckbox: List[int]) -&gt; str:
             </a>
              - is as follows:
         </p>
-        <pre class="language-javascript"><code>import { Todo } from &quot;../shared/components.dn.js&quot;
+        <pre class="language-javascript"><code>import { Todo } from &#34;../shared/components.dn.js&#34;
 
 ...
 
@@ -414,8 +415,8 @@ todoListFormEl.onsubmit = async e =&gt; {
         done: false
     }
     await fetch(
-        &quot;/classic/todos&quot;,
-        {method: &#x27;POST&#x27;, body: JSON.stringify(data)}
+        &#34;/classic/todos&#34;,
+        {method: &#39;POST&#39;, body: JSON.stringify(data)}
     )
 
     // make the Todo DOM node and append it to the DOM
@@ -445,9 +446,9 @@ todoListFormEl.onsubmit = async e =&gt; {
             .
         </p>
         <p>
-            Let&#x27;s show a video of this in action:
+            Let&#39;s show a video of this in action:
         </p>
-        <video src="videos/classic.webm" controls style="
+        <video controls src="videos/classic.webm" style="
         margin: auto;
         display: block;
         max-width: calc(min(20em, 100%));
@@ -462,14 +463,14 @@ todoListFormEl.onsubmit = async e =&gt; {
 
         </h2>
         <p>
-            It&#x27;s a bit contrived with this simple app, but let&#x27;s imagine our UI&#x27;s complexity has tipped over to the point where we want everything super dynamic. To achieve this, we will use the (excellent)             <a href="https://mithril.js.org/">
+            It&#39;s a bit contrived with this simple app, but let&#39;s imagine our UI&#39;s complexity has tipped over to the point where we want everything super dynamic. To achieve this, we will use the (excellent)             <a href="https://mithril.js.org/">
                 mithril
             </a>
              - which             <code class="inline">dnjs</code>
              is handily compatible with.
         </p>
         <p>
-            Here&#x27;s the line from             <a href="https://github.com/leontrolski/dnjs/tree/master/examples/todo/static/declarative.js">
+            Here&#39;s the line from             <a href="https://github.com/leontrolski/dnjs/tree/master/examples/todo/static/declarative.js">
                 <code class="inline">examples/todo/static/declarative.js</code>
 
             </a>
@@ -490,17 +491,17 @@ todoListFormEl.onsubmit = async e =&gt; {
             </a>
              wraps any             <code class="inline">{onclick: f, onsubmit: g, ...}</code>
              functions and rerenders the DOM as necessary in similar way to             <code class="inline">React</code>
-            . Below is an example of one of the functions we pass via             <code class="inline">m(&quot;form&quot;, {onsubmit: add}, ...)</code>
+            . Below is an example of one of the functions we pass via             <code class="inline">m(&#34;form&#34;, {onsubmit: add}, ...)</code>
             .
         </p>
         <pre class="language-javascript"><code>const add = (e) =&gt; {
     e.preventDefault()
     if (!state.new) return
     state.todos.push({message: state.new, done: false})
-    state.new = &quot;&quot;
+    state.new = &#34;&#34;
     m.request({
-        url: &quot;/declarative/todos&quot;,
-        method: &quot;PUT&quot;,
+        url: &#34;/declarative/todos&#34;,
+        method: &#34;PUT&#34;,
         body: {todos: state.todos}
     })
 }</code>
@@ -511,9 +512,9 @@ todoListFormEl.onsubmit = async e =&gt; {
             .
         </em>
         <p>
-            Let&#x27;s show a video of our declaratively rendered app in action:
+            Let&#39;s show a video of our declaratively rendered app in action:
         </p>
-        <video src="videos/declarative.webm" controls style="
+        <video controls src="videos/declarative.webm" style="
         margin: auto;
         display: block;
         max-width: calc(min(20em, 100%));
@@ -528,7 +529,7 @@ todoListFormEl.onsubmit = async e =&gt; {
 
         </h1>
         <p>
-            Our app has many pages, so we&#x27;d like to share/compose/namespace our css. Handily             <code class="inline">dnjs</code>
+            Our app has many pages, so we&#39;d like to share/compose/namespace our css. Handily             <code class="inline">dnjs</code>
              can convert from             <a href="https://github.com/leontrolski/dnjs/tree/master/examples/todo/shared/style.dn.js">
                 <code class="inline">examples/todo/shared/style.dn.js</code>
 
@@ -537,10 +538,10 @@ todoListFormEl.onsubmit = async e =&gt; {
         </p>
         <pre class="language-javascript"><code>const _classes = {
     bold: {
-        &quot;font-weight&quot;: &quot;bold&quot;,
+        &#34;font-weight&#34;: &#34;bold&#34;,
     },
     red: {
-        &quot;color&quot;: &quot;red&quot;,
+        &#34;color&#34;: &#34;red&#34;,
     },
     ...
 }
@@ -548,7 +549,7 @@ todoListFormEl.onsubmit = async e =&gt; {
 // namespace
 export default Object.fromEntries(
     Object.entries(_classes)
-    .map(([k, v], _) =&gt; [&quot;.{namespace}-{k}&quot;, v])
+    .map(([k, v], _) =&gt; [&#34;.{namespace}-{k}&#34;, v])
 )</code>
 </pre>
         <p>
@@ -572,15 +573,14 @@ export default Object.fromEntries(
 
             </a>
              we also export the names themselves of the css classes, so in the rendering code, we can refer to eg:             <code class="inline">style.classes.bold</code>
-             and it will resolve to the name:             <code class="inline">&quot;todo-bold&quot;</code>
+             and it will resolve to the name:             <code class="inline">&#34;todo-bold&#34;</code>
             .
         </p>
         <p>
-            Similar to the advantages in html-rendering land, having your css as &quot;just data&quot; means you can easily compose/transform it, again without resorting to a whole new DSL like             <code class="inline">Sass</code>
+            Similar to the advantages in html-rendering land, having your css as &#34;just data&#34; means you can easily compose/transform it, again without resorting to a whole new DSL like             <code class="inline">Sass</code>
             .
         </p>
 
     </body>
 
 </html>
-

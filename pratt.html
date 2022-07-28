@@ -1,5 +1,5 @@
 <html>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <head>
         <title>
             leontrolski -             Pratt parsing
@@ -11,8 +11,9 @@
             pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
             a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
             a:hover {border-bottom: 0;}
-            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em;}
+            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em; white-space: nowrap;}
             blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
+            details {border-bottom:solid 5px gray;}
         
         </style>
         <link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet">
@@ -33,16 +34,16 @@
             Writing a Pratt parser for a useful subset of Javascript
         </h1>
         <p>
-            Let&#x27;s write a Pratt parser and an interpreter for a             <a href="https://github.com/leontrolski/dnjs#how-exactly-does-dnjs-extend-json">
+            Let&#39;s write a Pratt parser and an interpreter for a             <a href="https://github.com/leontrolski/dnjs#how-exactly-does-dnjs-extend-json">
                 subset of JS
             </a>
              with Python!
         </p>
         <p>
-            This type of parser has become fairly popular due to the simplicity with which it handles things like operator precedence. In fact I&#x27;m part of a             <a href="https://www.oilshell.org/blog/2017/03/31.html">
+            This type of parser has become fairly popular due to the simplicity with which it handles things like operator precedence. In fact I&#39;m part of a             <a href="https://www.oilshell.org/blog/2017/03/31.html">
                 long lineage
             </a>
-             of bloggers - it&#x27;s the &quot;monad is a burrito&quot; of parsing posts. I thought I&#x27;d bother writing up my attempt as I had a fun time writing it and was particularly happy with the brevity of the resulting code - I think this really exposes how lovely a parsing method it is. Thank you thank you             <a href="https://andychu.net/">
+             of bloggers - it&#39;s the &#34;monad is a burrito&#34; of parsing posts. I thought I&#39;d bother writing up my attempt as I had a fun time writing it and was particularly happy with the brevity of the resulting code - I think this really exposes how lovely a parsing method it is. Thank you thank you             <a href="https://andychu.net/">
                 Andy C
             </a>
              for bringing it into my life.
@@ -66,34 +67,34 @@
 .advance() -&gt; None</code>
 </pre>
         <p>
-            Let&#x27;s see how they work:
+            Let&#39;s see how they work:
         </p>
         <pre class="language-python"><code>&gt;&gt;&gt; from dnjs import tokeniser
 
-&gt;&gt;&gt; source = &#x27;[1, &quot;two&quot;, foo]&#x27;
+&gt;&gt;&gt; source = &#39;[1, &#34;two&#34;, foo]&#39;
 &gt;&gt;&gt; t = tokeniser.TokenStream.from_source(source)
 
 &gt;&gt;&gt; t.current
-Token(type=&#x27;[&#x27;,      value=&#x27;[&#x27;,     pos=0,  lineno=1, linepos=0 )
+Token(type=&#39;[&#39;,      value=&#39;[&#39;,     pos=0,  lineno=1, linepos=0 )
 
 &gt;&gt;&gt; t.advance()
 &gt;&gt;&gt; t.current
-Token(type=&#x27;number&#x27;, value=&#x27;1&#x27;,     pos=1,  lineno=1, linepos=1 )
+Token(type=&#39;number&#39;, value=&#39;1&#39;,     pos=1,  lineno=1, linepos=1 )
 
 # we keep repeating t.advance(), t.current
 
-Token(type=&#x27;,&#x27;,      value=&#x27;,&#x27;,     pos=2,  lineno=1, linepos=2 )
-Token(type=&#x27;string&#x27;, value=&#x27;&quot;two&quot;&#x27;, pos=4,  lineno=1, linepos=4 )
-Token(type=&#x27;,&#x27;,      value=&#x27;,&#x27;,     pos=9,  lineno=1, linepos=9 )
-Token(type=&#x27;name&#x27;,   value=&#x27;foo&#x27;,   pos=11, lineno=1, linepos=11)
-Token(type=&#x27;]&#x27;,      value=&#x27;]&#x27;,     pos=14, lineno=1, linepos=14)
-Token(type=&#x27;eof&#x27;,    value=&#x27;eof&#x27;,   pos=16, lineno=2, linepos=0 )</code>
+Token(type=&#39;,&#39;,      value=&#39;,&#39;,     pos=2,  lineno=1, linepos=2 )
+Token(type=&#39;string&#39;, value=&#39;&#34;two&#34;&#39;, pos=4,  lineno=1, linepos=4 )
+Token(type=&#39;,&#39;,      value=&#39;,&#39;,     pos=9,  lineno=1, linepos=9 )
+Token(type=&#39;name&#39;,   value=&#39;foo&#39;,   pos=11, lineno=1, linepos=11)
+Token(type=&#39;]&#39;,      value=&#39;]&#39;,     pos=14, lineno=1, linepos=14)
+Token(type=&#39;eof&#39;,    value=&#39;eof&#39;,   pos=16, lineno=2, linepos=0 )</code>
 </pre>
         <p>
-            Makes sense? Great. I&#x27;ll leave implementing the tokeniser to your imagination, here&#x27;s             <a href="https://github.com/leontrolski/dnjs/blob/af83ef6a0561618bbc88a79ae7da5f33115702d0/dnjs/tokeniser.py">
+            Makes sense? Great. I&#39;ll leave implementing the tokeniser to your imagination, here&#39;s             <a href="https://github.com/leontrolski/dnjs/blob/af83ef6a0561618bbc88a79ae7da5f33115702d0/dnjs/tokeniser.py">
                 dnjs
             </a>
-            &#x27;s if you&#x27;re interested.
+            &#39;s if you&#39;re interested.
         </p>
         <p>
             The type of a token is one of the following:
@@ -107,12 +108,12 @@ eof unexpected</code>
         </h2>
         <p>
             All             <a href="https://github.com/leontrolski/dnjs/blob/af83ef6a0561618bbc88a79ae7da5f33115702d0/test/test_parser.py">
-                dnjs&#x27;s parsing tests
+                dnjs&#39;s parsing tests
             </a>
              assert against             <a href="https://en.wikipedia.org/wiki/S-expression">
                 S-expression
             </a>
-             representations of the parsed code. Let&#x27;s look at some examples - a line of JS followed by a line of equivalent S-expression - hopefully it&#x27;ll be obvious what&#x27;s going on.
+             representations of the parsed code. Let&#39;s look at some examples - a line of JS followed by a line of equivalent S-expression - hopefully it&#39;ll be obvious what&#39;s going on.
         </p>
         <pre class="language-javascript"><code>[1, 2, null]
 
@@ -139,24 +140,24 @@ const bar = {}
 (const (= bar ({)))
 
 
-import m from &quot;mithril&quot;
+import m from &#34;mithril&#34;
 
-(import (from m &quot;mithril&quot;))
+(import (from m &#34;mithril&#34;))
 
 
 (a) =&gt; [42]
 
-(=&gt; (d* a) &#x27;([ 42))
+(=&gt; (d* a) &#39;([ 42))
 
 
-const f = (a, b, c) =&gt; ({&quot;foo&quot;: [1]})
+const f = (a, b, c) =&gt; ({&#34;foo&#34;: [1]})
 
-(const (= f (=&gt; (d* a b c) &#x27;(( ({ (: &quot;foo&quot; ([ 1)))))))
+(const (= f (=&gt; (d* a b c) &#39;(( ({ (: &#34;foo&#34; ([ 1)))))))
 
 
-(a === 3) ? &quot;foo&quot; : 2
+(a === 3) ? &#34;foo&#34; : 2
 
-(? (( (=== a 3)) &#x27;&quot;foo&quot; &#x27;2)
+(? (( (=== a 3)) &#39;&#34;foo&#34; &#39;2)
 
 
 const a = `  hi ${first}${second}`
@@ -169,12 +170,12 @@ const a = `  hi ${first}${second}`
         <pre class="language-python"><code>(operator child child)</code>
 </pre>
         <p>
-            If we have no child, we have an &quot;atom&quot;, one child the operator is &quot;unary&quot;, two children is &quot;binary&quot;, three children is &quot;ternary&quot; and any number of children is &quot;variadic&quot;.
+            If we have no child, we have an &#34;atom&#34;, one child the operator is &#34;unary&#34;, two children is &#34;binary&#34;, three children is &#34;ternary&#34; and any number of children is &#34;variadic&#34;.
         </p>
         <p>
             Some of the S-expressions are quoted like this:
         </p>
-        <pre class="language-python"><code>&#x27;(operator child child)</code>
+        <pre class="language-python"><code>&#39;(operator child child)</code>
 </pre>
         <p>
             This is an instruction to the interpreter not to immediately evaluate the expression (used in the case of function return values and ternary operator return values).
@@ -197,7 +198,7 @@ class Node:
             We get the S-expression version.
         </p>
         <p>
-            In general, we just use the token&#x27;s type as the operator, as you may have noticed, we&#x27;ve invented some artificial operators that weren&#x27;t returned by the tokeniser, they are:
+            In general, we just use the token&#39;s type as the operator, as you may have noticed, we&#39;ve invented some artificial operators that weren&#39;t returned by the tokeniser, they are:
         </p>
         <pre class="language-python"><code>$               -  apply a function to some arguments
 *               -  a group of arguments
@@ -210,11 +211,11 @@ dname d* d[ d{  -  dumb versions of name * [ {</code>
             Parsing
         </h1>
         <p>
-            We&#x27;re now going to look at a reduced version of dnjs&#x27;s parser, our aim is going to be to parse a statement like this:
+            We&#39;re now going to look at a reduced version of dnjs&#39;s parser, our aim is going to be to parse a statement like this:
         </p>
-        <pre class="language-python"><code>source= &quot;foo.bar === [1, 2, 3]&quot;
+        <pre class="language-python"><code>source= &#34;foo.bar === [1, 2, 3]&#34;
 token_stream = t.TokenStream.from_source(source)
-assert str(parse(token_stream, 0)) == &quot;(=== (. foo bar) ([ 1 2 3))&quot;</code>
+assert str(parse(token_stream, 0)) == &#34;(=== (. foo bar) ([ 1 2 3))&#34;</code>
 </pre>
         <p>
             The Pratt parsing algorithm is, in essence:
@@ -258,25 +259,25 @@ def infix(binding_precedence, left) -&gt; Node:
              is the demo parser, (            <a href="https://github.com/leontrolski/dnjs/blob/af83ef6a0561618bbc88a79ae7da5f33115702d0/dnjs/parser.py">
                 here
             </a>
-             is the real one), we&#x27;re going to follow though all the function calls, step-by-step.
+             is the real one), we&#39;re going to follow though all the function calls, step-by-step.
         </p>
         <p>
             Our tokens are as follows:
         </p>
-        <pre class="language-python"><code>Token(type=&#x27;name&#x27;,   value=&#x27;foo&#x27;)
-Token(type=&#x27;.&#x27;,      value=&#x27;.&#x27;  )
-Token(type=&#x27;name&#x27;,   value=&#x27;bar&#x27;)
-Token(type=&#x27;===&#x27;,    value=&#x27;===&#x27;)
-Token(type=&#x27;[&#x27;,      value=&#x27;[&#x27;  )
-Token(type=&#x27;number&#x27;, value=&#x27;1&#x27;  )
-Token(type=&#x27;,&#x27;,      value=&#x27;,&#x27;  )
-Token(type=&#x27;number&#x27;, value=&#x27;2&#x27;  )
-Token(type=&#x27;,&#x27;,      value=&#x27;,&#x27;  )
-Token(type=&#x27;number&#x27;, value=&#x27;3&#x27;  )
-Token(type=&#x27;]&#x27;,      value=&#x27;]&#x27;  )</code>
+        <pre class="language-python"><code>Token(type=&#39;name&#39;,   value=&#39;foo&#39;)
+Token(type=&#39;.&#39;,      value=&#39;.&#39;  )
+Token(type=&#39;name&#39;,   value=&#39;bar&#39;)
+Token(type=&#39;===&#39;,    value=&#39;===&#39;)
+Token(type=&#39;[&#39;,      value=&#39;[&#39;  )
+Token(type=&#39;number&#39;, value=&#39;1&#39;  )
+Token(type=&#39;,&#39;,      value=&#39;,&#39;  )
+Token(type=&#39;number&#39;, value=&#39;2&#39;  )
+Token(type=&#39;,&#39;,      value=&#39;,&#39;  )
+Token(type=&#39;number&#39;, value=&#39;3&#39;  )
+Token(type=&#39;]&#39;,      value=&#39;]&#39;  )</code>
 </pre>
         <p>
-            Let&#x27;s follow this parsing process, step by step:
+            Let&#39;s follow this parsing process, step by step:
         </p>
         <pre class="language-python"><code>├── parse(rbp=0) before is foo
 ├── hit number|name branch
@@ -297,28 +298,28 @@ Token(type=&#x27;]&#x27;,      value=&#x27;]&#x27;  )</code>
 │   │   │   │   ├── parse(rbp=0) before is 1
 │   │   │   │   ├── hit number|name branch
 │   │   │   │   │   ├── infix(rbp=0, left=1) before is ,
-│   │   │   │   │   ├── didn&#x27;t hit any branch
+│   │   │   │   │   ├── didn&#39;t hit any branch
 │   │   │   │   │   └── return 1
 │   │   │   │   └── return 1
 │   │   │   │   ┌── parse(rbp=0) before is 2
 │   │   │   │   ├── hit number|name branch
 │   │   │   │   │   ├── infix(rbp=0, left=2) before is ,
-│   │   │   │   │   ├── didn&#x27;t hit any branch
+│   │   │   │   │   ├── didn&#39;t hit any branch
 │   │   │   │   │   └── return 2
 │   │   │   │   └── return 2
 │   │   │   │   ┌── parse(rbp=0) before is 3
 │   │   │   │   ├── hit number|name branch
 │   │   │   │   │   ├── infix(rbp=0, left=3) before is ]
-│   │   │   │   │   ├── didn&#x27;t hit any branch
+│   │   │   │   │   ├── didn&#39;t hit any branch
 │   │   │   │   │   └── return 3
 │   │   │   │   └── return 3
 │   │   │   │   ┌── infix(rbp=2, left=([ 1 2 3)) before is eof
-│   │   │   │   ├── didn&#x27;t hit any branch
+│   │   │   │   ├── didn&#39;t hit any branch
 │   │   │   │   └── return ([ 1 2 3)
 │   │   │   └── return ([ 1 2 3)
 │   │   ├── right = ([ 1 2 3)
 │   │   │   ┌── infix(rbp=0, left=(=== (. foo bar) ([ 1 2 3))) before is eof
-│   │   │   ├── didn&#x27;t hit any branch
+│   │   │   ├── didn&#39;t hit any branch
 │   │   │   └── return (=== (. foo bar) ([ 1 2 3))
 │   │   └── return (=== (. foo bar) ([ 1 2 3))
 │   └── return (=== (. foo bar) ([ 1 2 3))
@@ -334,4 +335,3 @@ Token(type=&#x27;]&#x27;,      value=&#x27;]&#x27;  )</code>
     </body>
 
 </html>
-

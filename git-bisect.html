@@ -1,5 +1,5 @@
 <html>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <head>
         <title>
             leontrolski -             succinct git bisect
@@ -11,8 +11,9 @@
             pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
             a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
             a:hover {border-bottom: 0;}
-            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em;}
+            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em; white-space: nowrap;}
             blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
+            details {border-bottom:solid 5px gray;}
         
         </style>
         <link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet">
@@ -35,7 +36,7 @@
         </h1>
         <p>
             I can never remember how to             <code class="inline">git bisect</code>
-            , it&#x27;s occasionally super-useful and there are extensive posts about it elsewhere, but I&#x27;ve never needed more than:
+            , it&#39;s occasionally super-useful and there are extensive posts about it elsewhere, but I&#39;ve never needed more than:
         </p>
         <pre class="language-bash"><code>cd ../top-of-repo
 
@@ -43,7 +44,7 @@
 git bisect start HEAD HEAD~200 --
 
 # run the test you wrote
-git bisect run sh -c &#x27;cd somewhere; pytest something&#x27;
+git bisect run sh -c &#39;cd somewhere; pytest something&#39;
 
 # tests run
 # then you see like:
@@ -55,4 +56,3 @@ git bisect reset</code>
     </body>
 
 </html>
-

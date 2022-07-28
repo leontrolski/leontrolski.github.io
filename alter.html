@@ -1,19 +1,20 @@
 <html>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <head>
         <title>
             leontrolski -             containing mutable data
         </title>
         <style>
-
+            
             body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 63%;}
             @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
             pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
             a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
             a:hover {border-bottom: 0;}
-            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em;}
+            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em; white-space: nowrap;}
             blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
-
+            details {border-bottom:solid 5px gray;}
+        
         </style>
         <link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet">
         <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js">
@@ -37,7 +38,7 @@
         </p>
         <ul>
             <li>
-                It removes nasty &quot;action at a distance&quot; bugs.
+                It removes nasty &#34;action at a distance&#34; bugs.
             </li>
             <li>
                 It opens the door for easy comparison of values.
@@ -51,7 +52,7 @@
             This post briefly surveys the territory, then proposes a small syntactic addition to Javascript that would help constrain mutability, while having a clear transition path from existing code (no funky FP stuff). The examples are in Javascript, but the same concept could be ported to Python and other high level languages with mutable data.
         </p>
         <em>
-            If you&#x27;re already familiar with immutable libraries in Javascript, feel free to jump to the             <a href="#proposal">
+            If you&#39;re already familiar with immutable libraries in Javascript, feel free to jump to the             <a href="#proposal">
                 proposal
             </a>
             .
@@ -66,7 +67,7 @@
              gives us a smorgasbord of new data structures, using them in practice can be a bit clunky:
         </p>
         <pre class="language-javascript"><code>const map1 = Map({a: 1, b: 2, c: 3})
-const map2 = map1.set(&#x27;b&#x27;, 50)</code>
+const map2 = map1.set(&#39;b&#39;, 50)</code>
 </pre>
         <p>
             Once you start updating large data nested structures, more gnarliness ensues. In introducing a non-native data-type we lose a number of syntactic/typing niceties - it seems that for most people, using new exotic data-types is not worth this hassle.
@@ -112,7 +113,7 @@ const map2 = produce(map1, draft =&gt; {
                 Some detail on that second point.
             </summary>
             <p>
-                With a library that deals in built-in data types, it&#x27;s only possible to structurally share data that&#x27;s passed around by reference (basically objects and arrays, not strings or numbers). If we do:
+                With a library that deals in built-in data types, it&#39;s only possible to structurally share data that&#39;s passed around by reference (basically objects and arrays, not strings or numbers). If we do:
             </p>
             <pre class="language-javascript"><code>const foo = { some massive nested object }
 const array1 = [foo]
@@ -123,10 +124,10 @@ const array2 = produce(array1, draft =&gt; {
             <p>
                 Then                 <code class="inline">array2[0]</code>
                 <em>
-                     is
+                     is 
                 </em>
                 <code class="inline">foo</code>
-                , we didn&#x27;t have to duplicate anything in memory. Under the hood,                 <code class="inline">array2</code>
+                , we didn&#39;t have to duplicate anything in memory. Under the hood,                 <code class="inline">array2</code>
                  is: some reference to                 <code class="inline">foo</code>
                 , and the atomic value                 <code class="inline">42</code>
                 .
@@ -155,7 +156,7 @@ const array2 = produce(array1, draft =&gt; {
 
         </details>
         <p>
-            As a thought experiment, let&#x27;s imagine what would happen if we baked the immer concept into the language...
+            As a thought experiment, let&#39;s imagine what would happen if we baked the immer concept into the language...
         </p>
         <h2 id="proposal">
             Syntax proposal
@@ -185,7 +186,7 @@ const map2 = alter (map1) {
 
         </ul>
         <p>
-            The first rule is important, let&#x27;s imagine we&#x27;ve added a             <code class="inline">--disallow-mutating</code>
+            The first rule is important, let&#39;s imagine we&#39;ve added a             <code class="inline">--disallow-mutating</code>
              flag to node and attempted to run the following:
         </p>
         <pre class="language-javascript"><code>function nastyMutator(m){
@@ -200,7 +201,7 @@ const map2 = alter (map1) {
             The interpreter would raise an error for the second line at parse time.
         </p>
         <em>
-            Note that we&#x27;re still allowing reassignment, so the following is permissable:
+            Note that we&#39;re still allowing reassignment, so the following is permissable:
         </em>
         <pre class="language-javascript"><code>let map1 = { a: 1, b: 2, c: 3 }
 map1 = alter (map1) {
@@ -237,7 +238,7 @@ map1 = alter (map1) {
             </li>
             <li>
                 Within the                 <code class="inline">alter</code>
-                 block, the variable we specified at the beginning is just a plain &#x27;ol value - no pitfalls resulting from proxy magic.
+                 block, the variable we specified at the beginning is just a plain &#39;ol value - no pitfalls resulting from proxy magic.
             </li>
             <li>
                 A clever interpreter would be able to do lots of structural sharing, so the following would be memory efficient:                <pre class="language-javascript"><code>const array1 = [1, 2, 3, etc, 9999999]
@@ -250,7 +251,7 @@ const array2 = alter (array1) {
 
         </ul>
         <p>
-            Now let&#x27;s think long term, let&#x27;s imagine uptake is high - there&#x27;s no need to install any libraries and converting existing code is easy, so why not - what happens then?
+            Now let&#39;s think long term, let&#39;s imagine uptake is high - there&#39;s no need to install any libraries and converting existing code is easy, so why not - what happens then?
         </p>
         <p>
             We can reach the stage where all the mutating in our codebase is contained within             <code class="inline">alter</code>
@@ -297,7 +298,7 @@ const array2 = alter (array1) {
             Python equivalent
         </h2>
         <p>
-            The Python version would look the same, just with Python&#x27;s block syntax:
+            The Python version would look the same, just with Python&#39;s block syntax:
         </p>
         <pre class="language-python"><code>const array1 = [1, 2, 3, etc, 9999999]
 const array2 = alter array1:
@@ -318,13 +319,13 @@ const array2 = alter array1:
                 Haskellers (often it seems) use the                 <a href="https://hackage.haskell.org/package/lens">
                     lens
                 </a>
-                 library for making deep changes to objects. I&#x27;ve seen the Python equivalent used and the resulting code has always been reverted back to a &quot;native&quot; style at some point as it can be tricksy to read and doesn&#x27;t play well with modern typed Python. An open question for me is:
+                 library for making deep changes to objects. I&#39;ve seen the Python equivalent used and the resulting code has always been reverted back to a &#34;native&#34; style at some point as it can be tricksy to read and doesn&#39;t play well with modern typed Python. An open question for me is:
             </p>
             <blockquote>
-                Is there a pure-FP-ish way to doing deep updates that&#x27;s always as &quot;natural&quot; as the classic mutational way?
+                Is there a pure-FP-ish way to doing deep updates that&#39;s always as &#34;natural&#34; as the classic mutational way?
             </blockquote>
             <p>
-                Here&#x27;s a contrived example of something that to me &quot;feels natural&quot; in an imperative style, but it could just be my unfamiliarity with FP stuff.
+                Here&#39;s a contrived example of something that to me &#34;feels natural&#34; in an imperative style, but it could just be my unfamiliarity with FP stuff.
             </p>
             <pre class="language-javascript"><code>const stateAfter = alter (state) {
     const unflagged = []
@@ -345,4 +346,3 @@ const array2 = alter array1:
     </body>
 
 </html>
-

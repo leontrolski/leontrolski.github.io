@@ -1,5 +1,5 @@
 <html>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <head>
         <title>
             leontrolski -             stop doing mad config
@@ -11,8 +11,9 @@
             pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
             a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
             a:hover {border-bottom: 0;}
-            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em;}
+            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em; white-space: nowrap;}
             blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
+            details {border-bottom:solid 5px gray;}
         
         </style>
         <link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet">
@@ -36,7 +37,7 @@
             People do all sorts of wild and wonderful things in Python to get configuration from files/the environment, then even stranger things attaching said config to applications.
         </p>
         <p>
-            Here&#x27;s how everyone should do it, in a way that&#x27;s (in vague order of importance):
+            Here&#39;s how everyone should do it, in a way that&#39;s (in vague order of importance):
         </p>
         <ul>
             <li>
@@ -71,10 +72,10 @@ class Config:
 
 @lru_cache(None)
 def get_config() -&gt; Config:
-    complicated_path = Path(__file__).parent / &quot;some-file.json&quot;
+    complicated_path = Path(__file__).parent / &#34;some-file.json&#34;
     return Config(
-        DB_URL=os.environ[&quot;DB_URL&quot;],
-        NUMBER_OF_WORKERS=int(os.environ.get(&quot;N_WORKERS&quot;, 4)),
+        DB_URL=os.environ[&#34;DB_URL&#34;],
+        NUMBER_OF_WORKERS=int(os.environ.get(&#34;N_WORKERS&#34;, 4)),
         COMPLICATED_THING=json.loads(complicated_path.read_bytes()),
     )</code>
 </pre>
@@ -92,7 +93,7 @@ def create_application():
         </p>
         <pre class="language-python"><code>@pytest.fixture
 def dummy_config(monkeypatch):
-    monkeypatch.setattr(config, &quot;get_config&quot;, lambda: Config(...))
+    monkeypatch.setattr(config, &#34;get_config&#34;, lambda: Config(...))
 
 def test_thingie(dummy_config):
     ...</code>
@@ -104,4 +105,3 @@ def test_thingie(dummy_config):
     </body>
 
 </html>
-

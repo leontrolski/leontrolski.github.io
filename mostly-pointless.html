@@ -1,5 +1,5 @@
 <html>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <head>
         <title>
             leontrolski -             OO in Python is mostly pointless
@@ -11,8 +11,9 @@
             pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
             a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
             a:hover {border-bottom: 0;}
-            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em;}
+            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em; white-space: nowrap;}
             blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
+            details {border-bottom:solid 5px gray;}
         
         </style>
         <link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet">
@@ -48,16 +49,16 @@
 
         </p>
         <p>
-            People bash OO a lot these days, I&#x27;m increasingly coming to the opinion they&#x27;re right, at least in Python. My point here is not to argue that OO is bad per se, more that its introduction is simply unnecessary, AKA not useful.
+            People bash OO a lot these days, I&#39;m increasingly coming to the opinion they&#39;re right, at least in Python. My point here is not to argue that OO is bad per se, more that its introduction is simply unnecessary, AKA not useful.
         </p>
         <h2>
-            Oli&#x27;s Conjecture
+            Oli&#39;s Conjecture
         </h2>
         <blockquote>
-            All OO code can be refactored into equivalent non-OO code that&#x27;s as easy or more easy to understand.
+            All OO code can be refactored into equivalent non-OO code that&#39;s as easy or more easy to understand.
         </blockquote>
         <p>
-            Let&#x27;s take an example that should pan out in OO&#x27;s favour, we&#x27;ve all seen/written code somewhat like the following:
+            Let&#39;s take an example that should pan out in OO&#39;s favour, we&#39;ve all seen/written code somewhat like the following:
         </p>
         <pre class="language-python"><code>class ApiClient:
     def __init__(self, root_url: str, session_cls: sessionmaker):
@@ -65,12 +66,12 @@
         self.session_cls = session_cls
 
     def construct_url(self, entity: str) -&gt; str:
-        return f&quot;{self.root_url}/v1/{entity}&quot;
+        return f&#34;{self.root_url}/v1/{entity}&#34;
 
     def get_items(self, entity: str) -&gt; List[Item]:
         resp = requests.get(self.construct_url(entity))
         resp.raise_for_status()
-        return [Item(**n) for n in resp.json()[&quot;items&quot;]]
+        return [Item(**n) for n in resp.json()[&#34;items&#34;]]
 
     def save_items(self, entity: str) -&gt; None:
         with scoped_session(self.session_cls) as session:
@@ -79,24 +80,24 @@
 
 class ClientA(ApiClient):
     def construct_url(self, entity: str) -&gt; str:
-        return f&quot;{self.root_url}/{entity}&quot;
+        return f&#34;{self.root_url}/{entity}&#34;
 
 
 class ClientB(ApiClient):
     def construct_url(self, entity: str) -&gt; str:
-        return f&quot;{self.root_url}/a/special/place/{entity}&quot;
+        return f&#34;{self.root_url}/a/special/place/{entity}&#34;
 
 
-client_a = ClientA(&quot;https://client-a&quot;, session_cls)
-client_a.save_items(&quot;bars&quot;)</code>
+client_a = ClientA(&#34;https://client-a&#34;, session_cls)
+client_a.save_items(&#34;bars&#34;)</code>
 </pre>
         <p>
             We chose OO it because we wanted to bind the             <code class="inline">root_url</code>
-             to something and we didn&#x27;t want to pass around the             <code class="inline">sessionmaker</code>
+             to something and we didn&#39;t want to pass around the             <code class="inline">sessionmaker</code>
             . We also wanted to utilise inheritance to hook into a method halfway through the call stack.
         </p>
         <p>
-            But what if we do just pass data around, and write &#x27;boring&#x27; functions, what happens then?
+            But what if we do just pass data around, and write &#39;boring&#39; functions, what happens then?
         </p>
         <pre class="language-python"><code>@dataclass
 class Client:
@@ -105,13 +106,13 @@ class Client:
 
 
 client_a = Client(
-    root_url=&quot;https://client-a&quot;,
-    url_layout=&quot;{root_url}/{entity}&quot;,
+    root_url=&#34;https://client-a&#34;,
+    url_layout=&#34;{root_url}/{entity}&#34;,
 )
 
 client_b = Client(
-    root_url=&quot;https://client-b&quot;,
-    url_layout=&quot;{root_url}/a/special/place/{entity}&quot;,
+    root_url=&#34;https://client-b&#34;,
+    url_layout=&#34;{root_url}/a/special/place/{entity}&#34;,
 )
 
 
@@ -122,7 +123,7 @@ def construct_url(client: Client, entity: str) -&gt; str:
 def get_items(client: Client, entity: str) -&gt; List[Item]:
     resp = requests.get(construct_url(client, entity))
     resp.raise_for_status()
-    return [Item(**n) for n in resp.json()[&quot;items&quot;]]
+    return [Item(**n) for n in resp.json()[&#34;items&#34;]]
 
 
 def save_items(client: Client, session_cls: session_cls, entity: str) -&gt; None:
@@ -130,7 +131,7 @@ def save_items(client: Client, session_cls: session_cls, entity: str) -&gt; None
         session.add(get_items(client, entity))
 
 
-save_items(client_a, session_cls, &quot;bars&quot;)</code>
+save_items(client_a, session_cls, &#34;bars&#34;)</code>
 </pre>
         <p>
             We had to pass round the             <code class="inline">Client</code>
@@ -141,10 +142,10 @@ save_items(client_a, session_cls, &quot;bars&quot;)</code>
             🤷
         </p>
         <p>
-            Who cares? We even wrote like 10% fewer characters. Also, the conjecture stands, the resulting code is at least as easy to understand and we didn&#x27;t need any OO.
+            Who cares? We even wrote like 10% fewer characters. Also, the conjecture stands, the resulting code is at least as easy to understand and we didn&#39;t need any OO.
         </p>
         <p>
-            I&#x27;ve heard this style referred to as the             <b>
+            I&#39;ve heard this style referred to as the             <b>
                 bag-of-functions
             </b>
              style. That is to say, all your code just consists of typed data and module-namespaced-bags-of-functions.
@@ -162,8 +163,8 @@ save_items(client_a, session_cls, &quot;bars&quot;)</code>
             What about interfaces/abstract base classes?
         </h2>
         <p>
-            Just try writing without them, I promise it&#x27;s going to be OK.             <em>
-                (To be fair, it&#x27;s only the introduction of type hints to Python that has made the                 <b>
+            Just try writing without them, I promise it&#39;s going to be OK.             <em>
+                (To be fair, it&#39;s only the introduction of type hints to Python that has made the                 <b>
                     bag-of-functions
                 </b>
                  style so pleasant).
@@ -174,7 +175,7 @@ save_items(client_a, session_cls, &quot;bars&quot;)</code>
             What about impure things?
         </h2>
         <p>
-            If you&#x27;ve taken the pure-FP/hexagonal-architecture pill, you want to write pure classes that take impure &#x27;adapter&#x27; instances for             <code class="inline">getting-the-current-datetime/API-calls/talking-to-the-db/other-impure-stuff</code>
+            If you&#39;ve taken the pure-FP/hexagonal-architecture pill, you want to write pure classes that take impure &#39;adapter&#39; instances for             <code class="inline">getting-the-current-datetime/API-calls/talking-to-the-db/other-impure-stuff</code>
             . The idea is nice in principle - should be good for testing right? - in practice, you can just use             <a href="https://github.com/spulec/freezegun">
                 freezegun
             </a>
@@ -191,26 +192,26 @@ save_items(client_a, session_cls, &quot;bars&quot;)</code>
             Exceptions:
         </h2>
         <p>
-            I&#x27;d like to make exceptions for the following:
+            I&#39;d like to make exceptions for the following:
         </p>
         <ul>
             <li>
-                You&#x27;ll notice I put                 <code class="inline">@dataclass</code>
-                s in the refactored code, these are fine - they&#x27;re just record types. Python 5 will only have these, not &#x27;normal&#x27; classes.
+                You&#39;ll notice I put                 <code class="inline">@dataclass</code>
+                s in the refactored code, these are fine - they&#39;re just record types. Python 5 will only have these, not &#39;normal&#39; classes.
             </li>
             <li>
-                It&#x27;s fine to subclass                 <code class="inline">Exception</code>
+                It&#39;s fine to subclass                 <code class="inline">Exception</code>
                 s.  The usage of                 <code class="inline">try: ... except SomeClass: ...</code>
-                 fundamentally ties you to a heirarchical worldview, this is fine, just don&#x27;t make it too complicated.
+                 fundamentally ties you to a heirarchical worldview, this is fine, just don&#39;t make it too complicated.
             </li>
             <li>
                 <code class="inline">Enum</code>
                 s - same as above, they fit in well with the rest of Python.
             </li>
             <li>
-                Very, very occasionally (at least in application development), you come up with a core type that&#x27;s used so often, it&#x27;s nice to have the cutesy stuff - think something like a                 <code class="inline">pandas.DataFrame</code>
+                Very, very occasionally (at least in application development), you come up with a core type that&#39;s used so often, it&#39;s nice to have the cutesy stuff - think something like a                 <code class="inline">pandas.DataFrame</code>
                 /                <code class="inline">sqlalchemy.Session</code>
-                . In general though, don&#x27;t kid yourself that you&#x27;re building anything that exciting, it&#x27;s just vanity getting the better of you.
+                . In general though, don&#39;t kid yourself that you&#39;re building anything that exciting, it&#39;s just vanity getting the better of you.
             </li>
 
         </ul>
@@ -221,14 +222,14 @@ save_items(client_a, session_cls, &quot;bars&quot;)</code>
             My point here is not to argue that OO is bad per se.
         </blockquote>
         <p>
-            OK, I lied, it&#x27;s not just a case of OO being a largely futile addition to the language, it&#x27;s that it often obscures the problem at hand and encourages bad behaviours:
+            OK, I lied, it&#39;s not just a case of OO being a largely futile addition to the language, it&#39;s that it often obscures the problem at hand and encourages bad behaviours:
         </p>
         <ul>
             <li>
-                It encourages you to mutate. Bag-of-functions makes it feel icky to mutate arguments - as it should feel. (Feel free to mutate within the confines of your function BTW, let&#x27;s not go mad FP).
+                It encourages you to mutate. Bag-of-functions makes it feel icky to mutate arguments - as it should feel. (Feel free to mutate within the confines of your function BTW, let&#39;s not go mad FP).
             </li>
             <li>
-                It&#x27;s somewhat just the return of global variables. Not being able to share data between functions with                 <code class="inline">self</code>
+                It&#39;s somewhat just the return of global variables. Not being able to share data between functions with                 <code class="inline">self</code>
                  forces you to write functions with a smaller state-space that are easier to test.
             </li>
             <li>
@@ -238,7 +239,7 @@ save_items(client_a, session_cls, &quot;bars&quot;)</code>
                 It encourages mad inheritance hierarchies - this has been talked about at length elsewhere.
             </li>
             <li>
-                Most importantly though, it adds nothing, it&#x27;s just noise that distracts from the problem at hand and makes it harder to navigate/comprehend your code.
+                Most importantly though, it adds nothing, it&#39;s just noise that distracts from the problem at hand and makes it harder to navigate/comprehend your code.
             </li>
 
         </ul>
@@ -248,7 +249,7 @@ save_items(client_a, session_cls, &quot;bars&quot;)</code>
         <ul>
             <li>
                 <a href="poor-mans-object.html">
-                    I&#x27;ve written before about the poor man&#x27;s object/closure thingy.
+                    I&#39;ve written before about the poor man&#39;s object/closure thingy.
                 </a>
 
             </li>
@@ -264,4 +265,3 @@ save_items(client_a, session_cls, &quot;bars&quot;)</code>
     </body>
 
 </html>
-
