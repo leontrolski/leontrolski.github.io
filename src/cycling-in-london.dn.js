@@ -122,7 +122,7 @@ export default page(title, h1, [
           "Staying safe"
         ), 
         m("p", 
-          "Tips on staying safe:"
+          "Once you're off the main roads (see above), cycling in London is pretty safe, in fact it feels a lot safer than in most other UK cities. To reduce the likelihood of being involved in a crash, here are some tips on staying safe, take time to ingest them properly."
         ), 
         m("ul",
             m("li",
