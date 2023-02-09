@@ -1,0 +1,100 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[parfill]{parskip}
+\usepackage{array}
+\usepackage{ifthen}
+\usepackage{xcolor}
+\definecolor{linkcolour}{rgb}{0.0, 0.18, 0.39}
+\usepackage[colorlinks=true,urlcolor=linkcolour]{hyperref}
+\usepackage[left=0.8in,top=0.6in,right=0.8in,bottom=0.6in]{geometry}
+\pagestyle{empty}
+\newcommand{\tab}[1]{\hspace{.2667\textwidth}\rlap{#1}}
+\newcommand{\itab}[1]{\hspace{0em}\rlap{#1}}
+\setlength{\parskip}{0.5em}
+
+\newenvironment{rSection}[1]{
+  \smallskip
+  {\bf #1}
+%   \MakeUppercase{\bf #1} 
+  \medskip
+  \hrule
+  \medskip
+  \begin{list}{}{
+    \setlength{\leftmargin}{1.2em}
+  }
+  \item[]
+}{
+  \end{list}
+}
+
+\begin{document}
+
+\centerline{\bf Oliver Russell $\bullet$ Developer}
+\centerline{\href{https://leontrolski.github.io}{leontrolski.github.io} $\bullet$ +44 7906 661336 $\bullet$ \href{mailto:ojhrussell@gmail.com}{ojhrussell@gmail.com}}
+\par
+\smallskip
+
+\begin{rSection}{Work}
+
+{\bf Google, London - SRE} \hfill{\em 2022 -} 
+\\Site Reliability Engineer for Ads Frontend Search team - responsible for hundreds of jobs serving dashboards and applications to high profile advertisers. Work included writing automation to maintain configuration/service health, log preparation and analysis, monitoring, high level design and documentation. Examples include:
+\setlength{\parskip}{0.2em}
+\begin{itemize}
+\item Analysed cross-stack structured logs to cut costs and improve peak-load reliability for \texttt{F1}/\texttt{Spanner} databases across GoogleAds via query optimisation and load shedding.
+\item Configured machine-learning detection and monitoring for end-to-end customer interactions.
+\item Handled on-call incidents for services responsible for billions of dollars of revenue.
+\item Rolled out internal security improvements for thousands of jobs across Google.
+\item Implemented \texttt{Go} validators for runtime analysis of service usage and configuration.
+\end{itemize}
+\setlength{\parskip}{0.5em}
+
+\smallskip
+{\bf Bulb Energy, London - Senior Developer} \hfill{\em 2019 - 2022} 
+\\ First full-time \texttt{Python} developer on Bulb's international team. The team quickly and successfully built services to handle billing, account management, interaction with external energy providers/payment processors, statement generation/scheduling.
+
+\par Services built on a \texttt{Flask}/\texttt{FastAPI}/\texttt{SQLAlchemy}/\texttt{Postgres}/\texttt{REST}/\texttt{PubSub}/\texttt{Kubernetes}/\texttt{GCP} stack. Lasting contributions to the team include:
+\setlength{\parskip}{0.2em}
+\begin{itemize}
+\item Codebase with a simple, consistent, modern, well-typed approach and style.
+\item Comprehensive testing - from low level contract tests up to multi-service integration tests.
+\item Performant and flexible database design using some advanced locking/indexing techniques.
+\item Fostered a friendly, engaged and collaborative team dynamic, particularly with new starters.
+\end{itemize}
+\setlength{\parskip}{0.5em}
+
+\par Spent my final 6 months working with Bulb's billing team across various backend/frontend \texttt{TypeScript + React} services with the aim of reducing customer debt.
+
+\smallskip
+{\bf YouView, London - Python Developer} \hfill{\em 2016 - 2019} 
+\\ Built, refactored and maintained the reporting service, APIs and infrastructure for the test-automation team; the team ran constant functional, memory and timing tests on $\approx$ 200 boxes.
+
+\par  Worked on API design, database design, building interactive data collation, search and graphing capabilities, infrastructure. Collaborated on \texttt{TypeScript} \texttt{Selenium} testing with the YouView front-end team. Worked closely with graduate scheme. Implemented machine-learning driven pipeline for test failure classification (\texttt{scikit-learn}).
+
+\smallskip
+\par {\bf Thales, London - Software Engineer} \hfill{\em 2014 - 2016}				    
+\\ Extended, maintained and documented an internal web based tool that managed hardware installation data. Also worked on the comms network infrastructure for the London Underground.
+
+\smallskip
+\par {\bf Bugudon Cola Ltd. Awaham, Ghana - Mechanical Engineer/CAD Technician} \hfill{\em 2013}
+\\ Worked with a small team making new equipment to increase the running capacity of the mine.
+
+\end{rSection}
+
+
+\begin{rSection}{Education}
+
+{\bf University of Bristol} \hfill{\em 2009 - 2013}
+\\ Upper Second Class (2:1) MEng Mechanical Engineering Degree. Studied: Systems and Control, Robotics, Smart Structures, Fluid Dynamics, Advanced Dynamics.
+
+\end{rSection}
+
+
+\begin{rSection}{Other}
+
+{\bf Software} - Hobby projects include small \texttt{Python}/\texttt{JS} libraries \& projects, blog posts, educational implementations of existing libraries - see \href{https://leontrolski.github.io}{my blog}. Have studied/dipped into include relational theory, probabilistic methods, interpreters.
+\par {\bf Interests} - Cello/Double bass, music production, reading, climbing, hiking, cycling, 5-a-side.
+
+\end{rSection}
+
+
+\end{document}
