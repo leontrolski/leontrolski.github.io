@@ -13,7 +13,6 @@
                 h1 {font-size: 40px;margin-bottom: 0.3em;}
                 ol {padding-inline-start: 10px;margin-top: 0.4em;}
             }
-            pre {width: 100%; margin: 0;}
             ol {margin-top: 0.4em;}
             li {margin-bottom: 0.7em;padding-left: 0.5em;}
             a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
@@ -21,7 +20,7 @@
             .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em; white-space: nowrap;}
             blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
             details {border-bottom:solid 5px gray;}
-            pre {padding: 0.6em !important; font-size: 0.8em !important;margin-bottom: 2em !important;}
+            pre {width: 100%; margin: 0; padding: 0.6em !important; font-size: 0.8em !important;margin-bottom: 2em !important;}
         </style>
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -48,8 +47,9 @@
     f(data)  # I can&#39;t CMD-click f</code></pre>
         </li>
         <li>Trad Object Orientated code tends to break the golden property (this makes sense as <a href="https://leontrolski.github.io/poor-mans-object.html#:~:text=objects%20are%20a%20poor%20man%27s%20closures%20are%20a%20poor%20man%27s%20objects">objects are closures</a>), use it as a last resort.
-        <pre class="language-python"><code>def do_something(a: Animal):  
+        <pre class="language-python" style="margin-bottom: 0.2em !important;"><code>def do_something(a: Animal):  
     a.meow()  # I can&#39;t CMD-click meow</code></pre>
+        <small><em>This case it is ambiguous as <code>meow()</code> could be on any <code>Cat</code>, <code>Lion</code>, <code>Tiger</code>...</em></small>
         </li>
         <li>Use enum-like information to distinguish between otherwise similar data.
         <pre class="language-python"><code>class Cat(Animal): ...                # bad
