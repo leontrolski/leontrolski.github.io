@@ -461,7 +461,7 @@ renderNoughts()
         </item>
         <item>
             <title>The CMD-click manifesto</title>
-            <pubDate></pubDate>
+            <pubDate>Thu, 23 Feb 2023 07:56:01 +0000</pubDate>
             <link>https://leontrolski.github.io/cmd-click-manifesto.html</link>
             <guid>https://leontrolski.github.io/cmd-click-manifesto.html</guid>
             <description>
@@ -516,7 +516,7 @@ def do_something(data, kind: Kind):
     # we enumerate the specific things we can do - small state space
     if kind == Kind.A:
         g(data)
-            ...&lt;/code&gt;&lt;/pre&gt;
+    ...&lt;/code&gt;&lt;/pre&gt;
         &lt;/li&gt;
         &lt;li&gt;Lean in on language features, don't introduce &lt;a href="https://github.com/gcanti/fp-ts"&gt;unnecessary&lt;/a&gt; &lt;a href="https://github.com/ingolemo/python-lenses"&gt;abstractions&lt;/a&gt;.&lt;/li&gt;
         &lt;li&gt;There exists deep library code where we want to allow consumers to do anything (extensibility). In application development, this is the exception - you have control over the whole codebase, the code by its nature is extensible.&lt;/li&gt;
