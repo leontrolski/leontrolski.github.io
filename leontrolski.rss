@@ -151,7 +151,7 @@
         </item>
         <item>
             <title>33 line React</title>
-            <pubDate>Mon, 27 Apr 2020 22:56:54 +0100</pubDate>
+            <pubDate>Fri, 14 Jan 2022 09:04:32 +0000</pubDate>
             <link>https://leontrolski.github.io/33-line-react.html</link>
             <guid>https://leontrolski.github.io/33-line-react.html</guid>
             <description>
@@ -159,8 +159,9 @@
 You might want to visit the &lt;a href="https://leontrolski.github.io/33-line-react.html"&gt;original article&lt;/a&gt;.
     &lt;h1&gt;33 line React&lt;/h1&gt;
     &lt;p&gt;
-        &lt;em&gt;&lt;a href="33-line-react-thoughts.html"&gt;Thoughts&lt;/a&gt; on reading through the hacker news &lt;a href="https://news.ycombinator.com/item?id=22776753"&gt;response&lt;/a&gt;.&lt;/em&gt;
+        &lt;em&gt;&lt;a href="33-line-react-thoughts.html"&gt;Thoughts&lt;/a&gt; on reading through the hacker news &lt;a href="https://news.ycombinator.com/item?id=22776753"&gt;response&lt;/a&gt;. &lt;a href="96-line-react-jsx.html"&gt;96 line&lt;/a&gt; version with JSX compiler.&lt;/em&gt;
     &lt;/p&gt;
+    &lt;br&gt;
     &lt;p&gt;
         &lt;a href="https://reactjs.org/"&gt;React&lt;/a&gt;
         &lt;ul&gt;
@@ -459,8 +460,74 @@ renderNoughts()
             </description>
         </item>
         <item>
+            <title>The CMD-click manifesto</title>
+            <pubDate></pubDate>
+            <link>https://leontrolski.github.io/cmd-click-manifesto.html</link>
+            <guid>https://leontrolski.github.io/cmd-click-manifesto.html</guid>
+            <description>
+        &lt;h1&gt;The CMD-click manifesto&lt;/h1&gt;
+        &lt;small&gt;&lt;em&gt;Or CTRL-click or META-click or whatever.&lt;/em&gt;&lt;/small&gt;
+        &lt;ol&gt;
+        &lt;li&gt;Being able to CMD-click through code &gt;&gt; any other theoretical concerns.&lt;/li&gt;
+        &lt;li&gt;CMD-clickability is the opposite of indirection - &lt;em&gt;how does this function work?&lt;/em&gt; CMD-click it.&lt;/li&gt;
+        &lt;li&gt;Non-CMD-clickable codebases are filled with non-meaningful abstractions and tend to be longer.&lt;/li&gt;
+        &lt;li&gt;Static analysis tooling should be easy to write.&lt;/li&gt;
+        &lt;li&gt;Stack traces should correspond with the structure of the code.&lt;/li&gt;
+        &lt;li&gt;Higher order functions break the golden property, use them as a last resort.
+        &lt;pre class="language-python"&gt;&lt;code&gt;def do_something(data, f: Callable[...]):  
+    f(data)  # I can&amp;#39;t CMD-click f&lt;/code&gt;&lt;/pre&gt;
+        &lt;/li&gt;
+        &lt;li&gt;Trad Object Orientated code tends to break the golden property (this makes sense as &lt;a href="https://leontrolski.github.io/poor-mans-object.html#:~:text=objects%20are%20a%20poor%20man%27s%20closures%20are%20a%20poor%20man%27s%20objects"&gt;objects are closures&lt;/a&gt;), use it as a last resort.
+        &lt;pre class="language-python"&gt;&lt;code&gt;def do_something(a: Animal):  
+    a.meow()  # I can&amp;#39;t CMD-click meow&lt;/code&gt;&lt;/pre&gt;
+        &lt;/li&gt;
+        &lt;li&gt;Use enum-like information to distinguish between otherwise similar data.
+        &lt;pre class="language-python"&gt;&lt;code&gt;class Cat(Animal): ...                # bad
+a = Animal(kind=AnimalKind.CAT, ...)  # good&lt;/code&gt;&lt;/pre&gt;
+        &lt;/li&gt;
+        &lt;li&gt;Serializable enum-like &lt;a href="https://basarat.gitbook.io/typescript/type-system/discriminated-unions"&gt;discriminants&lt;/a&gt; in data can be trivially plonked into databases, regurgitated via JSON, etc.&lt;/li&gt;
+        &lt;li&gt;Choose behaviour based on data, not class hierarchies:
+        &lt;pre class="language-python"&gt;&lt;code&gt;def do_something(data):
+    if data.kind == Kind.A:
+        g(data)  # I can CMD-click g&lt;/code&gt;&lt;/pre&gt;
+        &lt;/li&gt;
+        &lt;li&gt;Say arbitrarily complicated things about data, rather than be constrained by inflexible heirarchies.
+        &lt;pre class="language-python"&gt;&lt;code&gt;class Cat(Animal, FourLegged): ...                  # bad
+def has_even_number_of_legs(a: AnimalKind) -&amp;gt; bool  # good&lt;/code&gt;&lt;/pre&gt;
+        &lt;/li&gt;
+        &lt;li&gt;Strong typing aids CMD-clickability, this property of typing is more valuable than correctness.&lt;/li&gt;
+        &lt;li&gt;Microservices in and of themselves are not bad, however:
+            &lt;ol type="i"&gt;
+                &lt;li&gt;Construct your codebase such that CMD-clicking &lt;em&gt;across&lt;/em&gt; a service boundary is as easy as &lt;em&gt;within&lt;/em&gt; a service. &lt;/li&gt;
+                &lt;li&gt;Typecheck service boundaries as you would any other code.&lt;/li&gt;
+                &lt;li&gt;Use correlation ids and a &lt;a href="https://www.datadoghq.com/blog/request-log-correlation/"&gt;Datadog&lt;/a&gt;-like tool to make cross-service stack traces comprehensible for debugging production.&lt;/li&gt;
+            &lt;/ol&gt;
+        &lt;/li&gt;
+        &lt;li&gt;Where you might have to fall back on grepping - make it easy, use full literals:
+        &lt;pre class="language-python"&gt;&lt;code&gt;@app.route(PREFIX + &amp;quot;/v1/add&amp;quot;)          # bad
+@app.route(&amp;quot;/payments/inbound/v1/add&amp;quot;)  # good&lt;/code&gt;&lt;/pre&gt;
+        &lt;/li&gt;
+        &lt;li&gt;Good code expresses the smallest possible state space the program could operate in - &lt;strong&gt;YAGNI&lt;/strong&gt;.
+        &lt;pre class="language-python"&gt;&lt;code&gt;def do_something(data, f: Callable[...]):  
+    # f could be anything - big state space
+    f(data)
+
+def do_something(data, kind: Kind):
+    # we enumerate the specific things we can do - small state space
+    if kind == Kind.A:
+        g(data)
+            ...&lt;/code&gt;&lt;/pre&gt;
+        &lt;/li&gt;
+        &lt;li&gt;Lean in on language features, don't introduce &lt;a href="https://github.com/gcanti/fp-ts"&gt;unnecessary&lt;/a&gt; &lt;a href="https://github.com/ingolemo/python-lenses"&gt;abstractions&lt;/a&gt;.&lt;/li&gt;
+        &lt;li&gt;There exists deep library code where we want to allow consumers to do anything (extensibility). In application development, this is the exception - you have control over the whole codebase, the code by its nature is extensible.&lt;/li&gt;
+        &lt;li&gt;Ignore this manifesto sooner than code anything outright barbarous.&lt;/li&gt;
+        &lt;/ol&gt;
+    &lt;/body&gt;
+            </description>
+        </item>
+        <item>
             <title>A developer's summary of Consciousness and the Social Brain&lt;/em&gt;</title>
-            <pubDate>Thu, 4 Jun 2020 17:30:42 +0100</pubDate>
+            <pubDate>Wed, 2 Nov 2022 13:20:15 +0000</pubDate>
             <link>https://leontrolski.github.io/consciousness.html</link>
             <guid>https://leontrolski.github.io/consciousness.html</guid>
             <description>
@@ -474,10 +541,10 @@ renderNoughts()
 
     &lt;h2&gt;Intro&lt;/h2&gt;
     &lt;p&gt;
-        As a first year student I attended a talk by &lt;a href="https://en.wikipedia.org/wiki/Susan_Blackmore"&gt;Susan Blackmore&lt;/a&gt; on consciousness. She is an engaging and thought-provoking speaker - that talk led me to reading further on the topic including her "best of" book "&lt;a href="https://www.susanblackmore.uk/conversations-on-consciousness/"&gt;Conversations on Consciousness&lt;/a&gt;" in which she talks to a wide spectrum of thinkers on &lt;a href="https://en.wikipedia.org/wiki/Hard_problem_of_consciousness"&gt;the hard problem&lt;/a&gt;.
+        As a first year student I attended a talk by &lt;a href="https://en.wikipedia.org/wiki/Susan_Blackmore"&gt;Susan Blackmore&lt;/a&gt; on consciousness. She's a great speaker, and that talk led me to reading further on the topic including her "best of" book "&lt;a href="https://www.susanblackmore.uk/conversations-on-consciousness/"&gt;Conversations on Consciousness&lt;/a&gt;" in which she talks to a wide spectrum of thinkers on &lt;a href="https://en.wikipedia.org/wiki/Hard_problem_of_consciousness"&gt;the hard problem&lt;/a&gt;.
     &lt;/p&gt;
     &lt;p&gt;
-        A few years later, book three or four on the topic blew my mind in its clarity and concision - "Consciousness and the Social Brain" by Michael Graziano. The title is slightly misleading (to me at least) in that it implies his theory might be limited in scope to what our brain does as we interact with other people. Instead it is a simple, materialist theory of mind accompanied by series of observations from neuroscience that support the theory. On finishing the book you may find that the hard problem don't seem so hard after all.
+        A few years and a few books later, one book in particular stood out for its clarity and concision - "Consciousness and the Social Brain" by Michael Graziano. The title is slightly misleading (to me at least) in that it implies his theory might be limited in scope to what our brain does as we interact with other people. Instead it is a simple, materialist theory of mind accompanied by series of observations from neuroscience that support the theory. On finishing the book you may find that the hard problem don't seem so hard after all.
     &lt;/p&gt;
 
     &lt;h2&gt;Define consciousness&lt;/h2&gt;

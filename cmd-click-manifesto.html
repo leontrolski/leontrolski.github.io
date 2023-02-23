@@ -1,0 +1,96 @@
+<html>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <head>
+        <title>
+            leontrolski - CMD-click manifesto
+        </title>
+        <style>
+            body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: 'Libre Baskerville', serif; font-size: 18px; line-height: 1.8; max-width: 63%;}
+            h1 {font-family: 'Libre Baskerville', serif;font-style: italic;font-size: 60px;margin-bottom: 0;}
+            small {display: block; margin-bottom: 2em;}
+            @media screen and (max-width: 800px) {
+                body {font-size: 14px; line-height: 1.4; max-width: 90%;}
+                h1 {font-size: 40px;margin-bottom: 0.3em;}
+                ol {padding-inline-start: 10px;margin-top: 0.4em;}
+            }
+            pre {width: 100%; margin: 0;}
+            ol {margin-top: 0.4em;}
+            li {margin-bottom: 0.7em;padding-left: 0.5em;}
+            a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
+            a:hover {border-bottom: 0;}
+            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em; white-space: nowrap;}
+            blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
+            details {border-bottom:solid 5px gray;}
+            pre {padding: 0.6em !important; font-size: 0.8em !important;margin-bottom: 2em !important;}
+        </style>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital@0;1&display=swap" rel="stylesheet">
+        <link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-nord.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    </head>
+    <body>
+        <a href="index.html">
+            <img src="pic.png" style="height:2em">
+            ⇦
+        </a>
+        <h1>The CMD-click manifesto</h1>
+        <small><em>Or CTRL-click or META-click or whatever.</em></small>
+        <ol>
+        <li>Being able to CMD-click through code >> any other theoretical concerns.</li>
+        <li>CMD-clickability is the opposite of indirection - <em>how does this function work?</em> CMD-click it.</li>
+        <li>Non-CMD-clickable codebases are filled with non-meaningful abstractions and tend to be longer.</li>
+        <li>Static analysis tooling should be easy to write.</li>
+        <li>Stack traces should correspond with the structure of the code.</li>
+        <li>Higher order functions break the golden property, use them as a last resort.
+        <pre class="language-python"><code>def do_something(data, f: Callable[...]):  
+    f(data)  # I can&#39;t CMD-click f</code></pre>
+        </li>
+        <li>Trad Object Orientated code tends to break the golden property (this makes sense as <a href="https://leontrolski.github.io/poor-mans-object.html#:~:text=objects%20are%20a%20poor%20man%27s%20closures%20are%20a%20poor%20man%27s%20objects">objects are closures</a>), use it as a last resort.
+        <pre class="language-python"><code>def do_something(a: Animal):  
+    a.meow()  # I can&#39;t CMD-click meow</code></pre>
+        </li>
+        <li>Use enum-like information to distinguish between otherwise similar data.
+        <pre class="language-python"><code>class Cat(Animal): ...                # bad
+a = Animal(kind=AnimalKind.CAT, ...)  # good</code></pre>
+        </li>
+        <li>Serializable enum-like <a href="https://basarat.gitbook.io/typescript/type-system/discriminated-unions">discriminants</a> in data can be trivially plonked into databases, regurgitated via JSON, etc.</li>
+        <li>Choose behaviour based on data, not class hierarchies:
+        <pre class="language-python"><code>def do_something(data):
+    if data.kind == Kind.A:
+        g(data)  # I can CMD-click g</code></pre>
+        </li>
+        <li>Say arbitrarily complicated things about data, rather than be constrained by inflexible heirarchies.
+        <pre class="language-python"><code>class Cat(Animal, FourLegged): ...                  # bad
+def has_even_number_of_legs(a: AnimalKind) -&gt; bool  # good</code></pre>
+        </li>
+        <li>Strong typing aids CMD-clickability, this property of typing is more valuable than correctness.</li>
+        <li>Microservices in and of themselves are not bad, however:
+            <ol type="i">
+                <li>Construct your codebase such that CMD-clicking <em>across</em> a service boundary is as easy as <em>within</em> a service. </li>
+                <li>Typecheck service boundaries as you would any other code.</li>
+                <li>Use correlation ids and a <a href="https://www.datadoghq.com/blog/request-log-correlation/">Datadog</a>-like tool to make cross-service stack traces comprehensible for debugging production.</li>
+            </ol>
+        </li>
+        <li>Where you might have to fall back on grepping - make it easy, use full literals:
+        <pre class="language-python"><code>@app.route(PREFIX + &quot;/v1/add&quot;)          # bad
+@app.route(&quot;/payments/inbound/v1/add&quot;)  # good</code></pre>
+        </li>
+        <li>Good code expresses the smallest possible state space the program could operate in - <strong>YAGNI</strong>.
+        <pre class="language-python"><code>def do_something(data, f: Callable[...]):  
+    # f could be anything - big state space
+    f(data)
+
+def do_something(data, kind: Kind):
+    # we enumerate the specific things we can do - small state space
+    if kind == Kind.A:
+        g(data)
+            ...</code></pre>
+        </li>
+        <li>Lean in on language features, don't introduce <a href="https://github.com/gcanti/fp-ts">unnecessary</a> <a href="https://github.com/ingolemo/python-lenses">abstractions</a>.</li>
+        <li>There exists deep library code where we want to allow consumers to do anything (extensibility). In application development, this is the exception - you have control over the whole codebase, the code by its nature is extensible.</li>
+        <li>Ignore this manifesto sooner than code anything outright barbarous.</li>
+        </ol>
+    </body>
+</html>
