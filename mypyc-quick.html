@@ -1,0 +1,107 @@
+<html>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <head>
+        <title>
+            leontrolski -             
+        </title>
+        <style>
+            
+            body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 63%;}
+            @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+            pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
+            a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
+            a:hover {border-bottom: 0;}
+            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em; white-space: nowrap;}
+            blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
+            details {border-bottom:solid 5px gray;}
+        
+        </style>
+        <link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js">
+
+        </script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js">
+
+        </script>
+
+    </head>
+    <body>
+        <a href="index.html">
+            <img src="pic.png" style="height:2em">
+            ⇦
+        </a>
+        <h1>
+            <code class="inline">mypyc</code>
+             is quick
+        </h1>
+        <p>
+            <a href="https://mypyc.readthedocs.io/en/latest/">
+                mypyc
+            </a>
+            doesn&#39;t get a huge amount of attention, but it&#39;s easy to use and can make well-typed Python really fast. No one likes benchmarks, but here&#39;s one anyways.
+        </p>
+        <p>
+            Save the following as             <code class="inline">lib.py</code>
+
+        </p>
+        <pre class="language-python"><code>from dataclasses import dataclass
+
+@dataclass
+class Row:
+    name: str
+    age: int
+
+def make() -&gt; list[Row]:
+    return [Row(name=f&#34;name-{i}&#34;, age=i) for i in range(1_000_000)]
+
+def mult(rows: list[Row]) -&gt; None:
+    for row in rows:
+        row.name = row.name.upper()
+        row.age *= 3</code>
+</pre>
+        <p>
+            And the following as             <code class="inline">prof.py</code>
+
+        </p>
+        <pre class="language-python"><code>import time
+import lib
+
+before  = time.time()
+d = lib.make()
+print(f&#34;took {time.time() - before:.2f} seconds&#34;)
+
+before  = time.time()
+lib.mult(d)
+print(f&#34;took {time.time() - before:.2f} seconds&#34;)</code>
+</pre>
+        <p>
+            Now             <code class="inline">python prof.py</code>
+
+        </p>
+        <p>
+            On my laptop,             <code class="inline">make()</code>
+            runs in 1.95s,             <code class="inline">mult()</code>
+            runs in 0.87s.
+        </p>
+        <br>
+        <p>
+            Now compile it,             <code class="inline">pip install mypy</code>
+            ,             <code class="inline">mypyc lib.py</code>
+
+        </p>
+        <p>
+            On my laptop,             <code class="inline">make()</code>
+            runs in 1.40s,             <code class="inline">mult()</code>
+            runs in 0.03s.
+        </p>
+        <br>
+        <p>
+            Quick huh!
+        </p>
+        <p>
+            This could be quite an exciting development in the Python ecosystem. Imagine writing interpreted code all day (zero compile times, breakpoints, etc), then compiling for production. Imagine a well-typed and compiled stdlib, flask, SQLAlchemy, etc. It&#39;s gonna be great ☀️.
+        </p>
+
+    </body>
+
+</html>
