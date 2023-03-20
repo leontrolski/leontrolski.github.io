@@ -1,0 +1,249 @@
+<html>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <head>
+        <title>
+            leontrolski - helpful pytest
+        </title>
+        <style>
+            body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 63%;}
+            @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+            pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
+            a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
+            a:hover {border-bottom: 0;}
+            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em; white-space: nowrap;}
+            blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
+            details {border-bottom:solid 5px gray;}
+        </style>
+        <link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    </head>
+    <body>
+        <a href="index.html">
+            <img src="pic.png" style="height:2em">
+            ⇦
+        </a>
+
+
+<h1 id="helpful-pytest-plugins">Helpful pytest plugins</h1>
+<p>These are some helpful pytest plugins that I&#39;ve collected over the years. They&#39;re here as code rather than as a
+    library because it&#39;s useful to be able to modify them for a particular domain/codebase. Some of the hacks are
+    pretty ugly as they utilise fairly deep implementation details.</p>
+<ul>
+    <li><a href="#nicer-comparisons">Nicer comparisons</a></li>
+    <li><a href="#prevent-network-calls">Prevent network calls</a></li>
+    <li><a href="#prettier-pretty-print-with-postgres-sql-support">Prettier pretty print with Postgres SQL support</a></li>
+    <li><a href="#quickly-clean-postgres-tables">Quickly clean Postgres tables</a></li>
+</ul>
+<h2 id="setup">Setup</h2>
+<details>
+    <summary>
+        Imports for the subsequent code, external dependencies are: <code>icdiff</code>, <code>sqlparse</code>,
+        <code>prettyprinter</code>, <code>sqlalchemy</code>.
+    </summary>
+<pre class="language-python"><code>import contextlib
+import datetime
+import enum
+import importlib
+import pdb
+import socket
+from socket import socket as original_socket
+from decimal import Decimal
+from os import environ
+from typing import Any, cast
+from uuid import UUID
+
+import icdiff
+import pytest
+import sqlparse
+from prettyprinter import install_extras, pformat
+from sqlalchemy import create_engine, event, sql, text
+from sqlalchemy.dialects import postgresql
+from sqlalchemy.orm import Query, Session
+from _pytest.monkeypatch import MonkeyPatch
+</code></pre>
+</details>
+<p>We&#39;re going to make a file: <code>some/dir/plugin.py</code>, you can make all the fixtures/plugins available by
+    adding the following to a <code>conftest.py</code>:</p>
+<pre class="language-python"><code>pytest_plugins = [&quot;some.dir.plugin&quot;]
+</code></pre>
+<p>From now, all the code will be assumed to be in <code>plugin.py</code>.</p>
+<h2 id="nicer-comparisons">Nicer comparisons</h2>
+<p>Pytest&#39;s comparisons often leave a lot to be desired. Adding <code>pytest_assertrepr_compare</code> overrides
+    pytest&#39;s compare function, if the function returns <code>None</code>, it reverts to the default comparison. This
+    is basically just a minimal version of <a href="https://github.com/hjwp/pytest-icdiff">pytest-icdiff</a>, it&#39;s
+    often handy to add domain specific pretty printers to aid debugging, so its useful in &quot;raw&quot; form.
+</p>
+<pre class="language-python"><code>def pytest_assertrepr_compare(
+    config: Any, op: str, left: Any, right: Any
+) -&gt; list[str] | None:
+    very_verbose = config.option.verbose &gt;= 2
+    if not very_verbose:
+        return None
+
+    if op != &quot;==&quot;:
+        return None
+
+    try:
+        if abs(left + right) &lt; 100:
+            return None
+    except TypeError:
+        pass
+
+    try:
+        pretty_left = pformat(left, indent=4, width=80, sort_dict_keys=True).splitlines()
+        pretty_right = pformat(right, indent=4, width=80, sort_dict_keys=True).splitlines()
+        differ = icdiff.ConsoleDiff(cols=160, tabsize=4)
+        icdiff_lines = list(differ.make_table(pretty_left, pretty_right, context=False))
+        return (
+            [&quot;equals failed&quot;]
+            + [&quot;&lt;left&gt;&quot;.center(79) + &quot;|&quot; + &quot;&lt;right&gt;&quot;.center(80)]
+            + [&quot;-&quot; * 160]
+            + [icdiff.color_codes[&quot;none&quot;] + l for l in icdiff_lines]
+        )
+    except Exception:
+        return None
+</code></pre>
+<h2 id="prevent-network-calls">Prevent network calls</h2>
+<p>All your tests should run on the train, right? Adding the following will prevent network calls by default and allow
+    them <em>only</em> when provided with the <code>allow_network_calls</code> fixture.</p>
+<pre class="language-python"><code>@pytest.fixture(scope=&quot;class&quot;, autouse=True)
+def stop_network_calls(_get_event_loop):
+    mpatch = MonkeyPatch()
+
+    def _socket(*_, **__):
+        raise Exception(&quot;stop making network calls!&quot;)
+
+    yield mpatch
+    mpatch.undo()
+
+
+@pytest.fixture
+def allow_network_calls(monkeypatch):
+    monkeypatch.setattr(socket, &quot;socket&quot;, original_socket)
+</code></pre>
+<h2 id="prettier-pretty-print-with-postgres-sql-support">Prettier pretty print with Postgres SQL support</h2>
+<p>This adds a new function to the debugger - <code>ppp</code> - that can pretty print Postgres SQLAlchemy queries. The
+    use case is: slap an <code>assert False</code> after constructing a SQLAlchemy query in the application code, run
+    the tests with <code>--pdb</code>, then <code>ppp my_query</code>, copy paste into <code>psql</code>.</p>
+<pre class="language-python"><code>class LiteralCompiler(postgresql.psycopg2.PGCompiler_psycopg2):
+    # see also https://stackoverflow.com/a/9898141/4865874
+    def visit_bindparam(
+        self,
+        bindparam,
+        within_columns_clause=False,
+        literal_binds=False,
+        **kwargs,
+    ):
+        return super(LiteralCompiler, self).render_literal_bindparam(
+            bindparam,
+            within_columns_clause=within_columns_clause,
+            literal_binds=literal_binds,
+            **kwargs,
+        )
+
+    def render_literal_value(self, value, type_):
+        if isinstance(value, str):
+            value = value.replace(&quot;&#39;&quot;, &quot;&#39;&#39;&quot;)
+            return f&quot;&#39;{value}&#39;&quot;
+        elif isinstance(value, UUID):
+            return f&quot;&#39;{value}&#39;&quot;
+        elif value is None:
+            return &quot;NULL&quot;
+        elif isinstance(value, (float, int, Decimal)):
+            return repr(value)
+        elif isinstance(value, datetime.datetime):
+            return f&quot;&#39;{value.isoformat()}&#39;&quot;
+        elif isinstance(value, enum.Enum):
+            return f&quot;&#39;{value.value}&#39;&quot;
+        else:
+            raise NotImplementedError(
+                f&quot;Don&#39;t know how to literal-quote value {value}&quot;
+            )
+
+
+def pp_sql(qry: sql.expression.ClauseElement | Query) -&gt; str:
+    if isinstance(qry, Query):
+        qry = qry.statement
+
+    qry = cast(sql.expression.ClauseElement, qry)
+    compiler = LiteralCompiler(postgresql.psycopg2.dialect(), qry)
+    raw_sql = compiler.process(qry)
+
+    indented = sqlparse.format(
+        raw_sql,
+        reindent=True,
+        keyword_case=&quot;upper&quot;,
+        indent_width=4,
+        indent_tabs=False,
+        wrap_after=20,
+    )
+    return f&quot;&lt;Raw SQL query:&gt;\n{indented}&quot;
+
+
+def ppp(self: Any, arg: Any) -&gt; str | None:
+    # try get the value from the current scope
+    try:
+        obj = self._getval(arg)
+    except Exception:
+        return None
+
+    # if it looks like a SQL query, try format it
+    if isinstance(obj, (sql.expression.ClauseElement, Query)):
+        try:
+            return pp_sql(obj)
+        except Exception:
+            pass
+
+    # else try nicely pprint it
+    try:
+        return pformat(obj, indent=4, width=120)
+    except Exception as e:
+        return f&quot;&gt;&gt;&gt; Failed to pretty print {obj} with exception {e}&quot;
+
+# call this at the end of plugin.py
+def _set_up_prettyprinter() -&gt; None:
+    install_extras(warn_on_error=False)
+
+    # Yucky monkeypatch to give nicer class names.
+    # By default, prettyprinter prints classes like:
+    #     my.really.long.namespaced.module.Cat()
+    # wherease we just want:
+    #     Cat()
+    ppcore = importlib.import_module(&quot;prettyprinter.prettyprinter&quot;)
+
+    def general_identifier(s):
+        if callable(s):
+            return s.__qualname__.split(&quot;.&quot;)[-1]
+        return ppcore.identifier(s)  # type: ignore
+
+    ppcore.general_identifier = general_identifier  # type: ignore
+
+    # adds `ppp` to the debugger
+    pdb.Pdb.do_ppp = lambda self, arg: print(ppp(self, arg))  # type: ignore
+
+
+_set_up_prettyprinter()
+</code></pre>
+<h2 id="quickly-clean-postgres-tables">Quickly clean Postgres tables</h2>
+<p>By convention, tests will often <code>DROP</code> and <code>CREATE</code> tables between tests. Normally, it should be
+    sufficient and faster to just delete the data (in the correct table order) and reset all the sequences.</p>
+<pre class="language-python"><code>def clean_tables(session, sqlalchemy_base):
+    tables = [t for t in reversed(sqlalchemy_base.metadata.sorted_tables)]
+    for table in tables:
+        session.execute(table.delete())
+
+    # reset all the sequences
+    sql = (
+        &quot;SELECT sequencename FROM pg_sequences &quot;
+        &quot;WHERE schemaname IN (SELECT current_schema())&quot;
+    )
+    for [sequence] in session.execute(text(sql)):
+        session.execute(text(f&quot;ALTER SEQUENCE {sequence} RESTART WITH 1&quot;))
+
+    session.commit()
+</code></pre>
+
+
+    </body>
+</html>
