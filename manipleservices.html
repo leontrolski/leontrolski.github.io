@@ -1,0 +1,564 @@
+<html>
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+
+<head>
+    <title>
+        leontrolski - Manipleservices
+    </title>
+    <style>
+            body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 50rem;}
+            @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+            pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;background-color:white;}
+            a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
+            a:hover {border-bottom: 0;}
+            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em; white-space: nowrap;}
+            .georgian {font-family: Georgia, serif;}
+            blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
+            details {border-bottom:solid 5px gray;}
+            td {border-right: solid 1px gray; padding: 0.5rem;}
+            table {border-collapse: collapse;}
+            li {line-height: 1.4rem;}
+    </style>
+    <link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js">
+
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js">
+
+    </script>
+
+</head>
+
+<body>
+    <a href="index.html">
+        <img src="pic.png" style="height:2em">
+        ⇦
+    </a>
+    <h1>Manipleservices</h1>
+    <p class="georgian">Maniple: <em>a subdivision of a Roman legion</em>. From manipulus:
+        <em>bundle, handful.</em>
+    </p>
+    <br>
+    <p>Discussions of modern system design often focus on one of two
+        architectures:</p>
+    <ul>
+        <li>
+
+            <p><strong>Trad Monolith</strong> - one service, handling entire
+                requests vertically via function calls.</p>
+
+        </li>
+        <li>
+
+            <p><strong>Modern Classic Microservices</strong> - many services,
+                running on independent machines (or VMs or Pods), talking over the
+                network (usually REST or some message bus).</p>
+
+        </li>
+    </ul>
+    <br>
+    <p><em>(Most existing systems are already somewhere in the
+            middle).</em></p>
+    <br>
+    <p>This document tries to break down and discuss the decision into the
+        (somewhat) orthogonal:</p>
+    <ul>
+        <li>
+
+            <p><strong>Aims</strong> - what are the actual development/production
+                aims we’re trying to achieve?</p>
+
+        </li>
+        <li>
+
+            <p><strong>Methods</strong> - How to structure the code? How should
+                components of the system communicate? etc.</p>
+
+        </li>
+    </ul>
+    <p>It then proposes a third path - with aim of maximising our aims given our available methods - <strong>Manipleservices</strong>.</p>
+    <br>
+    <p><em>To be more generic, service-like units of the system will be
+            referred to as "components" instead of "services".</em></p>
+    <br>
+    <h1 id="aims"><strong>Aims</strong></h1>
+    <p>Regardless of the methods we choose, we tend to hold the same aims.
+        Some of them end up being conflicting in reality, and their
+        costs/benefits need to be weighed up against one another.</p>
+    <ul>
+        <li>
+
+            <p><strong>Database</strong></p>
+
+            <ul>
+                <li>
+
+                    <p><strong>Isolation</strong> - Frequent, difficult-to-avoid incidents
+                        are often caused by schema migrations, query planner changes etc. We
+                        would like these to be isolated.</p>
+
+                </li>
+                <li>
+
+                    <p><strong>Performance</strong> (assuming a conventional db) - After
+                        we've reached the limits of vertical scaling, we would like to be able
+                        to split the data to achieve some level of horizontal scaling. For most
+                        companies, application-code performance is irrelevant as apps scale
+                        easily and they're cheap to run.</p>
+
+                </li>
+                <li>
+
+                    <p><strong>Consistency</strong> - ACID-ier the better.</p>
+
+                </li>
+            </ul>
+        </li>
+        <li>
+
+            <p><strong>Reliability</strong> - The system should keep working for the
+                end user.</p>
+
+        </li>
+        <li>
+
+            <p><strong>CI</strong> - The CI should run quickly, both running tests
+                and deploying components.</p>
+
+        </li>
+        <li>
+
+            <p><strong>Developer Ergonomics</strong> - Developers would like to be
+                able to <a href="https://leontrolski.github.io/cmd-click-manifesto.html">CMD-click things</a>, they'd like their tests to run fast, they'd
+                like to have confidence their one-line change doesn't break something
+                miles away, they'd like well-typed data to work with.</p>
+
+        </li>
+        <li>
+
+            <p><strong>Testing</strong> - Testing any slice of the system - from
+                unit tests through to cross component tests - should be easy.</p>
+
+        </li>
+        <li>
+
+            <p><strong>Organisational</strong> - Management want to have specific teams responsible for specific bits of the code.</p>
+
+        </li>
+        <li>
+
+            <p><strong>Debugging</strong> - It should be easy to isolate the cause
+                of production problems and recreate them locally. If something starts
+                breaking, it should be easy to say - "change X caused this to start
+                breaking". It would be nice to be able to run two versions of a component in production to
+                see which one doesn't work.</p>
+
+        </li>
+    </ul>
+    <h1 id="methods"><strong>Methods</strong></h1>
+    <h2 id="splitting-into-components">Splitting Into Components</h2>
+    <p>Splitting into more small components (as opposed to fewer large
+        components) simply magnifies the effects of the other methods below.</p>
+    <h2 id="dependency-specification">Dependency Specification</h2>
+    <p>Monoliths tend to very <em>loosely</em> specify "this code depends on
+        this other code", often via language-level imports. In the wild,
+        microservices also tend to loosely specify dependencies by enumerating
+        service URLs in some config file.</p>
+    <p>An explicit dependency graph has many advantages, it can be achieved
+        with:</p>
+    <ul>
+        <li>
+
+            <p>Language-level packages (eg. Installable Python packages + lists of
+                requirements).</p>
+
+        </li>
+        <li>
+
+            <p>File-level build system (eg. <a href="https://bazel.build/">Bazel</a>).</p>
+
+        </li>
+    </ul>
+    <p>An explicit dependency graph enables:</p>
+    <ul>
+        <li>
+
+            <p>Quicker <strong>CI</strong> - <a href="https://circleci.com/docs/api/v2/index.html#operation/continuePipeline">only build/test/deploy</a> things that
+                changed/that's dependencies changed.</p>
+
+        </li>
+        <li>
+
+            <p>More comprehensive <strong>testing</strong> - we know if we change
+                component A, we should run the integration tests covering {A, B, C}.</p>
+
+        </li>
+        <li>
+
+            <p>Better <strong>developer ergonomics</strong> - tests run quicker, the
+                section of system to bear in mind while working on a task is
+                reduced.</p>
+
+        </li>
+    </ul>
+    <p><strong>Note</strong>: the <strong>aims</strong> achieved by using this method are
+        <em>mostly</em> <em>independent</em> from those achieved using the other
+        methods.
+    </p>
+    <h2 id="communication">Communication</h2>
+    <p>The most common ways components communicate are:</p>
+    <ul>
+        <li>
+
+            <p>Language-level function calls.</p>
+
+        </li>
+        <li>
+
+            <p>REST.</p>
+
+        </li>
+        <li>
+
+            <p>Message buses.</p>
+
+        </li>
+        <li>
+
+            <p>RPC frameworks.</p>
+
+        </li>
+    </ul>
+    <p>Using function calls means it's difficult to achieve
+        <strong>deployment independence</strong> (see below), however there are
+        numerous downsides to picking any of the other options in regards to
+        <strong>developer ergonomics</strong>:
+    </p>
+    <ul>
+        <li>
+
+            <p>Typing tends to be rubbish without significant investment in wacky
+                (often codegen-based) tooling - see gRPC and friends.</p>
+
+        </li>
+        <li>
+
+            <p>CMD-clickability goes out the window, back to grep.</p>
+
+        </li>
+    </ul>
+    <p>There are also various performance costs to constantly serialising
+        and flinging data over the wire.</p>
+    <p>Using message buses introduces further <strong>deployment
+            independence</strong> - if one service is down, the caller can still
+        give it work to do later. However there are often large
+        <strong>debugging</strong> costs - where the hell did that message
+        originally come from?
+    </p>
+    <h2 id="deployment-independence">Deployment Independence</h2>
+    <p>A Trad Monolith system handles entire requests vertically in one
+        process. A Modern Classic Microservice system handles requests across
+        many independent machines (or VMs or Pods).</p>
+    <p>Deployment independence</p>
+    <p>…</p>
+    <h2 id="separate-repos">Separate Repos</h2>
+    <p>Choosing many repos vs monorepo mostly impacts <strong>developer
+            ergonomics</strong> and <strong>CI</strong>.</p>
+    <p>The main bad downside of many repos is duplication of component level
+        boilerplate (think CircleCI config etc). The flipside with monorepos is
+        that tooling like github/CircleCI can get a bit overwhelming, it is
+        possible to overcome this with tooling though.</p>
+    <p>In theory, the decision to have one/many repos should be independent
+        of <strong>version independence</strong>, in practice, one tends to
+        follow the other.</p>
+    <blockquote><em>Aside: it should at least be at least feasible to not have one
+            follow the other:</em>
+        <ul>
+            <li>
+
+                <p><em>Have one repo depend always on the HEAD of another.</em></p>
+
+            </li>
+            <li>
+
+                <p><em>Within a single repo, one Python package could depend on another
+                        package at a different commit.</em></p>
+
+            </li>
+        </ul>
+    </blockquote>
+    <h2 id="version-independence">Version Independence</h2>
+    <p>…</p>
+    <h2 id="language-independence">Language Independence</h2>
+    <p>Choosing to have a mix of languages impacts the feasibility of
+        various other methods:</p>
+    <ul>
+        <li>
+
+            <p><strong>Communication</strong> - no more language-level function
+                calls. <em>(Aside: how difficult would eg. a Python call to a Node
+                    process to server-side render some React be?)</em></p>
+
+        </li>
+        <li>
+
+            <p><strong>Dependency Specification</strong> - no more utilising
+                language-level package tooling.</p>
+
+        </li>
+    </ul>
+    <p>In practice, there will often be eg. Python and TypeScript living
+        alongside each other. It might be advantageous to mix and match
+        different kinds of components and methods in this case.</p>
+    <h2 id="database-independence">Database Independence</h2>
+    <p>Sometimes a component has many databases (maybe a separate time
+        series db for a particular domain). The consensus is that having many
+        components sharing one database is a no-go - in this case you
+        <em>really</em> have only one component.
+    </p>
+    <p>More databases means:</p>
+    <ul>
+        <li>
+
+            <p>More <strong>isolation</strong>.</p>
+
+        </li>
+        <li>
+
+            <p>The potential for better <strong>performance</strong>.</p>
+
+        </li>
+        <li>
+
+            <p>The potential for worse <strong>performance</strong> by being forced
+                into doing cross-database JOINs at the application level.</p>
+
+        </li>
+        <li>
+
+            <p>Worse <strong>consistency</strong> - cross database transactions are
+                hard to do.</p>
+
+        </li>
+        <li>
+
+            <p>Worse <strong>debugging</strong>, the number of things you can JOIN
+                across to debug is reduced. This is somewhat surmountable with
+                data-lake-y things.</p>
+
+        </li>
+    </ul>
+    <h1 id="stereotypes-of-existing-architectures">Stereotypes of existing
+        architectures</h1>
+    <h2 id="trad-monolith">Trad Monolith</h2>
+    <table>
+        <tr>
+            <td><strong>Splitting Into Components</strong></th>
+            <td>One component</th>
+        </tr>
+        <tr>
+            <td><strong>Dependency Specification</strong></th>
+            <td>Loose via imports</th>
+        </tr>
+        <tr>
+            <td><strong>Communication</strong></th>
+            <td>Function calls</th>
+        </tr>
+        <tr>
+            <td><strong>Deployment Independence</strong></th>
+            <td>None</th>
+        </tr>
+        <tr>
+            <td><strong>Separate Repos</strong></th>
+            <td>Nope</th>
+        </tr>
+        <tr>
+            <td><strong>Version Independence</strong></th>
+            <td>Nope</th>
+        </tr>
+        <tr>
+            <td><strong>Language Independence</strong></th>
+            <td>Not really</th>
+        </tr>
+        <tr>
+            <td><strong>Database Independence</strong></th>
+            <td>One DB</th>
+        </tr>
+    </table>
+    <h2 id="modern-classic-microservices">Modern Classic Microservices</h2>
+    <table>
+        <tr>
+            <td><strong>Splitting Into Components</strong></th>
+            <td>Many components</th>
+        </tr>
+        <tr>
+            <td><strong>Dependency Specification</strong></th>
+            <td>Not really</th>
+        </tr>
+        <tr>
+            <td><strong>Communication</strong></th>
+            <td>REST</th>
+        </tr>
+        <tr>
+            <td><strong>Deployment Independence</strong></th>
+            <td>Loads</th>
+        </tr>
+        <tr>
+            <td><strong>Separate Repos</strong></th>
+            <td>Yup</th>
+        </tr>
+        <tr>
+            <td><strong>Version Independence</strong></th>
+            <td>Yup</th>
+        </tr>
+        <tr>
+            <td><strong>Language Independence</strong></th>
+            <td>Yup</th>
+        </tr>
+        <tr>
+            <td><strong>Database Independence</strong></th>
+            <td>One DB per component</th>
+        </tr>
+    </table>
+    <h1 id="proposal">Proposal</h1>
+    <p>A stereotypical Manipleservice architecture starts as a Trad Monolith
+        (above), and evolves into:</p>
+    <table>
+        <tr>
+            <td><strong>Splitting Into Components</strong></th>
+            <td>Handful of components</th>
+        </tr>
+        <tr>
+            <td><strong>Dependency Specification</strong></th>
+            <td>Explicit at the language's package level (eg. in <code>pyproject.toml</code>s)</th>
+        </tr>
+        <tr>
+            <td><strong>Communication</strong></th>
+            <td>Mostly function calls</th>
+        </tr>
+        <tr>
+            <td><strong>Deployment Independence</strong></th>
+            <td>Nope</th>
+        </tr>
+        <tr>
+            <td><strong>Separate Repos</strong></th>
+            <td>Nope</th>
+        </tr>
+        <tr>
+            <td><strong>Version Independence</strong></th>
+            <td>Nope</th>
+        </tr>
+        <tr>
+            <td><strong>Language Independence</strong></th>
+            <td>Mostly not</th>
+        </tr>
+        <tr>
+            <td><strong>Database Independence</strong></th>
+            <td>One or many DBs per component</th>
+        </tr>
+    </table>
+    <p>The system adopts further deployment
+        independence/communication/version independence <strong>only when there
+            are concrete reasons to do so</strong>.</p>
+    <br>
+    <blockquote class="georgian">Simply by dividing into packages, making the dependency tree
+        explicit and splitting our databases, the majority of our original aims are achieved.</blockquote>
+    <br>
+    <h2 id="python-manipleservices">Manipleservices in Python</h2>
+    <ul>
+        <li>
+
+            <p><u>Components are installable packages.</u></p>
+
+        </li>
+        <li>
+
+            <p>By (linted) convention, components can only:</p>
+
+            <ul>
+                <li>
+
+                    <p>Talk to other components via functions in that component's <code>api.py</code></p>
+
+                </li>
+                <li>
+
+                    <p>Import types from other component's <code>types.py</code> (which are all dumb dataclasses). <em>This means if there is good reason to change communication to
+                        eg. REST, it is trivial.</em></p>
+
+                </li>
+            </ul>
+        </li>
+    </ul>
+
+    <ul>
+        <li>
+
+            <p>A dependency tree of the entire system is encoded in the <code>pyproject.toml</code> files via <code>-e</code> installs.</p>
+
+        </li>
+        <li>
+
+            <p>Cross-component integration tests import components.</p>
+
+        </li>
+        <li>
+
+            <p>CI builds continuation jobs based on which component(s) change
+                and their dependencies.</p>
+
+        </li>
+        <li>
+
+            <p><code>common</code> components don't contain runnable-applications. They are
+                numerous to try and avoid lots of dependencies where possible -
+                <em>choosing the right splits here is hard</em>.
+            </p>
+
+        </li>
+        <li>
+
+            <p><code>virtualenv</code> developer tooling is standardised.</p>
+
+        </li>
+        <li>
+
+            <p>Keeping cross-component external dependencies compatible and up to
+                date (you can only have one version of a package installed at a time in
+                Python) takes effort.</p>
+
+        </li>
+    </ul>
+    <h3>Example file layout</h3>
+    <pre>components/
+a/
+    src/
+        api/
+        types/
+    tests/
+    pyproject.toml
+b/
+    src/
+        api/
+        types/
+    tests/
+    pyproject.toml
+...
+integration_tests_a_b/
+    tests/
+    pyproject.toml
+...
+common/
+    template_money_filters/
+        src/
+        tests/
+        pyproject.toml
+    ...
+enums/
+    customers/
+        src/
+        pyproject.toml
+</pre>
+</body>
+
+</html>
