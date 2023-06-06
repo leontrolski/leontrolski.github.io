@@ -6,18 +6,24 @@
         leontrolski - Manipleservices
     </title>
     <style>
-            body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 50rem;}
-            @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
-            pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;background-color:white;}
+            body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 50rem;margin-left:30%;}
+            @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;margin-left:5%;}}
+            #left{min-width:10%;position:fixed;top:0;left:0;padding:2rem;background:whitesmoke;height:100vh}
+            @media screen and (max-width: 1000px) {#left{display:none;}}
+            pre {width: 100%;background-color:white;line-height:1.3rem;padding:1rem;}
             a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
             a:hover {border-bottom: 0;}
             .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em; white-space: nowrap;}
             .georgian {font-family: Georgia, serif;}
             blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
             details {border-bottom:solid 5px gray;}
+            th {text-align: left; border-right: solid 1px gray;border-bottom: solid 1px gray;padding: 0.5rem;}
             td {border-right: solid 1px gray; padding: 0.5rem;}
+            .table-container{overflow-x:scroll;background:white;}
             table {border-collapse: collapse;}
             li {line-height: 1.4rem;}
+            .link-1 {display:table;font-size:1rem;margin-bottom:0.5rem;margin-top:0.5rem;}
+            .link-2 {display:table;font-size:0.8rem;margin-bottom:0.2rem;margin-left:2rem;}
     </style>
     <link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js">
@@ -30,6 +36,19 @@
 </head>
 
 <body>
+    <div id="left">
+        <a class="link-1" href="#intro">Intro</a>
+        <a class="link-1" href="#aims">Aims</a>
+        <a class="link-1" href="#methods">Methods</a>
+        <a class="link-2" href="#splitting-into-components">Splitting Into Components</a>
+        <a class="link-2" href="#dependency-specification">Dependency Specification</a>
+        <a class="link-2" href="#communication">Communication</a>
+        <a class="link-2" href="#deployment-independence">Deployment/Version Independence</a>
+        <a class="link-2" href="#separate-repos">Separate Repos</a>
+        <a class="link-2" href="#language-independence">Language Independence</a>
+        <a class="link-2" href="#database-independence">Database Independence</a>
+        <a class="link-1" href="#proposal">Proposal</a>
+    </div>
     <a href="index.html">
         <img src="pic.png" style="height:2em">
         ⇦
@@ -38,8 +57,8 @@
     <p class="georgian">Maniple: <em>a subdivision of a Roman legion</em>. From manipulus:
         <em>bundle, handful.</em>
     </p>
-    <br>
-    <p>Discussions of modern system design often focus on one of two
+    <h1 id="intro">Intro</h1>
+    <p>Discussions of system design often focus on one of two
         architectures:</p>
     <ul>
         <li>
@@ -56,17 +75,19 @@
 
         </li>
     </ul>
+    <p>
+        As in our politics, this neat lumping together of ideas isn't particularly
+        helpful when it comes to solving our problems effectively - we're free to pick
+        and choose ideas from each approach.
+    </p>
     <br>
-    <p><em>(Most existing systems are already somewhere in the
-            middle).</em></p>
-    <br>
-    <p>This document tries to break down and discuss the decision into the
+    <p>With that in mind, this document aims to decompose these approaches into
         (somewhat) orthogonal:</p>
     <ul>
         <li>
 
             <p><strong>Aims</strong> - what are the actual development/production
-                aims we’re trying to achieve?</p>
+                aims we're trying to achieve?</p>
 
         </li>
         <li>
@@ -76,11 +97,14 @@
 
         </li>
     </ul>
-    <p>It then proposes a third path - with aim of maximising our aims given our available methods - <strong>Manipleservices</strong>.</p>
+    <p>It then <a href="#proposal">proposes</a> a third approach - <strong>Manipleservices</strong> - with the target of maximising our aims, in a wide variety of contexts,
+        given commonly available methods.
+        There is an accompanying skeleton <a href="https://github.com/leontrolski/manipleservices/tree/main#manipleservices">Python + CircleCI repo</a> -
+        variations on this approach could be applied to a wide variety of codebases.
+    </p>
     <br>
-    <p><em>To be more generic, service-like units of the system will be
-            referred to as "components" instead of "services".</em></p>
-    <br>
+    <p><em><small>To be more generic, service-like units of the system will be
+            referred to as "components" instead of "services".</small></em></p>
     <h1 id="aims"><strong>Aims</strong></h1>
     <p>Regardless of the methods we choose, we tend to hold the same aims.
         Some of them end up being conflicting in reality, and their
@@ -155,6 +179,7 @@
 
         </li>
     </ul>
+    <br>
     <h1 id="methods"><strong>Methods</strong></h1>
     <h2 id="splitting-into-components">Splitting Into Components</h2>
     <p>Splitting into more small components (as opposed to fewer large
@@ -205,6 +230,7 @@
         <em>mostly</em> <em>independent</em> from those achieved using the other
         methods.
     </p>
+
     <h2 id="communication">Communication</h2>
     <p>The most common ways components communicate are:</p>
     <ul>
@@ -255,40 +281,81 @@
         <strong>debugging</strong> costs - where the hell did that message
         originally come from?
     </p>
-    <h2 id="deployment-independence">Deployment Independence</h2>
+
+    <h2 id="deployment-independence">Deployment/Version Independence</h2>
     <p>A Trad Monolith system handles entire requests vertically in one
         process. A Modern Classic Microservice system handles requests across
         many independent machines (or VMs or Pods).</p>
-    <p>Deployment independence</p>
-    <p>…</p>
+    <p>Deployment independence means the ability to deploy v1.3.7 of your payments service
+        alongside v1.3.6, directing 10% of traffic to the former and 90% of traffic to the latter.
+        This should lead to increased <strong>reliability</strong> as you can test new software
+        for a subset of users and automatically roll back if some threshold of errors is crossed.
+    </p>
+    <p>
+        If you wish to test pre-prod, there are significant <strong>testing</strong> tooling
+        problems to overcome - are you going to test against the cross-product of allow
+        possible interacting services? Some small <strong>developer ergonomics</strong>
+        friction is introduced - if I CMD-click, do I hit the version of the function
+        that is deployed and causing bugs? Similar pain is introduced whilst <strong>debugging</strong>.
+    </p>
+
+
     <h2 id="separate-repos">Separate Repos</h2>
-    <p>Choosing many repos vs monorepo mostly impacts <strong>developer
+    <p>Choosing many-repos vs monorepo mostly impacts <strong>developer
             ergonomics</strong> and <strong>CI</strong>.</p>
-    <p>The main bad downside of many repos is duplication of component level
+    <p>One downside of many-repos is duplication of component level
         boilerplate (think CircleCI config etc). The flipside with monorepos is
-        that tooling like github/CircleCI can get a bit overwhelming, it is
+        that tooling like github/CircleCI can get a bit overwhelming, it should be
         possible to overcome this with tooling though.</p>
-    <p>In theory, the decision to have one/many repos should be independent
+    <p>
+        The bigger downside with many-repos is that it <strong id="rot">induces code rot</strong>. In a monorepo,
+        if there is a small cleanup to do with a bit of library code, you:
+        <ol>
+            <li>Make the fix.</li>
+            <li>Run linters/tests.</li>
+            <li>Fix everything downstream.</li>
+            <li>Repeat steps 2-3.</li>
+        </ol>
+        With many-repos, you:
+        <ol>
+            <li>Make the fix.</li>
+            <li>Upversion the library's package.</li>
+            <li>Deploy the package to some repository.</li>
+            <li>Work out which downstream things depend on the library.</li>
+            <li>For each downstream thing:
+                <ul>
+                    <li>Upversion the dependency.</li>
+                    <li>Work out how to run the linters/tests.</li>
+                    <li>Run the linters/tests.</li>
+                </ul>
+            </li>
+            <li>Realise you made a small error in the original fix.</li>
+            <li>Repeat steps 1-6.</li>
+        </ol>
+        What tends to happen is people either make the fix and ignore steps 2 onwards, thereby
+        making people downstream wary of updating. <strong>Or they just don't make the fix</strong>.
+        At Google, people making wide-reaching changes are responsible for cleaning up at least
+        80% of the mess they make - this is the way it should be.
+    </p>
+    <p>In theory, the decision to have one/many-repos should be independent
         of <strong>version independence</strong>, in practice, one tends to
         follow the other.</p>
-    <blockquote><em>Aside: it should at least be at least feasible to not have one
-            follow the other:</em>
+    <blockquote><em>Aside: It should at least be at least feasible to not have one
+            follow the other, consider these scenarios:</em>
         <ul>
             <li>
-
-                <p><em>Have one repo depend always on the HEAD of another.</em></p>
-
+                <p><em>Many-repos where one repo depends <strong>always</strong> on the HEAD of another.</em></p>
             </li>
             <li>
-
-                <p><em>Within a single repo, one Python package could depend on another
-                        package at a different commit.</em></p>
-
+                <p><em>A single repo, where one Python package depends on another
+                        package <strong>at a different commit within the same repo</strong>.</em></p>
             </li>
         </ul>
+        It's also possible to imagine some funky setup with one master repo (that's maybe in charge
+        of deployment and integration testing) that contains one <a href="https://git-scm.com/book/en/v2/Git-Tools-Submodules">Git submodule</a>
+        for each component.
     </blockquote>
-    <h2 id="version-independence">Version Independence</h2>
-    <p>…</p>
+
     <h2 id="language-independence">Language Independence</h2>
     <p>Choosing to have a mix of languages impacts the feasibility of
         various other methods:</p>
@@ -296,8 +363,8 @@
         <li>
 
             <p><strong>Communication</strong> - no more language-level function
-                calls. <em>(Aside: how difficult would eg. a Python call to a Node
-                    process to server-side render some React be?)</em></p>
+                calls. <p><em>(Aside: How difficult would eg. a Python call to a Node
+                    process to server-side render some React be?)</em></p></p>
 
         </li>
         <li>
@@ -348,217 +415,132 @@
 
         </li>
     </ul>
-    <h1 id="stereotypes-of-existing-architectures">Stereotypes of existing
-        architectures</h1>
-    <h2 id="trad-monolith">Trad Monolith</h2>
-    <table>
-        <tr>
-            <td><strong>Splitting Into Components</strong></th>
-            <td>One component</th>
-        </tr>
-        <tr>
-            <td><strong>Dependency Specification</strong></th>
-            <td>Loose via imports</th>
-        </tr>
-        <tr>
-            <td><strong>Communication</strong></th>
-            <td>Function calls</th>
-        </tr>
-        <tr>
-            <td><strong>Deployment Independence</strong></th>
-            <td>None</th>
-        </tr>
-        <tr>
-            <td><strong>Separate Repos</strong></th>
-            <td>Nope</th>
-        </tr>
-        <tr>
-            <td><strong>Version Independence</strong></th>
-            <td>Nope</th>
-        </tr>
-        <tr>
-            <td><strong>Language Independence</strong></th>
-            <td>Not really</th>
-        </tr>
-        <tr>
-            <td><strong>Database Independence</strong></th>
-            <td>One DB</th>
-        </tr>
-    </table>
-    <h2 id="modern-classic-microservices">Modern Classic Microservices</h2>
-    <table>
-        <tr>
-            <td><strong>Splitting Into Components</strong></th>
-            <td>Many components</th>
-        </tr>
-        <tr>
-            <td><strong>Dependency Specification</strong></th>
-            <td>Not really</th>
-        </tr>
-        <tr>
-            <td><strong>Communication</strong></th>
-            <td>REST</th>
-        </tr>
-        <tr>
-            <td><strong>Deployment Independence</strong></th>
-            <td>Loads</th>
-        </tr>
-        <tr>
-            <td><strong>Separate Repos</strong></th>
-            <td>Yup</th>
-        </tr>
-        <tr>
-            <td><strong>Version Independence</strong></th>
-            <td>Yup</th>
-        </tr>
-        <tr>
-            <td><strong>Language Independence</strong></th>
-            <td>Yup</th>
-        </tr>
-        <tr>
-            <td><strong>Database Independence</strong></th>
-            <td>One DB per component</th>
-        </tr>
-    </table>
     <h1 id="proposal">Proposal</h1>
-    <p>A stereotypical Manipleservice architecture starts as a Trad Monolith
-        (above), and evolves into:</p>
-    <table>
-        <tr>
-            <td><strong>Splitting Into Components</strong></th>
-            <td>Handful of components</th>
-        </tr>
-        <tr>
-            <td><strong>Dependency Specification</strong></th>
-            <td>Explicit at the language's package level (eg. in <code>pyproject.toml</code>s)</th>
-        </tr>
-        <tr>
-            <td><strong>Communication</strong></th>
-            <td>Mostly function calls</th>
-        </tr>
-        <tr>
-            <td><strong>Deployment Independence</strong></th>
-            <td>Nope</th>
-        </tr>
-        <tr>
-            <td><strong>Separate Repos</strong></th>
-            <td>Nope</th>
-        </tr>
-        <tr>
-            <td><strong>Version Independence</strong></th>
-            <td>Nope</th>
-        </tr>
-        <tr>
-            <td><strong>Language Independence</strong></th>
-            <td>Mostly not</th>
-        </tr>
-        <tr>
-            <td><strong>Database Independence</strong></th>
-            <td>One or many DBs per component</th>
-        </tr>
-    </table>
-    <p>The system adopts further deployment
-        independence/communication/version independence <strong>only when there
+    <p><em><a href="https://github.com/leontrolski/manipleservices/tree/main#manipleservices">Example Python + CircleCI repo</a></em>.</p>
+    <p>
+        Manipleservices is a set of methods picked to maximise our aims within commonly seen, medium
+        sized codebases. The following table summarises the choices made, comparing them to the two dominating approaches:
+    </p>
+    <div class="table-container">
+        <table>
+            <tr>
+                <th>Method</th>
+                <th>Trad Monolith</th>
+                <th>Modern Classic Microservices</th>
+                <th>Manipleservices</th>
+            </tr>
+            <tr>
+                <td><strong>Splitting Into Components</strong></td>
+                <td>One component</td>
+                <td>Many components</td>
+                <td>Handful of components</td>
+            </tr>
+            <tr>
+                <td><strong>Dependency Specification</strong></td>
+                <td>Loose via imports</td>
+                <td>Not really</td>
+                <td>Explicit at the language's package level (eg. in <code>pyproject.toml</code>s)</td>
+            </tr>
+            <tr>
+                <td><strong>Communication</strong></td>
+                <td>Function calls</td>
+                <td>REST</td>
+                <td>Mostly function calls</td>
+            </tr>
+            <tr>
+                <td><strong>Deployment/Version Independence</strong></td>
+                <td>None</td>
+                <td>Loads</td>
+                <td>Nope</td>
+            </tr>
+            <tr>
+                <td><strong>Separate Repos</strong></td>
+                <td>Nope</td>
+                <td>Yup</td>
+                <td>Nope</td>
+            </tr>
+            <tr>
+                <td><strong>Language Independence</strong></td>
+                <td>Not really</td>
+                <td>Yup</td>
+                <td>Mostly not</td>
+            </tr>
+            <tr>
+                <td><strong>Database Independence</strong></td>
+                <td>One DB</td>
+                <td>One DB per component</td>
+                <td>One or many DBs per component</td>
+            </tr>
+        </table>
+    </div>
+
+    <p>Manipleservices adopt further deployment
+        independence/communication <strong>only when there
             are concrete reasons to do so</strong>.</p>
-    <br>
-    <blockquote class="georgian">Simply by dividing into packages, making the dependency tree
-        explicit and splitting our databases, the majority of our original aims are achieved.</blockquote>
-    <br>
-    <h2 id="python-manipleservices">Manipleservices in Python</h2>
+
+    <p>
+        Why did we pick these methods?
+        <ul>
+            <li><p><strong>Splitting Into Components</strong> - We pick a handful - it's all in the name, a maniple.</p></li>
+            <li><p><strong>Dependency Specification</strong> - We're explicit so we can always test everything that we need to test, but nothing more.</p></li>
+            <li><p><strong>Communication</strong> - Until there's some RPC library with excellent typing and good CMD-clickability, function calls are a vastly superior dev experience. The benefits from sending things over wire aren't big enough for most medium codebases.</p></li>
+            <li><p><strong>Deployment/Version Independence</strong> - This might be the first thing you'd change when looking from a reliability perspective, being able to A-B test core features is good. In practice however, this isn't used so much and the difficulties in tracability aren't worth it.</p></li>
+            <li><p><strong>Separate Repos</strong> - The Github (or equivalent) tooling needs to improve for monorepos, getting the CI right is tricky, but code <a href="#rot">enters long term decline</a> in many-repos.</p></li>
+            <li><p><strong>Language Independence</strong> - There don't seem to be many projects that try get cross-language typing/in process communication working well. For this reason, combined with the choice of function-calls-by-default, we try keep the number of languages in use low.</p></li>
+            <li><p><strong>Database Independence</strong> - A handful of DBs makes it largely possible to avoid cross-component N+1 patterns, while still letting us tune specific databases for specific performance characteristics.</p></li>
+        </ul>
+    </p>
+
+    <h2><a href="https://github.com/leontrolski/manipleservices/tree/main#manipleservices">Manipleservices in Python</a></h2>
     <ul>
-        <li>
-
-            <p><u>Components are installable packages.</u></p>
-
-        </li>
-        <li>
-
-            <p>By (linted) convention, components can only:</p>
-
+        <li><p>Components are installable packages.</p></li>
+        <li><p>A dependency tree of the entire system is encoded in the <code>pyproject.toml</code> files via <code>-e</code> installs.</p></li>
+        <li><p>CI builds continuation jobs based on which component(s) change and their dependencies.</p></li>
+        <li><p>We only call functions from <code>&lt;other-package&gt;.api</code>, this is by convention, but should probably be linted (and linted such that only "dumb data" can cross the interface).</p></li>
+        <li><p>Note that we don't import any types from <code>&lt;other-package&gt;</code>, we make our own types.
             <ul>
-                <li>
-
-                    <p>Talk to other components via functions in that component's <code>api.py</code></p>
-
-                </li>
-                <li>
-
-                    <p>Import types from other component's <code>types.py</code> (which are all dumb dataclasses). <em>This means if there is good reason to change communication to
-                        eg. REST, it is trivial.</em></p>
-
-                </li>
+                <li><p>When we call <code>&lt;other-package&gt;.api.f(a)</code>, <code>a</code> only has to conform to a <code>Protocol</code>, not a nominal type.</p></li>
+                <li><p>In the return type from <code>&lt;other-package&gt;.api(...) -&gt;</code>, we can just choose which bits we need, we don't have to conform to the whole return type.</p></li>
+                <li><p><code>mypy</code> will check that everything lines up.</p></li>
             </ul>
-        </li>
+        </p></li>
+        <li><p>The aim of the above, is that if we for some reason wanted to switch inter-package communication from function calls to eg. REST, it should be trivial.</p></li>
+        <li><p>In <code>.circleci/continue.py</code>, <code>changed_packages(...)</code> could be any function that returns a list of packages that you think have changed. Ditto with <code>add_dependant_packages(...)</code> - this would normally add any packages that depend on the ones that have changed.</p></li>
+        <li><p>As well as packages that are "service-like", you'd have eg: <code>packages/shop_integration_tests</code> that might depend on <code>account</code> and <code>shop</code> and run tests that depend on both of them.</p></li>
+        <li><p>To complement the above, we might want that by convention, eg: <code>shop</code> would monkeypatch any methods of <code>account.api</code> that it uses during testing.</p></li>
     </ul>
 
-    <ul>
-        <li>
-
-            <p>A dependency tree of the entire system is encoded in the <code>pyproject.toml</code> files via <code>-e</code> installs.</p>
-
-        </li>
-        <li>
-
-            <p>Cross-component integration tests import components.</p>
-
-        </li>
-        <li>
-
-            <p>CI builds continuation jobs based on which component(s) change
-                and their dependencies.</p>
-
-        </li>
-        <li>
-
-            <p><code>common</code> components don't contain runnable-applications. They are
-                numerous to try and avoid lots of dependencies where possible -
-                <em>choosing the right splits here is hard</em>.
-            </p>
-
-        </li>
-        <li>
-
-            <p><code>virtualenv</code> developer tooling is standardised.</p>
-
-        </li>
-        <li>
-
-            <p>Keeping cross-component external dependencies compatible and up to
-                date (you can only have one version of a package installed at a time in
-                Python) takes effort.</p>
-
-        </li>
-    </ul>
-    <h3>Example file layout</h3>
-    <pre>components/
-a/
-    src/
-        api/
-        types/
-    tests/
-    pyproject.toml
-b/
-    src/
-        api/
-        types/
-    tests/
-    pyproject.toml
-...
-integration_tests_a_b/
-    tests/
-    pyproject.toml
-...
-common/
-    template_money_filters/
-        src/
-        tests/
-        pyproject.toml
-    ...
-enums/
-    customers/
-        src/
-        pyproject.toml
+    <h3>File layout</h3>
+    <pre>├── README.md
+└── packages
+    ├── account
+    │   ├── pyproject.toml
+    │   ├── src
+    │   │   └── account
+    │   │       ├── __init__.py
+    │   │       ├── api
+    │   │       │   ├── get.py
+    │   │       │   └── post.py
+    │   │       ├── db.py
+    │   │       ├── py.typed
+    │   │       └── users.py
+    │   └── tests
+    │       └── test_user.py
+    └── shop
+        ├── pyproject.toml
+        ├── src
+        │   └── shop
+        │       ├── __init__.py
+        │       ├── api
+        │       │   ├── get.py
+        │       │   └── post.py
+        │       ├── basket.py
+        │       ├── client
+        │       │   └── account.py
+        │       └── py.typed
+        └── tests
+            └── test_basket.py
 </pre>
-</body>
 
+</body>
 </html>
