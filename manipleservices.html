@@ -16,6 +16,7 @@
             .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em; white-space: nowrap;}
             .georgian {font-family: Georgia, serif;}
             blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
+            @media screen and (max-width: 800px) {blockquote {padding:1em;}}
             details {border-bottom:solid 5px gray;}
             th {text-align: left; border-right: solid 1px gray;border-bottom: solid 1px gray;padding: 0.5rem;}
             td {border-right: solid 1px gray; padding: 0.5rem;}
@@ -43,7 +44,8 @@
         <a class="link-2" href="#splitting-into-components">Splitting Into Components</a>
         <a class="link-2" href="#dependency-specification">Dependency Specification</a>
         <a class="link-2" href="#communication">Communication</a>
-        <a class="link-2" href="#deployment-independence">Deployment/Version Independence</a>
+        <a class="link-2" href="#deployment-independence">Deployment Independence</a>
+        <a class="link-2" href="#version-independence">Version Independence</a>
         <a class="link-2" href="#separate-repos">Separate Repos</a>
         <a class="link-2" href="#language-independence">Language Independence</a>
         <a class="link-2" href="#database-independence">Database Independence</a>
@@ -76,11 +78,10 @@
         </li>
     </ul>
     <p>
-        As in our politics, this neat lumping together of ideas isn't particularly
+        This neat lumping together of ideas (think left-wing/right-wing) isn't particularly
         helpful when it comes to solving our problems effectively - we're free to pick
         and choose ideas from each approach.
     </p>
-    <br>
     <p>With that in mind, this document aims to decompose these approaches into
         (somewhat) orthogonal:</p>
     <ul>
@@ -97,12 +98,19 @@
 
         </li>
     </ul>
-    <p>It then <a href="#proposal">proposes</a> a third approach - <strong>Manipleservices</strong> - with the target of maximising our aims, in a wide variety of contexts,
-        given commonly available methods.
-        There is an accompanying skeleton <a href="https://github.com/leontrolski/manipleservices/tree/main#manipleservices">Python + CircleCI repo</a> -
-        variations on this approach could be applied to a wide variety of codebases.
+    <p>It then <a href="#proposal">proposes</a> a third approach - <strong>Manipleservices</strong>
+        - with the target of maximising our aims,
+        in commonly encountered software environments, given our available methods.
+        There is an accompanying skeleton
+        <a href="https://github.com/leontrolski/manipleservices/tree/main#manipleservices">Python + CircleCI repo</a> -
+        variations on the ideas in this repo can be applied to a wide variety of codebases.
+        The main takeaway from this document is just a restatement of YAGNI:
     </p>
-    <br>
+    <blockquote class="georgian">
+        Start your architecture as simply as possible. As your system grows, work out what <b>aims</b> you have,
+        and pick <b>methods</b> that best reach those aims. Don't choose methods based on ideologies,
+        that solve problems you may never have, often at significant cost.
+    </blockquote>
     <p><em><small>To be more generic, service-like units of the system will be
             referred to as "components" instead of "services".</small></em></p>
     <h1 id="aims"><strong>Aims</strong></h1>
@@ -110,6 +118,10 @@
         Some of them end up being conflicting in reality, and their
         costs/benefits need to be weighed up against one another.</p>
     <ul>
+        <li>
+            <p><strong>Reliability</strong> - The system should keep working for the
+                end user.</p>
+        </li>
         <li>
 
             <p><strong>Database</strong></p>
@@ -139,10 +151,8 @@
             </ul>
         </li>
         <li>
-
-            <p><strong>Reliability</strong> - The system should keep working for the
-                end user.</p>
-
+            <p><strong>Performance</strong> - The system should run quickly for the end user,
+            without being too pricey for the company running it.</p>
         </li>
         <li>
 
@@ -166,7 +176,8 @@
         </li>
         <li>
 
-            <p><strong>Organisational</strong> - Management want to have specific teams responsible for specific bits of the code.</p>
+            <p><strong>Organisational</strong> - Management want to have specific teams responsible for
+                specific bits of the code, both during development and running in prod.</p>
 
         </li>
         <li>
@@ -235,24 +246,16 @@
     <p>The most common ways components communicate are:</p>
     <ul>
         <li>
-
-            <p>Language-level function calls.</p>
-
+            Language-level function calls.
         </li>
         <li>
-
-            <p>REST.</p>
-
+            REST.
         </li>
         <li>
-
-            <p>Message buses.</p>
-
+            Message buses.
         </li>
         <li>
-
-            <p>RPC frameworks.</p>
-
+            RPC frameworks.
         </li>
     </ul>
     <p>Using function calls means it's difficult to achieve
@@ -262,15 +265,11 @@
     </p>
     <ul>
         <li>
-
             <p>Typing tends to be rubbish without significant investment in wacky
                 (often codegen-based) tooling - see gRPC and friends.</p>
-
         </li>
         <li>
-
             <p>CMD-clickability goes out the window, back to grep.</p>
-
         </li>
     </ul>
     <p>There are also various performance costs to constantly serialising
@@ -278,34 +277,59 @@
     <p>Using message buses introduces further <strong>deployment
             independence</strong> - if one service is down, the caller can still
         give it work to do later. However there are often large
-        <strong>debugging</strong> costs - where the hell did that message
+        <strong>debugging</strong> costs - where did that message
         originally come from?
     </p>
 
-    <h2 id="deployment-independence">Deployment/Version Independence</h2>
-    <p>A Trad Monolith system handles entire requests vertically in one
-        process. A Modern Classic Microservice system handles requests across
-        many independent machines (or VMs or Pods).</p>
-    <p>Deployment independence means the ability to deploy v1.3.7 of your payments service
+    <h2 id="deployment-independence">Deployment Independence</h2>
+    <p>The ability to deploy different components to
+        different types of machines, and also to scale parts of the system
+        independently we refer to as deployment independence. Deployment independence
+        often comes together with version independence (see below), but it's possible
+        to have one without the other.
+    </p>
+    <p>
+        Having things deployed separately can help <strong>organisationally</strong>,
+        for example, different teams can be billed according to their resource usage.
+        Occasionally, different types of workers might be more suitable for different types of
+        workloads, for example, there might be some <strong>performance</strong> reason to serve user
+        requests by some magic cloud worker near to the user.
+    </p>
+    <p>
+        The case that deployment independence in and of itself enables scaling is somewhat overstated.
+        Consider an inbound request that hits component <code>A</code>, this in turn talks to component <code>B</code>.
+        If <code>B</code> takes 98% of the CPU, there's a temptation to make <code>B</code> a separately deployed component,
+        this means you can scale up the number of machines accordingly right? This only acheives anything meaningful where the work done by <code>B</code>
+        is parallelisable <em>for each original call to <code>A</code></em>, if this is not the case, you may as well deploy
+        <code>A+B</code> on every machine and scale them together.
+    </p>
+
+    <h2 id="version-independence">Version Independence</h2>
+    <p>
+        This is the ability to have different versions of components running in prod together.
+    </p>
+    </p>
+        An important use case is the ability to eg: deploy v1.3.7 of your payments service
         alongside v1.3.6, directing 10% of traffic to the former and 90% of traffic to the latter.
         This should lead to increased <strong>reliability</strong> as you can test new software
         for a subset of users and automatically roll back if some threshold of errors is crossed.
     </p>
     <p>
         If you wish to test pre-prod, there are significant <strong>testing</strong> tooling
-        problems to overcome - are you going to test against the cross-product of allow
+        problems to overcome - are you going to test against the cross-product of
         possible interacting services? Some small <strong>developer ergonomics</strong>
         friction is introduced - if I CMD-click, do I hit the version of the function
         that is deployed and causing bugs? Similar pain is introduced whilst <strong>debugging</strong>.
+        Also, there is often significant tooling overhead introduced implementing versioning and deploying versions
+        of packages (see the example below).
     </p>
-
 
     <h2 id="separate-repos">Separate Repos</h2>
     <p>Choosing many-repos vs monorepo mostly impacts <strong>developer
             ergonomics</strong> and <strong>CI</strong>.</p>
     <p>One downside of many-repos is duplication of component level
         boilerplate (think CircleCI config etc). The flipside with monorepos is
-        that tooling like github/CircleCI can get a bit overwhelming, it should be
+        that tooling like Github/CircleCI can get a bit overwhelming, it should be
         possible to overcome this with tooling though.</p>
     <p>
         The bigger downside with many-repos is that it <strong id="rot">induces code rot</strong>. In a monorepo,
@@ -340,7 +364,7 @@
     <p>In theory, the decision to have one/many-repos should be independent
         of <strong>version independence</strong>, in practice, one tends to
         follow the other.</p>
-    <blockquote><em>Aside: It should at least be at least feasible to not have one
+    <blockquote>Aside:<em> It should at least be at least feasible to not have one
             follow the other, consider these scenarios:</em>
         <ul>
             <li>
@@ -363,7 +387,7 @@
         <li>
 
             <p><strong>Communication</strong> - no more language-level function
-                calls. <p><em>(Aside: How difficult would eg. a Python call to a Node
+                calls. <p><em>(Aside: How difficult to implement is eg. a Python call to a Node
                     process to server-side render some React be?)</em></p></p>
 
         </li>
@@ -379,9 +403,9 @@
         different kinds of components and methods in this case.</p>
     <h2 id="database-independence">Database Independence</h2>
     <p>Sometimes a component has many databases (maybe a separate time
-        series db for a particular domain). The consensus is that having many
-        components sharing one database is a no-go - in this case you
-        <em>really</em> have only one component.
+        series db for a particular domain). The consensus is that the opposite - having many
+        components sharing one database - is a no-go, in this case the coupling is such that you
+        only <em>truly</em> have one component.
     </p>
     <p>More databases means:</p>
     <ul>
@@ -419,7 +443,8 @@
     <p><em><a href="https://github.com/leontrolski/manipleservices/tree/main#manipleservices">Example Python + CircleCI repo</a></em>.</p>
     <p>
         Manipleservices is a set of methods picked to maximise our aims within commonly seen, medium
-        sized codebases. The following table summarises the choices made, comparing them to the two dominating approaches:
+        sized codebases (that is to say, almost all codebases). The following table summarises the choices made,
+        comparing them to the two dominating approaches:
     </p>
     <div class="table-container">
         <table>
@@ -448,10 +473,16 @@
                 <td>Mostly function calls</td>
             </tr>
             <tr>
-                <td><strong>Deployment/Version Independence</strong></td>
+                <td><strong>Deployment Independence</strong></td>
                 <td>None</td>
                 <td>Loads</td>
                 <td>Nope</td>
+            </tr>
+            <tr>
+                <td><strong>Version Independence</strong></td>
+                <td>Nope</td>
+                <td>Yup</td>
+                <td>Mostly not</td>
             </tr>
             <tr>
                 <td><strong>Separate Repos</strong></td>
@@ -475,16 +506,17 @@
     </div>
 
     <p>Manipleservices adopt further deployment
-        independence/communication <strong>only when there
+        independence/communication methods <strong>only when there
             are concrete reasons to do so</strong>.</p>
 
     <p>
         Why did we pick these methods?
         <ul>
             <li><p><strong>Splitting Into Components</strong> - We pick a handful - it's all in the name, a maniple.</p></li>
-            <li><p><strong>Dependency Specification</strong> - We're explicit so we can always test everything that we need to test, but nothing more.</p></li>
+            <li><p><strong>Dependency Specification</strong> - We're explicit so we can always test/deploy everything that we need to, but nothing more.</p></li>
             <li><p><strong>Communication</strong> - Until there's some RPC library with excellent typing and good CMD-clickability, function calls are a vastly superior dev experience. The benefits from sending things over wire aren't big enough for most medium codebases.</p></li>
-            <li><p><strong>Deployment/Version Independence</strong> - This might be the first thing you'd change when looking from a reliability perspective, being able to A-B test core features is good. In practice however, this isn't used so much and the difficulties in tracability aren't worth it.</p></li>
+            <li><p><strong>Deployment Independence</strong> - The benefits of doing this are only really present with very large codebases/organisations. It's worth restating, that this is largely orthogonal to version independence.</p></li>
+            <li><p><strong>Version Independence</strong> - This might be the first thing you'd change when looking from a reliability perspective, being able to A-B test core features is good. However, until you actually see incidents where a root fix would have been to do this, the complexity introduced in testing and developer tooling probably isn't worth it.</p></li>
             <li><p><strong>Separate Repos</strong> - The Github (or equivalent) tooling needs to improve for monorepos, getting the CI right is tricky, but code <a href="#rot">enters long term decline</a> in many-repos.</p></li>
             <li><p><strong>Language Independence</strong> - There don't seem to be many projects that try get cross-language typing/in process communication working well. For this reason, combined with the choice of function-calls-by-default, we try keep the number of languages in use low.</p></li>
             <li><p><strong>Database Independence</strong> - A handful of DBs makes it largely possible to avoid cross-component N+1 patterns, while still letting us tune specific databases for specific performance characteristics.</p></li>
@@ -493,7 +525,7 @@
 
     <h2><a href="https://github.com/leontrolski/manipleservices/tree/main#manipleservices">Manipleservices in Python</a></h2>
     <ul>
-        <li><p>Components are installable packages.</p></li>
+        <li><p>Components are installable packages. (See also <a href="https://blogs.newardassociates.com/blog/2023/you-want-modules-not-microservices.html">You Want Modules, Not Microservices</a>).</p></li>
         <li><p>A dependency tree of the entire system is encoded in the <code>pyproject.toml</code> files via <code>-e</code> installs.</p></li>
         <li><p>CI builds continuation jobs based on which component(s) change and their dependencies.</p></li>
         <li><p>We only call functions from <code>&lt;other-package&gt;.api</code>, this is by convention, but should probably be linted (and linted such that only "dumb data" can cross the interface).</p></li>
