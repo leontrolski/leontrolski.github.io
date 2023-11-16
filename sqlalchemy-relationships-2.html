@@ -30,19 +30,11 @@
             <img src="pic.png" style="height:2em">
             ⇦
         </a>
-        <br>
-        <br>
-        <br>
-        <p>
-            <b>Equivalent for <a href="sqlalchemy-relationships-2.html">SQLAlchemy v2</a></b>.
-        </p>
-        <br>
-
         <h1>
-            SQLAlchemy relationship loading techniques TLDR
+            SQLAlchemy relationship loading techniques TLDR - v2
         </h1>
         <p>
-            The             <a href="https://docs.sqlalchemy.org/en/14/orm/loading_relationships.html">
+            The             <a href="https://docs.sqlalchemy.org/en/20/orm/queryguide/relationships.html">
                 SQLAlchemy docs for relationship loading techniques
             </a>
              are great and have some useful examples.
@@ -57,12 +49,19 @@
             <summary>
                 Users have many Baskets, simple! Here&#39;s our set up code.
             </summary>
-            <pre class="language-python"><code>from sqlalchemy import Column, Integer, String, create_engine
-from sqlalchemy.ext.declarative import declarative_base
+            <pre class="language-python"><code>from __future__ import annotations
+
+from sqlalchemy import (
+    ForeignKey,
+    create_engine,
+    select,
+)
 from sqlalchemy.orm import (
-    backref,
+    DeclarativeBase,
+    Mapped,
+    Session,
+    mapped_column,
     relationship,
-    sessionmaker,
     lazyload,
     joinedload,
     subqueryload,
@@ -70,47 +69,46 @@ from sqlalchemy.orm import (
     raiseload,
     noload,
 )
-from sqlalchemy.schema import ForeignKey
 
-Base = declarative_base()
+
+class Base(DeclarativeBase):
+    pass
 
 
 class User(Base):
-    __tablename__ = &#34;user&#34;
-    user_id = Column(Integer, primary_key=True)
-    name = Column(String)
+    __tablename__ = "user"
+    user_id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str]
+    baskets: Mapped[list[Basket]] = relationship(lazy="raise")
 
 
 class Basket(Base):
-    __tablename__ = &#34;basket&#34;
-    basket_id = Column(Integer, primary_key=True)
-    user_id = Column(String, ForeignKey(User.user_id))
-    price = Column(Integer)
-    user = relationship(User, backref=backref(&#34;baskets&#34;, lazy=&#34;raise&#34;))
+    __tablename__ = "basket"
+    basket_id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey(User.user_id))
+    price: Mapped[int]
 
 
-engine = create_engine(&#34;sqlite://&#34;, echo=True)
+engine = create_engine("sqlite://", echo=True)
 Base.metadata.create_all(engine)
-session = sessionmaker(engine)()
 
-
-users = [
-    User(
-        name=&#34;ben&#34;,
-        baskets=[Basket(price=1), Basket(price=2)],
-    ),
-    User(
-        name=&#34;si&#34;,
-        baskets=[Basket(price=3), Basket(price=4)],
-    ),
-    User(
-        name=&#34;si&#34;,
-        baskets=[Basket(price=5)],
-    ),
-]
-session.add_all(users)
-session.commit()</code>
-</pre>
+with Session(engine) as session:
+    users = [
+        User(
+            name="ben",
+            baskets=[Basket(price=1), Basket(price=2)],
+        ),
+        User(
+            name="si",
+            baskets=[Basket(price=3), Basket(price=4)],
+        ),
+        User(
+            name="si",
+            baskets=[Basket(price=5)],
+        ),
+    ]
+    session.add_all(users)
+    session.commit()</code></pre>
 
         </details>
         <br>
@@ -118,7 +116,7 @@ session.commit()</code>
         <b>
             Note from the above:
         </b>
-        <pre class="language-python"><code>backref=backref(&#34;baskets&#34;, lazy=&#34;raise&#34;)</code>
+        <pre class="language-python"><code>relationship(lazy=&#34;raise&#34;)</code>
 </pre>
         <b>
             This should probably be the default as it forces you to pick a loading technique at query time.
@@ -129,17 +127,16 @@ session.commit()</code>
             The N+1 (where N is the number of Users) looking bit of code we&#39;re going to write at is:
         </p>
         <pre class="language-python"><code>qry = (
-    session.query(User)
-    .filter(User.name == &#34;si&#34;)
+    select(User)
+    .where(User.name == "si")
     .options(someloadingtechnique(User.baskets))
 )
 
-for user in qry:  # Point A
-    print(f&#34;User: {user.user_id}&#34;)
+for user in session.execute(qry).unique().scalars():  # Point A
+    print(f"User: {user.user_id}")
 
     for basket in user.baskets:  # Point B
-        print(f&#34;Basket {basket.basket_id}&#34;)</code>
-</pre>
+        print(f"Basket {basket.basket_id}")</code></pre>
         <p>
             We&#39;re going to swap out             <code class="inline">someloadingtechnique</code>
              with each of SQLAlchemy&#39;s and inspect the SQL.
