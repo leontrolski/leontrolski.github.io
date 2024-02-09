@@ -4,7 +4,7 @@
 
 Michael Gove, 2016
 
-I have some misgivings about Michael Gove and his politics, however, ten years as a professional software developer have given me some sympathy with "the people of this [great, surely?] country". I dislike an acronym as much as the next person, my real beef though lies with lofty abstract ideas. This post will ramble, wade and veer between software, politics and philosophy, hold on tight.
+I have some misgivings about Michael Gove and his politics, however, ten years as a professional software developer have given me some sympathy with "the people of this [great, surely?] country". I dislike an acronym as much as the next person, my real beef though lies with lofty abstract ideas. This post will ramble, wade and veer between software, politics and philosophy - hold on tight.
 
 ## Definitions
 
@@ -16,6 +16,8 @@ Example abstract idea
 Example concrete idea
 - This quality
 - This quality
+
+How do we avoid filing useful ideas into the former category? Are maths and phsyics not abstract? Are there not useful theories in sociology and literary criticism?
 
 # Software
 
