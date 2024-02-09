@@ -1,4 +1,6 @@
-# Against Abstract Ideas
+# ~Against Abstract Ideas~
+
+# There are no big ideas
 
 > I think the people of this country have had enough of experts from organisations with acronyms saying that they know what is best and getting it consistently wrong.
 
