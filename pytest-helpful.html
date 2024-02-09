@@ -13,6 +13,8 @@
             .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em; white-space: nowrap;}
             blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
             details {border-bottom:solid 5px gray;}
+            img{max-width:80rem;}
+            .overflow{overflow:scroll;max-width:100%;box-shadow:0 0 5px 0 gray;}
         </style>
         <link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet">
         <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js"></script>
@@ -39,24 +41,30 @@
 <details>
     <summary>
         Imports for the subsequent code, external dependencies are: <code>icdiff</code>, <code>sqlparse</code>,
-        <code>prettyprinter</code>, <code>sqlalchemy</code>.
+        <code>rich</code>, <code>sqlalchemy</code>.
     </summary>
 <pre class="language-python"><code>import contextlib
 import datetime
 import enum
+import fcntl
 import importlib
+import io
+import os
 import pdb
 import socket
+import struct
+import termios
+from dataclasses import is_dataclass
 from socket import socket as original_socket
 from decimal import Decimal
-from os import environ
 from typing import Any, cast
+from unittest import mock
 from uuid import UUID
 
 import icdiff
 import pytest
+import rich.console
 import sqlparse
-from prettyprinter import install_extras, pformat
 from sqlalchemy import create_engine, event, sql, text
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import Query, Session
@@ -74,35 +82,85 @@ from _pytest.monkeypatch import MonkeyPatch
     is basically just a minimal version of <a href="https://github.com/hjwp/pytest-icdiff">pytest-icdiff</a>, it&#39;s
     often handy to add domain specific pretty printers to aid debugging, so its useful in &quot;raw&quot; form.
 </p>
-<pre class="language-python"><code>def pytest_assertrepr_compare(
-    config: Any, op: str, left: Any, right: Any
-) -&gt; list[str] | None:
-    very_verbose = config.option.verbose &gt;= 2
+<p>Example output:</p>
+<div class="overflow">
+    <img src="images/nice-diff.png"/>
+</div>
+<p>Code:</p>
+<pre class="language-python"><code>def get_terminal_width() -> int:  # from: https://gist.github.com/jtriley/1108174
+    fd = os.open(os.ctermid(), os.O_RDONLY)
+    cr = struct.unpack("hh", fcntl.ioctl(fd, termios.TIOCGWINSZ, "1234"))  # type: ignore
+    os.close(fd)
+    return int(cr[1])
+
+try:
+    WIDTH = get_terminal_width() - 10
+except Exception:
+    WIDTH = 80
+
+def pytest_assertrepr_compare(config: Any, op: str, left: Any, right: Any) -> list[str] | None:
+    very_verbose = config.option.verbose >= 2
     if not very_verbose:
         return None
-
-    if op != &quot;==&quot;:
+    if op != "==":
         return None
-
     try:
-        if abs(left + right) &lt; 100:
+        if abs(left + right) < 100:
             return None
     except TypeError:
         pass
 
+    replace_mocked_fields(left, right)
     try:
-        pretty_left = pformat(left, indent=4, width=80, sort_dict_keys=True).splitlines()
-        pretty_right = pformat(right, indent=4, width=80, sort_dict_keys=True).splitlines()
-        differ = icdiff.ConsoleDiff(cols=160, tabsize=4)
-        icdiff_lines = list(differ.make_table(pretty_left, pretty_right, context=False))
+        if isinstance(left, str) and isinstance(right, str):
+            pretty_left = left.splitlines()
+            pretty_right = right.splitlines()
+        else:
+            pretty_left = rich_repr(left).splitlines()
+            pretty_right = rich_repr(right).splitlines()
+        differ = icdiff.ConsoleDiff(cols=WIDTH, tabsize=4)
+        icdiff_lines = differ.make_table(pretty_left, pretty_right, context=True, numlines=10)
         return (
-            [&quot;equals failed&quot;]
-            + [&quot;&lt;left&gt;&quot;.center(79) + &quot;|&quot; + &quot;&lt;right&gt;&quot;.center(80)]
-            + [&quot;-&quot; * 160]
-            + [icdiff.color_codes[&quot;none&quot;] + l for l in icdiff_lines]
+            ["equals failed"]
+            + ["ACTUAL".center(WIDTH // 2 - 1) + "|" + "EXPECTED".center(WIDTH // 2)]
+            + ["-" * WIDTH]
+            + [icdiff.color_codes["none"] + line for line in icdiff_lines]
         )
-    except Exception:
+    except Exception:  # if it breaks at all, just do a normal diff
         return None
+
+# Helpers
+
+def rich_repr(o: Any) -> str:
+    string_io = io.StringIO()
+    rich.console.Console(
+        file=string_io,
+        width=WIDTH // 2,
+        tab_size=4,
+        no_color=True,
+        highlight=False,
+        log_time=False,
+        log_path=False,
+    ).print(o)
+    string_io.seek(0)
+    return string_io.getvalue()
+
+def replace_mocked_fields(left: Any, right: Any) -> None:
+    keys: set[str] | range
+    if is_dataclass(left) and is_dataclass(right):
+        left = left.__dict__
+        right = right.__dict__
+        keys = left.keys() & right.keys()
+    elif isinstance(left, list) and isinstance(right, list):
+        keys = range(min(len(left), len(right)))
+    else:
+        return
+
+    for key in keys:
+        if right[key] is mock.ANY:
+            left[key] = mock.ANY
+        else:
+            replace_mocked_fields(left[key], right[key])
 </code></pre>
 <h2 id="prevent-network-calls">Prevent network calls</h2>
 <p>All your tests should run on the train, right? Adding the following will prevent network calls by default and allow
@@ -197,33 +255,14 @@ def ppp(self: Any, arg: Any) -&gt; str | None:
 
     # else try nicely pprint it
     try:
-        return pformat(obj, indent=4, width=120)
+        return rich_repr(obj)
     except Exception as e:
         return f&quot;&gt;&gt;&gt; Failed to pretty print {obj} with exception {e}&quot;
 
 # call this at the end of plugin.py
 def _set_up_prettyprinter() -&gt; None:
-    install_extras(warn_on_error=False)
-
-    # Yucky monkeypatch to give nicer class names.
-    # By default, prettyprinter prints classes like:
-    #     my.really.long.namespaced.module.Cat()
-    # wherease we just want:
-    #     Cat()
-    ppcore = importlib.import_module(&quot;prettyprinter.prettyprinter&quot;)
-
-    def general_identifier(s):
-        if callable(s):
-            return s.__qualname__.split(&quot;.&quot;)[-1]
-        return ppcore.identifier(s)  # type: ignore
-
-    ppcore.general_identifier = general_identifier  # type: ignore
-
     # adds `ppp` to the debugger
     pdb.Pdb.do_ppp = lambda self, arg: print(ppp(self, arg))  # type: ignore
-
-
-_set_up_prettyprinter()
 </code></pre>
 <h2 id="quickly-clean-postgres-tables">Quickly clean Postgres tables</h2>
 <p>By convention, tests will often <code>DROP</code> and <code>CREATE</code> tables between tests. Normally, it should be
