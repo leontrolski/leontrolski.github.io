@@ -34,6 +34,7 @@
             <img src="pic.png" style="height:2em">
             ⇦
         </a>
+        <p><i>2023-02-23</i></p>
         <h1>The CMD-click manifesto</h1>
         <small><em>Or CTRL-click or META-click or whatever.</em></small>
         <ol>
@@ -43,11 +44,11 @@
         <li>Static analysis tooling should be easy to write.</li>
         <li>Stack traces should correspond with the structure of the code.</li>
         <li>Higher order functions break the golden property, use them as a last resort.
-        <pre class="language-python"><code>def do_something(data, f: Callable[...]):  
+        <pre class="language-python"><code>def do_something(data, f: Callable[...]):
     f(data)  # I can&#39;t CMD-click f</code></pre>
         </li>
         <li>Trad Object Orientated code tends to break the golden property (this makes sense as <a href="https://leontrolski.github.io/poor-mans-object.html#:~:text=objects%20are%20a%20poor%20man%27s%20closures%20are%20a%20poor%20man%27s%20objects">objects are closures</a>), use it as a last resort.
-        <pre class="language-python" style="margin-bottom: 0.2em !important;"><code>def do_something(a: Animal):  
+        <pre class="language-python" style="margin-bottom: 0.2em !important;"><code>def do_something(a: Animal):
     a.meow()  # I can&#39;t CMD-click meow</code></pre>
         <small><em>This case it is ambiguous as <code>meow()</code> could be on any <code>Cat</code>, <code>Lion</code>, <code>Tiger</code>...</em></small>
         </li>
@@ -78,7 +79,7 @@ def has_even_number_of_legs(a: AnimalKind) -&gt; bool  # good</code></pre>
 @app.route(&quot;/payments/inbound/v1/add&quot;)  # good</code></pre>
         </li>
         <li>Good code expresses the smallest possible state space the program could operate in - <strong>YAGNI</strong>.
-        <pre class="language-python"><code>def do_something(data, f: Callable[...]):  
+        <pre class="language-python"><code>def do_something(data, f: Callable[...]):
     # f could be anything - big state space
     f(data)
 

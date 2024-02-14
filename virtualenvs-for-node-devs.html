@@ -5,7 +5,7 @@
             leontrolski -             virtualenvs for Node devs
         </title>
         <style>
-            
+
             body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 63%;}
             @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
             pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
@@ -14,7 +14,7 @@
             .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em; white-space: nowrap;}
             blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
             details {border-bottom:solid 5px gray;}
-        
+
         </style>
         <link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet">
         <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js">
@@ -30,6 +30,7 @@
             <img src="pic.png" style="height:2em">
             ⇦
         </a>
+        <p><i>2021-01-03</i></p>
         <h1>
             Python             <code class="inline">virtualenv</code>
             s for Node devs
@@ -46,26 +47,16 @@
              and friends.
         </p>
         <p>
-            First, do you have the right Python version installed? We&#39;re going to use             <a href="https://asdf-vm.com">
-                asdf
-            </a>
-             which supports Node, Ruby, Python, etc. Steps to install for me were:
+            Let's install a python version with brew:
         </p>
-        <pre class="language-bash"><code>brew install asdf
-echo -e &#34;\n. $(brew --prefix asdf)/asdf.sh&#34; &gt;&gt; ~/.zshrc
-# switch to a new shell window at this point
-asdf plugin-add python
-asdf install python 3.9.1
-asdf global python 3.9.1
-which python3  # should give you ~/.asdf/shims/python3
-python3 --version # should give you 3.9.1</code>
+        <pre class="language-bash"><code>brew install python@3.9</code>
 </pre>
         <p>
             OK, so we&#39;ve got a Python version that seems sane, let&#39;s set up a             <code class="inline">virtualenv</code>
              with the equivalent of             <code class="inline">npm init</code>
             .
         </p>
-        <pre class="language-bash"><code>python3 -m venv .env</code>
+        <pre class="language-bash"><code>$(brew --prefix python@3.9)/libexec/bin/python -m venv .env</code>
 </pre>
         <p>
             We now have a new folder in our current directory called             <code class="inline">.env</code>
@@ -83,7 +74,7 @@ python3 --version # should give you 3.9.1</code>
 │   ├── pip3
 │   ├── pip3.9
 │   ├── python -&gt; python3
-│   ├── python3 -&gt; ~/.asdf/installs/python/3.9.1/bin/python3
+│   ├── python3 -&gt; /opt/homebrew/opt/python@3.11/bin/python3.11
 │   └── python3.9 -&gt; python3
 ├── include
 ├── lib
