@@ -37,6 +37,7 @@
     <li><a href="#prevent-network-calls">Prevent network calls</a></li>
     <li><a href="#prettier-pretty-print-with-postgres-sql-support">Prettier pretty print with Postgres SQL support</a></li>
     <li><a href="#quickly-clean-postgres-tables">Quickly clean Postgres tables</a></li>
+    <li><a href="#typed-monkeypatch">Typed monkeypatch</a></li>
 </ul>
 <h2 id="setup">Setup</h2>
 <details>
@@ -267,7 +268,7 @@ def _set_up_prettyprinter() -&gt; None:
 </code></pre>
 <h2 id="quickly-clean-postgres-tables">Quickly clean Postgres tables</h2>
 <p>By convention, tests will often <code>DROP</code> and <code>CREATE</code> tables between tests. Normally, it should be
-    sufficient and faster to just delete the data (in the correct table order) and reset all the sequences.</p>
+    sufficient and faster to just delete the data (in the correct table order) and reset all the sequences. See <a href="https://github.com/leontrolski/pgtestdbpy">also</a>.</p>
 <pre class="language-python"><code>def clean_tables(session, sqlalchemy_base):
     tables = [t for t in reversed(sqlalchemy_base.metadata.sorted_tables)]
     for table in tables:
@@ -284,6 +285,37 @@ def _set_up_prettyprinter() -&gt; None:
     session.commit()
 </code></pre>
 
+<h2 id="typed-monkeypatch">Typed monkeypatch</h2>
+<p>This is a bit of a bodge under the hood, should really use ast rather than regex...</p>
+<pre class="language-python"><code>T = TypeVar("T")
 
+@dataclass
+class _MonkeyPatchSetAttr(Generic[T]):
+    monkeypatch: Any
+    module: Any
+    attr: str
+
+    def to(self, to: T) -> None:
+        self.monkeypatch.setattr(self.module, self.attr, to)
+
+@dataclass
+class MonkeyPatch:
+    monkeypatch: Any
+
+    def __call__(self, from_: T) -> _MonkeyPatchSetAttr[T]:
+        call_site = inspect.stack()[1]
+        assert call_site.code_context is not None
+        code: str = call_site.code_context[0]
+        match = re.match(r".+patch\(([\w+.]+)\)", code)
+        assert match is not None
+        module_name, _, attr = match.groups()[0].rpartition(".")
+        module = eval(module_name, call_site.frame.f_globals, call_site.frame.f_locals)
+        return _MonkeyPatchSetAttr(self.monkeypatch, module, attr)
+
+@pytest.fixture
+def patch(monkeypatch: Any) -> Iterator[MonkeyPatch]:
+    yield MonkeyPatch(monkeypatch)
+</code></pre>
+   
     </body>
 </html>
