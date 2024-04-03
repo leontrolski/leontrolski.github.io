@@ -431,16 +431,19 @@
                     }
                 }
             }
-            const state = {
-                kind: "LOCK",
-                id: "ROW EXCLUSIVE",
-            }
+            const state = [
+                {
+                    kind: "LOCK",
+                    id: "ROW EXCLUSIVE",
+                }
+            ]
+            const stateRecent = () => state[state.length - 1]
 
             const LockButton = id => m(
                 id.startsWith("FOR ") ? "button.light-blue" : "button",
                 {onclick: () => {
-                    state.kind = "LOCK"
-                    state.id = id
+                    state.push({kind: "LOCK", id})
+                    history.pushState({id}, "")
                     render()
                 }},
                 m("code", id))
@@ -448,8 +451,8 @@
             const StatementButton = id => m(
                 "button",
                 {onclick: () => {
-                    state.kind = "STATEMENT"
-                    state.id = id
+                    state.push({kind: "STATEMENT", id})
+                    history.pushState({id}, "")
                     render()
                 }},
                 m("code", data.statements[id].example))
@@ -465,31 +468,36 @@
                     m(".flex-col", Object.keys(data.statements).map(statement=>
                         StatementButton(statement))),
                 ),
-                m("h3", m("code", state.id)),
-                state.kind === "LOCK"
+                m("h3", m("code", stateRecent().id)),
+                stateRecent().kind === "LOCK"
                     ? m("",
                         m("",
                             "Example statements that take the lock:",
-                            m(".flex-col", data.locks[state.id].statements.map(statement=>
+                            m(".flex-col", data.locks[stateRecent().id].statements.map(statement=>
                                 StatementButton(statement)))),
                         m("br"),
                         m("",
                             "Blocks the following locks from being taken: ",
-                            m(".flex-col", data.locks[state.id].blocks.map(lock=>
+                            m(".flex-col", data.locks[stateRecent().id].blocks.map(lock=>
                                 LockButton(lock)))),
                         m("br"),
                         m("",
                             "Doesn't block the following locks from being taken: ",
-                            data.locks[state.id].doesntBlock.length
-                                ? m(".flex-col", data.locks[state.id].doesntBlock.map(lock=>
+                            data.locks[stateRecent().id].doesntBlock.length
+                                ? m(".flex-col", data.locks[stateRecent().id].doesntBlock.map(lock=>
                                     LockButton(lock)))
                                 : m("em", "Blocks all other locks from being taken.")))
                     : m("",
                         "Takes the following locks: ",
-                        m(".flex-col", data.statements[state.id].lockTypes.map(lock=>
+                        m(".flex-col", data.statements[stateRecent().id].lockTypes.map(lock=>
                             LockButton(lock)))))
             const render = () => m.render(document.getElementById("app"), {children: [App()]})
             render()
+
+            window.onpopstate = (event) => {
+                state.pop()
+                render()
+            }
         </script>
 
     </body>
