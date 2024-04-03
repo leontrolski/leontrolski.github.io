@@ -1,0 +1,496 @@
+<html>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <head>
+        <title>
+            leontrolski - Postgres locks
+        </title>
+        <style>
+            body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 63%;}
+            @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+            a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
+            a:hover {border-bottom: 0;}
+            #app {border: solid 2px gray;padding:1rem;}
+            button{margin:0.1rem;}
+            .flex-col{display:flex;flex-direction:column;align-items:baseline;}
+            .light-blue{background-color:lightblue;}
+        </style>
+        <script src="33-line-react.js"></script>
+
+    </head>
+    <body>
+        <a href="index.html">
+            <img src="pic.png" style="height:2em">
+            ⇦
+        </a>
+        <p><i>2024-04-03</i></p>
+        <h1>Postgres locks explorer</h1>
+        <p>A handy guide to Postgres locks. Sources:</p>
+        <ul>
+            <li>Postgres <a href="https://www.postgresql.org/docs/current/explicit-locking.html#LOCKING-TABLES"> table-level locking docs</a></li>
+            <li>Postgres <a href="https://www.postgresql.org/docs/current/explicit-locking.html#LOCKING-ROWS">row-level locking docs</a></li>
+            <li><a href="https://github.com/tbicr/django-pg-zero-downtime-migrations#django-pg-zero-downtime-migrations">django-pg-zero-downtime-migrations</a></li>
+        </ul>
+        <p>
+            All of the data in this page is derived from <a href="https://github.com/leontrolski/pglockpy/blob/main/test_locks.py">these tests</a>, so is true by some definition of true.
+        </p>
+        <p>
+            Notable is <a href="https://github.com/leontrolski/pglockpy/blob/main/test_locks.py#L386-L398">this test</a> - given an arbitrary SQL statement, it determines via runtime inspection which locks are taken.
+        </p>
+        <p>
+            <code>FOR ...</code> locks lock at the row level, other locks at the table level.
+        </p>
+
+        <div id="app"></div>
+        <script>
+            const data = {
+                "statements": {
+                    "DROP TABLE": {
+                        "example": "DROP TABLE t",
+                        "lockTypes": [
+                            "ACCESS EXCLUSIVE"
+                        ]
+                    },
+                    "TRUNCATE": {
+                        "example": "TRUNCATE t",
+                        "lockTypes": [
+                            "ACCESS EXCLUSIVE"
+                        ]
+                    },
+                    "CREATE TABLE": {
+                        "example": "CREATE TABLE v (id INT)",
+                        "lockTypes": []
+                    },
+                    "ALTER TABLE": {
+                        "example": "ALTER TABLE t ADD COLUMN col INT",
+                        "lockTypes": [
+                            "ACCESS EXCLUSIVE"
+                        ]
+                    },
+                    "REINDEX": {
+                        "example": "REINDEX TABLE t",
+                        "lockTypes": [
+                            "SHARE"
+                        ]
+                    },
+                    "VACUUM FULL": {
+                        "example": "VACUUM FULL",
+                        "lockTypes": [
+                            "ACCESS EXCLUSIVE"
+                        ]
+                    },
+                    "REFERESH MATERIALIZED VIEW": {
+                        "example": "REFRESH MATERIALIZED VIEW mat",
+                        "lockTypes": [
+                            "ACCESS EXCLUSIVE",
+                            "ACCESS SHARE",
+                            "ACCESS SHARE",
+                            "EXCLUSIVE"
+                        ]
+                    },
+                    "ALTER TABLE FOREIGN KEY": {
+                        "example": "ALTER TABLE t ADD CONSTRAINT fk FOREIGN KEY (id) REFERENCES u (id)",
+                        "lockTypes": [
+                            "SHARE ROW EXCLUSIVE"
+                        ]
+                    },
+                    "CREATE TRIGGER": {
+                        "example": "CREATE TRIGGER trig AFTER INSERT ON t FOR EACH ROW EXECUTE FUNCTION f()",
+                        "lockTypes": [
+                            "SHARE ROW EXCLUSIVE"
+                        ]
+                    },
+                    "CREATE INDEX": {
+                        "example": "CREATE INDEX idy ON t (id)",
+                        "lockTypes": [
+                            "SHARE"
+                        ]
+                    },
+                    "VACUUM": {
+                        "example": "VACUUM",
+                        "lockTypes": [
+                            "SHARE UPDATE EXCLUSIVE"
+                        ]
+                    },
+                    "ANALYZE": {
+                        "example": "ANALYZE",
+                        "lockTypes": [
+                            "SHARE UPDATE EXCLUSIVE"
+                        ]
+                    },
+                    "CREATE INDEX CONCURRENTLY": {
+                        "example": "CREATE INDEX CONCURRENTLY idy ON t (id)",
+                        "lockTypes": [
+                            "SHARE UPDATE EXCLUSIVE"
+                        ]
+                    },
+                    "CREATE STATISTICS": {
+                        "example": "CREATE STATISTICS stat ON id FROM t",
+                        "lockTypes": [
+                            "SHARE UPDATE EXCLUSIVE"
+                        ]
+                    },
+                    "REINDEX CONCURRENTLY": {
+                        "example": "REINDEX TABLE CONCURRENTLY t",
+                        "lockTypes": [
+                            "SHARE UPDATE EXCLUSIVE"
+                        ]
+                    },
+                    "ALTER TABLE SET STATISTICS": {
+                        "example": "ALTER TABLE t ALTER COLUMN id SET STATISTICS 100",
+                        "lockTypes": [
+                            "SHARE UPDATE EXCLUSIVE"
+                        ]
+                    },
+                    "ALTER TABLE VALIDATE CONSTRAINT": {
+                        "example": "ALTER TABLE t VALIDATE CONSTRAINT constr",
+                        "lockTypes": [
+                            "SHARE UPDATE EXCLUSIVE"
+                        ]
+                    },
+                    "ALTER INDEX RENAME": {
+                        "example": "ALTER INDEX idx RENAME TO idy",
+                        "lockTypes": []
+                    },
+                    "UPDATE": {
+                        "example": "UPDATE t SET id = 4",
+                        "lockTypes": [
+                            "ROW EXCLUSIVE"
+                        ]
+                    },
+                    "DELETE": {
+                        "example": "DELETE FROM t",
+                        "lockTypes": [
+                            "ROW EXCLUSIVE"
+                        ]
+                    },
+                    "INSERT": {
+                        "example": "INSERT INTO t VALUES (1)",
+                        "lockTypes": [
+                            "ROW EXCLUSIVE"
+                        ]
+                    },
+                    "MERGE": {
+                        "example": "MERGE INTO t USING u AS sub ON t.id = u.id WHEN MATCHED THEN DO NOTHING",
+                        "lockTypes": [
+                            "ROW EXCLUSIVE"
+                        ]
+                    },
+                    "SELECT FOR UPDATE": {
+                        "example": "SELECT * FROM t FOR UPDATE",
+                        "lockTypes": [
+                            "ROW SHARE",
+                            "FOR UPDATE"
+                        ]
+                    },
+                    "SELECT FOR NO KEY UPDATE": {
+                        "example": "SELECT * FROM t FOR NO KEY UPDATE",
+                        "lockTypes": [
+                            "ROW SHARE",
+                            "FOR NO KEY UPDATE"
+                        ]
+                    },
+                    "SELECT FOR SHARE": {
+                        "example": "SELECT * FROM t FOR SHARE",
+                        "lockTypes": [
+                            "ROW SHARE",
+                            "FOR SHARE"
+                        ]
+                    },
+                    "SELECT FOR KEY SHARE": {
+                        "example": "SELECT * FROM t FOR KEY SHARE",
+                        "lockTypes": [
+                            "ROW SHARE",
+                            "FOR KEY SHARE"
+                        ]
+                    },
+                    "SELECT": {
+                        "example": "SELECT * FROM t",
+                        "lockTypes": [
+                            "ACCESS SHARE"
+                        ]
+                    }
+                },
+                "locks": {
+                    "ACCESS EXCLUSIVE": {
+                        "kind": "TABLE",
+                        "blocks": [
+                            "ACCESS SHARE",
+                            "ROW SHARE",
+                            "ROW EXCLUSIVE",
+                            "SHARE UPDATE EXCLUSIVE",
+                            "SHARE",
+                            "SHARE ROW EXCLUSIVE",
+                            "EXCLUSIVE",
+                            "ACCESS EXCLUSIVE"
+                        ],
+                        "doesntBlock": [],
+                        "statements": [
+                            "DROP TABLE",
+                            "TRUNCATE",
+                            "VACUUM FULL",
+                            "ALTER TABLE",
+                            "REFERESH MATERIALIZED VIEW"
+                        ]
+                    },
+                    "EXCLUSIVE": {
+                        "kind": "TABLE",
+                        "blocks": [
+                            "ROW SHARE",
+                            "ROW EXCLUSIVE",
+                            "SHARE UPDATE EXCLUSIVE",
+                            "SHARE",
+                            "SHARE ROW EXCLUSIVE",
+                            "EXCLUSIVE",
+                            "ACCESS EXCLUSIVE"
+                        ],
+                        "doesntBlock": [
+                            "ACCESS SHARE"
+                        ],
+                        "statements": [
+                            "REFERESH MATERIALIZED VIEW"
+                        ]
+                    },
+                    "SHARE ROW EXCLUSIVE": {
+                        "kind": "TABLE",
+                        "blocks": [
+                            "ROW EXCLUSIVE",
+                            "SHARE UPDATE EXCLUSIVE",
+                            "SHARE",
+                            "SHARE ROW EXCLUSIVE",
+                            "EXCLUSIVE",
+                            "ACCESS EXCLUSIVE"
+                        ],
+                        "doesntBlock": [
+                            "ACCESS SHARE",
+                            "ROW SHARE"
+                        ],
+                        "statements": [
+                            "ALTER TABLE FOREIGN KEY",
+                            "CREATE TRIGGER"
+                        ]
+                    },
+                    "SHARE": {
+                        "kind": "TABLE",
+                        "blocks": [
+                            "ROW EXCLUSIVE",
+                            "SHARE UPDATE EXCLUSIVE",
+                            "SHARE ROW EXCLUSIVE",
+                            "EXCLUSIVE",
+                            "ACCESS EXCLUSIVE"
+                        ],
+                        "doesntBlock": [
+                            "ACCESS SHARE",
+                            "ROW SHARE",
+                            "SHARE"
+                        ],
+                        "statements": [
+                            "REINDEX",
+                            "CREATE INDEX"
+                        ]
+                    },
+                    "SHARE UPDATE EXCLUSIVE": {
+                        "kind": "TABLE",
+                        "blocks": [
+                            "SHARE UPDATE EXCLUSIVE",
+                            "SHARE",
+                            "SHARE ROW EXCLUSIVE",
+                            "EXCLUSIVE",
+                            "ACCESS EXCLUSIVE"
+                        ],
+                        "doesntBlock": [
+                            "ACCESS SHARE",
+                            "ROW SHARE",
+                            "ROW EXCLUSIVE"
+                        ],
+                        "statements": [
+                            "VACUUM",
+                            "ANALYZE",
+                            "CREATE INDEX CONCURRENTLY",
+                            "CREATE STATISTICS",
+                            "REINDEX CONCURRENTLY",
+                            "ALTER TABLE SET STATISTICS",
+                            "ALTER TABLE VALIDATE CONSTRAINT"
+                        ]
+                    },
+                    "ROW EXCLUSIVE": {
+                        "kind": "TABLE",
+                        "blocks": [
+                            "SHARE",
+                            "SHARE ROW EXCLUSIVE",
+                            "EXCLUSIVE",
+                            "ACCESS EXCLUSIVE"
+                        ],
+                        "doesntBlock": [
+                            "ACCESS SHARE",
+                            "ROW SHARE",
+                            "ROW EXCLUSIVE",
+                            "SHARE UPDATE EXCLUSIVE"
+                        ],
+                        "statements": [
+                            "UPDATE",
+                            "DELETE",
+                            "INSERT",
+                            "MERGE"
+                        ]
+                    },
+                    "ROW SHARE": {
+                        "kind": "TABLE",
+                        "blocks": [
+                            "EXCLUSIVE",
+                            "ACCESS EXCLUSIVE"
+                        ],
+                        "doesntBlock": [
+                            "ACCESS SHARE",
+                            "ROW SHARE",
+                            "ROW EXCLUSIVE",
+                            "SHARE UPDATE EXCLUSIVE",
+                            "SHARE",
+                            "SHARE ROW EXCLUSIVE"
+                        ],
+                        "statements": [
+                            "SELECT FOR UPDATE",
+                            "SELECT FOR NO KEY UPDATE",
+                            "SELECT FOR SHARE",
+                            "SELECT FOR KEY SHARE"
+                        ]
+                    },
+                    "ACCESS SHARE": {
+                        "kind": "TABLE",
+                        "blocks": [
+                            "ACCESS EXCLUSIVE"
+                        ],
+                        "doesntBlock": [
+                            "ACCESS SHARE",
+                            "ROW SHARE",
+                            "ROW EXCLUSIVE",
+                            "SHARE UPDATE EXCLUSIVE",
+                            "SHARE",
+                            "SHARE ROW EXCLUSIVE",
+                            "EXCLUSIVE"
+                        ],
+                        "statements": [
+                            "REFERESH MATERIALIZED VIEW",
+                            "REFERESH MATERIALIZED VIEW",
+                            "SELECT"
+                        ]
+                    },
+                    "FOR UPDATE": {
+                        "kind": "ROW",
+                        "blocks": [
+                            "FOR KEY SHARE",
+                            "FOR SHARE",
+                            "FOR NO KEY UPDATE",
+                            "FOR UPDATE"
+                        ],
+                        "doesntBlock": [],
+                        "statements": [
+                            "SELECT FOR UPDATE"
+                        ]
+                    },
+                    "FOR NO KEY UPDATE": {
+                        "kind": "ROW",
+                        "blocks": [
+                            "FOR SHARE",
+                            "FOR NO KEY UPDATE",
+                            "FOR UPDATE"
+                        ],
+                        "doesntBlock": [
+                            "FOR KEY SHARE"
+                        ],
+                        "statements": [
+                            "SELECT FOR NO KEY UPDATE"
+                        ]
+                    },
+                    "FOR SHARE": {
+                        "kind": "ROW",
+                        "blocks": [
+                            "FOR NO KEY UPDATE",
+                            "FOR UPDATE"
+                        ],
+                        "doesntBlock": [
+                            "FOR KEY SHARE",
+                            "FOR SHARE"
+                        ],
+                        "statements": [
+                            "SELECT FOR SHARE"
+                        ]
+                    },
+                    "FOR KEY SHARE": {
+                        "kind": "ROW",
+                        "blocks": [
+                            "FOR UPDATE"
+                        ],
+                        "doesntBlock": [
+                            "FOR KEY SHARE",
+                            "FOR SHARE",
+                            "FOR NO KEY UPDATE"
+                        ],
+                        "statements": [
+                            "SELECT FOR KEY SHARE"
+                        ]
+                    }
+                }
+            }
+            const state = {
+                kind: "LOCK",
+                id: "ROW EXCLUSIVE",
+            }
+
+            const LockButton = id => m(
+                id.startsWith("FOR ") ? "button.light-blue" : "button",
+                {onclick: () => {
+                    state.kind = "LOCK"
+                    state.id = id
+                    render()
+                }},
+                m("code", id))
+
+            const StatementButton = id => m(
+                "button",
+                {onclick: () => {
+                    state.kind = "STATEMENT"
+                    state.id = id
+                    render()
+                }},
+                m("code", data.statements[id].example))
+
+            const App = () => m("",
+                m("details",
+                    m("summary", "All locks"),
+                    m(".flex-col", Object.keys(data.locks).map(lock=>
+                        LockButton(lock))),
+                ),
+                m("details",
+                    m("summary", "All example statements"),
+                    m(".flex-col", Object.keys(data.statements).map(statement=>
+                        StatementButton(statement))),
+                ),
+                m("h3", m("code", state.id)),
+                state.kind === "LOCK"
+                    ? m("",
+                        m("",
+                            "Example statements that take the lock:",
+                            m(".flex-col", data.locks[state.id].statements.map(statement=>
+                                StatementButton(statement)))),
+                        m("br"),
+                        m("",
+                            "Blocks the following locks from being taken: ",
+                            m(".flex-col", data.locks[state.id].blocks.map(lock=>
+                                LockButton(lock)))),
+                        m("br"),
+                        m("",
+                            "Doesn't block the following locks from being taken: ",
+                            data.locks[state.id].doesntBlock.length
+                                ? m(".flex-col", data.locks[state.id].doesntBlock.map(lock=>
+                                    LockButton(lock)))
+                                : m("em", "Blocks all other locks from being taken.")))
+                    : m("",
+                        "Takes the following locks: ",
+                        m(".flex-col", data.statements[state.id].lockTypes.map(lock=>
+                            LockButton(lock)))))
+            const render = () => m.render(document.getElementById("app"), {children: [App()]})
+            render()
+        </script>
+
+    </body>
+</html>
