@@ -50,24 +50,43 @@
             ⇦
         </a>
         <p><i>2024-04-03</i></p>
-        <h1>Postgres locks explorer</h1>
-        <p>A handy guide to Postgres locks. Sources:</p>
-        <ul>
-            <li>Postgres <a href="https://www.postgresql.org/docs/current/explicit-locking.html#LOCKING-TABLES"> table-level locking docs</a></li>
-            <li>Postgres <a href="https://www.postgresql.org/docs/current/explicit-locking.html#LOCKING-ROWS">row-level locking docs</a></li>
-            <li><a href="https://github.com/tbicr/django-pg-zero-downtime-migrations#django-pg-zero-downtime-migrations">django-pg-zero-downtime-migrations</a></li>
-        </ul>
-        <p>
-            All of the data in this page is derived from <a href="https://github.com/leontrolski/pglockpy/blob/main/test_locks.py">these tests</a>, so is true by some definition of true.
-        </p>
-        <p>
-            Notable is <a href="https://github.com/leontrolski/pglockpy/blob/main/test_locks.py#L386-L398">this test</a> - given an arbitrary SQL statement, it determines via runtime inspection which locks are taken.
-        </p>
-        <p>
-            <button class="light-blue"><code>SELECT ... FOR ...</code></button> locks lock at the <b>row</b> level, other locks lock at the <b>table</b> level.
-        </p>
+        <h1>Postgres Locks Explorer</h1>
+        <details>
+            <summary>Details/sources</summary>
+            <ul>
+                <li>Postgres <a href="https://www.postgresql.org/docs/current/explicit-locking.html#LOCKING-TABLES"> table-level locking docs</a></li>
+                <li>Postgres <a href="https://www.postgresql.org/docs/current/explicit-locking.html#LOCKING-ROWS">row-level locking docs</a></li>
+                <li><a href="https://github.com/tbicr/django-pg-zero-downtime-migrations#django-pg-zero-downtime-migrations">django-pg-zero-downtime-migrations</a></li>
+            </ul>
+            <p>
+                All of the data in this page is derived from <a href="https://github.com/leontrolski/pglockpy/blob/main/test_locks.py">these tests</a>, so is true by some definition of true.
+                Notable is <a href="https://github.com/leontrolski/pglockpy/blob/main/test_locks.py#L386-L398">this test</a> - given an arbitrary SQL statement, it determines via runtime inspection which locks are taken.
+            </p>
 
-        <h1>Locks Explorer</h1>
+        </details>
+        <details>
+            <summary>Key</summary>
+            <table>
+                <tr>
+                    <td><button class="light-orange"><code>ALTER ...</code></button></td>
+                    <td>&nbsp;Statements</td>
+                </tr>
+                <tr>
+                    <td><button class="lighter-blue"><code>SELECT ... FOR ...</code></button></td>
+                    <td>&nbsp;Statements that acquire row level locks</td>
+                </tr>
+                <tr>
+                    <td><button><code>ACCESS ...</code></button></td>
+                    <td>&nbsp;Table level locks</td>
+                </tr>
+                <tr>
+                    <td><button class="light-blue"><code>FOR ...</code></button></td>
+                    <td>&nbsp;Row level locks</td>
+                </tr>
+            </table>
+        </details>
+        <br>
+
         <div id="app"></div>
         <script>
             const appEl = document.getElementById("app")
@@ -111,7 +130,6 @@
                         "example": "REFRESH MATERIALIZED VIEW mat",
                         "lockTypes": [
                             "ACCESS EXCLUSIVE",
-                            "ACCESS SHARE",
                             "ACCESS SHARE",
                             "EXCLUSIVE"
                         ]
@@ -399,7 +417,6 @@
                         ],
                         "statements": [
                             "REFERESH MATERIALIZED VIEW",
-                            "REFERESH MATERIALIZED VIEW",
                             "SELECT"
                         ]
                     },
@@ -475,10 +492,9 @@
                         state.push({kind: "LOCK", id})
                         history.pushState({id}, "")
                         render()
-                        appEl.scrollIntoView()
                     },
                     classList: [
-                        id.includes("FOR") ? "light-blue": "",
+                        id.includes("FOR ") ? "light-blue": "",
                         stateRecent().id === id ? "selected" : "",
                     ].join(" "),
                 },
@@ -491,27 +507,24 @@
                         state.push({kind: "STATEMENT", id})
                         history.pushState({id}, "")
                         render()
-                        appEl.scrollIntoView()
                     },
                     classList: [
-                        id.includes("FOR") ? "lighter-blue": "light-orange",
+                        id.includes(" FOR ") ? "lighter-blue": "light-orange",
                         stateRecent().id === id ? "selected" : "",
                     ].join(" ")
                 },
                 m("code", data.statements[id].example))
 
-            const LockContent = (id, statementsAtStart) => m("",
-                statementsAtStart
-                    ? m("",
+            const LockContent = (id) => m("",
+                m("",
                         "The following statements take the ",
                         m("code", id),
                         " lock:",
                         m(".flex-col", data.locks[id].statements.map(statement=>
-                            StatementButton(statement))),
-                        m("br"))
-                    : null,
+                            StatementButton(statement)))),
+                m("br"),
                 m("",
-                    "If a ",
+                    "If the ",
                     m("code", id),
                     " lock is held, it prevents the following locks from being taken: ",
                     m(".flex-col", data.locks[id].blocks.map(lock=>
@@ -521,7 +534,7 @@
                                 StatementButton(statement))))))),
                 m("br"),
                 m("",
-                    "If a ",
+                    "If the ",
                     m("code", id),
                     " lock is held, it ",
                     m("b", "doesn't"),
@@ -529,40 +542,31 @@
                     data.locks[id].doesntBlock.length
                         ? m(".flex-col", data.locks[id].doesntBlock.map(lock=>
                             LockButton(lock)))
-                        : m("em", "Blocks all other locks from being taken.")),
-                m("br"),
-                statementsAtStart
-                    ? null
-                    : m("",
-                        "The following statements also take the ",
-                        m("code", id),
-                        " lock:",
-                        m(".flex-col", data.locks[id].statements.map(statement=>
-                            StatementButton(statement)))))
+                        : m("em", "Blocks all other locks from being taken.")))
 
             const App = () => m(".two-columns",
                 m(".desktop-navigate",
-                    m("h3", "Example statements"),
-                    m(".flex-col", Object.keys(data.statements).reverse().map(statement=>
-                        StatementButton(statement))),
                     m("h3", "Locks"),
                     m(".flex-col", Object.keys(data.locks).map(lock=>
-                        LockButton(lock)))),
+                        LockButton(lock))),
+                    m("h3", "Example statements"),
+                    m(".flex-col", Object.keys(data.statements).reverse().map(statement=>
+                        StatementButton(statement)))),
                 m(".content",
                     m(".mobile-navigate",
-                        m("details",
-                            m("summary", "All example statements"),
-                            m(".flex-col", Object.keys(data.statements).reverse().map(statement=>
-                                StatementButton(statement))),
-                        ),
                         m("details",
                             m("summary", "All locks"),
                             m(".flex-col", Object.keys(data.locks).map(lock=>
                                 LockButton(lock))),
                         ),
+                        m("details",
+                            m("summary", "All example statements"),
+                            m(".flex-col", Object.keys(data.statements).reverse().map(statement=>
+                                StatementButton(statement))),
+                        ),
                         m("hr")),
                     stateRecent().kind === "LOCK"
-                        ? LockContent(stateRecent().id, true)
+                        ? LockContent(stateRecent().id)
                         : m("",
                             m("p", "Consider the statement:"),
                             m("h3", m("code", data.statements[stateRecent().id].example)),
@@ -573,7 +577,7 @@
                                 m("",
                                     m("br"),
                                     m("hr"),
-                                    LockContent(lock, false)))))))
+                                    LockContent(lock)))))))
 
             const render = () => m.render(appEl, {children: [App()]})
             render()
@@ -581,7 +585,6 @@
             window.onpopstate = (event) => {
                 state.pop()
                 render()
-                appEl.scrollIntoView()
                 event.preventDefault()
             }
         </script>
