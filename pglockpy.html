@@ -9,9 +9,6 @@
             @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
             a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
             a:hover {border-bottom: 0;}
-            #app {border: solid 2px gray;padding:1rem;}
-            .flex-col{display:flex;flex-direction:column;align-items:baseline;}
-
             button {
                 margin: 0.2rem 0 0.2rem 0;
                 -webkit-appearance: none;
@@ -25,9 +22,24 @@
                 color: inherit;
                 font: inherit;
             }
+
+
+            #app {border: solid 2px gray;}
+            .two-columns{display: flex; gap: 1rem;}
+            .flex-col{display:flex;flex-direction:column;align-items:baseline;}
+
+            .desktop-navigate{display:block;padding:1rem;background-color:rgb(255, 255, 255);border-right:1px solid gray;max-width:30%;}
+            @media screen and (max-width: 800px) {.desktop-navigate{display:none;}}
+            .mobile-navigate{display:none;}
+            @media screen and (max-width: 800px) {.mobile-navigate{display:block;}}
+            .content{padding:1rem;}
+            .indented{padding-left:2rem;}
+
             @media screen and (max-width: 800px) {button {padding: 2px 5px 2px 5px;}}
             .light-orange{background-color:rgb(255, 239, 233);}
             .light-blue{background-color:lightblue;}
+            .lighter-blue{background-color:rgb(231, 241, 244);}
+            .selected{box-shadow: 0 0 0 1px yellow;}
         </style>
         <script src="33-line-react.js"></script>
 
@@ -450,78 +462,118 @@
             }
             const state = [
                 {
-                    kind: "LOCK",
-                    id: "ROW EXCLUSIVE",
+                    kind: "STATEMENT",
+                    id: "SELECT",
                 }
             ]
             const stateRecent = () => state[state.length - 1]
 
             const LockButton = id => m(
-                id.startsWith("FOR ") ? "button.light-blue" : "button",
-                {onclick: () => {
-                    state.push({kind: "LOCK", id})
-                    history.pushState({id}, "")
-                    render()
-                    appEl.scrollIntoView()
-                }},
+                "button",
+                {
+                    onclick: () => {
+                        state.push({kind: "LOCK", id})
+                        history.pushState({id}, "")
+                        render()
+                        appEl.scrollIntoView()
+                    },
+                    classList: [
+                        id.includes("FOR") ? "light-blue": "",
+                        stateRecent().id === id ? "selected" : "",
+                    ].join(" "),
+                },
                 m("code", id))
 
             const StatementButton = id => m(
-                "button.light-orange",
-                {onclick: () => {
-                    state.push({kind: "STATEMENT", id})
-                    history.pushState({id}, "")
-                    render()
-                    appEl.scrollIntoView()
-                }},
+                "button",
+                {
+                    onclick: () => {
+                        state.push({kind: "STATEMENT", id})
+                        history.pushState({id}, "")
+                        render()
+                        appEl.scrollIntoView()
+                    },
+                    classList: [
+                        id.includes("FOR") ? "lighter-blue": "light-orange",
+                        stateRecent().id === id ? "selected" : "",
+                    ].join(" ")
+                },
                 m("code", data.statements[id].example))
 
-            const App = () => m("",
-                m("details",
-                    m("summary", "All locks"),
-                    m(".flex-col", Object.keys(data.locks).map(lock=>
-                        LockButton(lock))),
-                ),
-                m("details",
-                    m("summary", "All example statements"),
-                    m(".flex-col", Object.keys(data.statements).map(statement=>
-                        StatementButton(statement))),
-                ),
-                m("hr"),
-                stateRecent().kind === "LOCK"
+            const LockContent = (id, statementsAtStart) => m("",
+                statementsAtStart
                     ? m("",
-                        m("p", "Consider the lock:"),
-                        m("h3", m("code", stateRecent().id)),
+                        "The following statements take the ",
+                        m("code", id),
+                        " lock:",
+                        m(".flex-col", data.locks[id].statements.map(statement=>
+                            StatementButton(statement))),
+                        m("br"))
+                    : null,
+                m("",
+                    "If a ",
+                    m("code", id),
+                    " lock is held, it prevents the following locks from being taken: ",
+                    m(".flex-col", data.locks[id].blocks.map(lock=>
                         m("",
-                            "The following statements take a ",
-                            m("code", stateRecent().id),
-                            " lock:",
-                            m(".flex-col", data.locks[stateRecent().id].statements.map(statement=>
-                                StatementButton(statement)))),
-                        m("br"),
-                        m("",
-                            "If a ",
-                            m("code", stateRecent().id),
-                            " lock is held, it prevents the following locks from being taken: ",
-                            m(".flex-col", data.locks[stateRecent().id].blocks.map(lock=>
-                                LockButton(lock)))),
-                        m("br"),
-                        m("",
-                            "If a ",
-                            m("code", stateRecent().id),
-                            " lock is held, it ",
-                            m("b", "doesn't"),
-                            " prevent the following locks from being taken: ",
-                            data.locks[stateRecent().id].doesntBlock.length
-                                ? m(".flex-col", data.locks[stateRecent().id].doesntBlock.map(lock=>
-                                    LockButton(lock)))
-                                : m("em", "Blocks all other locks from being taken.")))
+                            LockButton(lock),
+                            m(".flex-col.indented", data.locks[lock].statements.map(statement=>
+                                StatementButton(statement))))))),
+                m("br"),
+                m("",
+                    "If a ",
+                    m("code", id),
+                    " lock is held, it ",
+                    m("b", "doesn't"),
+                    " prevent the following locks from being taken: ",
+                    data.locks[id].doesntBlock.length
+                        ? m(".flex-col", data.locks[id].doesntBlock.map(lock=>
+                            LockButton(lock)))
+                        : m("em", "Blocks all other locks from being taken.")),
+                m("br"),
+                statementsAtStart
+                    ? null
                     : m("",
-                        m("p", "Consider the statement:"),
-                        m("h3", m("code", data.statements[stateRecent().id].example)),
-                        "It takes the following locks: ",
-                        m(".flex-col", data.statements[stateRecent().id].lockTypes.map(lock=>
-                            LockButton(lock)))))
+                        "The following statements also take the ",
+                        m("code", id),
+                        " lock:",
+                        m(".flex-col", data.locks[id].statements.map(statement=>
+                            StatementButton(statement)))))
+
+            const App = () => m(".two-columns",
+                m(".desktop-navigate",
+                    m("h3", "Example statements"),
+                    m(".flex-col", Object.keys(data.statements).reverse().map(statement=>
+                        StatementButton(statement))),
+                    m("h3", "Locks"),
+                    m(".flex-col", Object.keys(data.locks).map(lock=>
+                        LockButton(lock)))),
+                m(".content",
+                    m(".mobile-navigate",
+                        m("details",
+                            m("summary", "All example statements"),
+                            m(".flex-col", Object.keys(data.statements).reverse().map(statement=>
+                                StatementButton(statement))),
+                        ),
+                        m("details",
+                            m("summary", "All locks"),
+                            m(".flex-col", Object.keys(data.locks).map(lock=>
+                                LockButton(lock))),
+                        ),
+                        m("hr")),
+                    stateRecent().kind === "LOCK"
+                        ? LockContent(stateRecent().id, true)
+                        : m("",
+                            m("p", "Consider the statement:"),
+                            m("h3", m("code", data.statements[stateRecent().id].example)),
+                            "It takes the locks: ",
+                            m(".flex-col", data.statements[stateRecent().id].lockTypes.map(lock=>
+                                LockButton(lock))),
+                            m("", data.statements[stateRecent().id].lockTypes.map(lock=>
+                                m("",
+                                    m("br"),
+                                    m("hr"),
+                                    LockContent(lock, false)))))))
 
             const render = () => m.render(appEl, {children: [App()]})
             render()
