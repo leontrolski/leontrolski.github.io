@@ -129,9 +129,9 @@
                     "REFERESH MATERIALIZED VIEW": {
                         "example": "REFRESH MATERIALIZED VIEW mat",
                         "lockTypes": [
-                            "ACCESS EXCLUSIVE",
+                            "EXCLUSIVE",
                             "ACCESS SHARE",
-                            "EXCLUSIVE"
+                            "ACCESS EXCLUSIVE"
                         ]
                     },
                     "ALTER TABLE FOREIGN KEY": {
@@ -201,13 +201,15 @@
                     "UPDATE": {
                         "example": "UPDATE t SET id = 4",
                         "lockTypes": [
-                            "ROW EXCLUSIVE"
+                            "ROW EXCLUSIVE",
+                            "FOR NO KEY UPDATE"
                         ]
                     },
                     "DELETE": {
                         "example": "DELETE FROM t",
                         "lockTypes": [
-                            "ROW EXCLUSIVE"
+                            "ROW EXCLUSIVE",
+                            "FOR UPDATE"
                         ]
                     },
                     "INSERT": {
@@ -430,7 +432,8 @@
                         ],
                         "doesntBlock": [],
                         "statements": [
-                            "SELECT FOR UPDATE"
+                            "SELECT FOR UPDATE",
+                            "DELETE"
                         ]
                     },
                     "FOR NO KEY UPDATE": {
@@ -444,7 +447,8 @@
                             "FOR KEY SHARE"
                         ],
                         "statements": [
-                            "SELECT FOR NO KEY UPDATE"
+                            "SELECT FOR NO KEY UPDATE",
+                            "UPDATE"
                         ]
                     },
                     "FOR SHARE": {
@@ -550,7 +554,7 @@
                     m(".flex-col", Object.keys(data.locks).map(lock=>
                         LockButton(lock))),
                     m("h3", "Example statements"),
-                    m(".flex-col", Object.keys(data.statements).reverse().map(statement=>
+                    m(".flex-col", Object.keys(data.statements).sort().map(statement=>
                         StatementButton(statement)))),
                 m(".content",
                     m(".mobile-navigate",
@@ -561,7 +565,7 @@
                         ),
                         m("details",
                             m("summary", "All example statements"),
-                            m(".flex-col", Object.keys(data.statements).reverse().map(statement=>
+                            m(".flex-col", Object.keys(data.statements).sort().map(statement=>
                                 StatementButton(statement))),
                         ),
                         m("hr")),
