@@ -524,7 +524,11 @@
                         render()
                     },
                     classList: [
-                        id.includes(" FOR ") ? "lighter-blue": "light-orange",
+                        (
+                            id.includes(" FOR ")
+                            || id.startsWith("UPDATE")
+                            || id.startsWith("DELETE")
+                        ) ? "lighter-blue": "light-orange",
                         stateRecent().id === id ? "selected" : "",
                     ].join(" ")
                 },
