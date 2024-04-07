@@ -60,9 +60,11 @@
             </ul>
             <p>
                 All of the data in this page is derived from <a href="https://github.com/leontrolski/pglockpy/blob/main/test_locks.py">these tests</a>, so is true by some definition of true.
-                Notable is <a href="https://github.com/leontrolski/pglockpy/blob/main/test_locks.py#L386-L398">this test</a> - given an arbitrary SQL statement, it determines via runtime inspection which locks are taken.
+                Notable is <a href="https://github.com/leontrolski/pglockpy/blob/main/test_locks.py#L392-L404">this test</a> - given an arbitrary SQL statement, it determines via runtime inspection which locks are taken.
             </p>
-
+            <p>
+                Thanks to <code>kataklinger</code> for <a href="https://github.com/leontrolski/pglockpy/issues/1">this fix</a>!
+            </p>
         </details>
         <details>
             <summary>Key</summary>
@@ -129,8 +131,8 @@
                     "REFERESH MATERIALIZED VIEW": {
                         "example": "REFRESH MATERIALIZED VIEW mat",
                         "lockTypes": [
-                            "EXCLUSIVE",
                             "ACCESS SHARE",
+                            "EXCLUSIVE",
                             "ACCESS EXCLUSIVE"
                         ]
                     },
@@ -203,6 +205,13 @@
                         "lockTypes": [
                             "ROW EXCLUSIVE",
                             "FOR NO KEY UPDATE"
+                        ]
+                    },
+                    "UPDATE UNIQUE": {
+                        "example": "UPDATE v SET with_unique_index = 4",
+                        "lockTypes": [
+                            "ROW EXCLUSIVE",
+                            "FOR UPDATE"
                         ]
                     },
                     "DELETE": {
@@ -377,6 +386,7 @@
                         ],
                         "statements": [
                             "UPDATE",
+                            "UPDATE UNIQUE",
                             "DELETE",
                             "INSERT",
                             "MERGE"
@@ -433,6 +443,7 @@
                         "doesntBlock": [],
                         "statements": [
                             "SELECT FOR UPDATE",
+                            "UPDATE UNIQUE",
                             "DELETE"
                         ]
                     },
