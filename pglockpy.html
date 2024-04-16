@@ -68,6 +68,33 @@
             </p>
         </details>
         <details>
+            <summary>Locking at a high level</summary>
+            <ul>
+                <li>Each type of lock conflicts with a subset of lock types.</li>
+                <li>Locks acquired within a transaction will only be released at the end of the transaction.</li>
+                <li>Locks do not conflict with any locks of any type taken within the same transaction.</li>
+                <li>A conflicting lock will either be acquired or blocked and queueing behind another lock that it conflicts with. A somewhat common failure mode might be:</li>
+            </ul><pre class="indented"><code>a = ACCESS EXCLUSIVE
+b = ACCESS SHARE
+
+Many SELECTs are queued up and
+running concurrently:
+
+queue(t=1) = | b       |
+             | b[slow] |
+
+A migration enters the queue:
+
+queue(t=2) = | a |         |
+             |   | b[slow] |
+
+It blocks new SELECTs from happening
+until b[slow] is completed:
+
+queue(t=3) = | b | a |         |
+             | b |   | b[slow] |</code></pre>
+        </details>
+        <details>
             <summary>Key</summary>
             <table>
                 <tr>
