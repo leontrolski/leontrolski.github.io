@@ -1,0 +1,12 @@
+- Subset of .tsx as Jinja replacement for Python, probs implement in Rust.
+  - Always JSON-able to allow for REST-ifying (or just permit Pydantic models? Nice tie in with FastAPI?)
+  - Some clever back and forth with typing, see [mypy-play](https://github.com/leontrolski/mypy-play)
+  - Allow passing in Python functions that take/return JSON as template-y things.
+- Modern types-styley <form> library (see above).
+- Go all in on steppingpack/immerframe thingy, see email to Brandon, try and understand mutable value sematics paper.
+- Fix slow Pydantic class `__new__`
+- Port pytest discovery to Rust.
+- Write up "Patterns for Postgres as a queue".
+- Write up "Can your type system do this? For non-TypeScript devs".
+- Write up "Understanding through UnObjectOrientating".
+- Fix Pratt Parser demo.
