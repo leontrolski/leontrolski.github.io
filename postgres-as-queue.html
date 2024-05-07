@@ -119,7 +119,7 @@ UUID | SMALLINT | TIMESTAMP WITH TIME ZONE
     <span class="hljs-keyword">FOR</span> <span class="hljs-keyword">UPDATE</span> <span class="hljs-keyword">SKIP</span> <span class="hljs-keyword">LOCKED</span>
 )
 <span class="hljs-keyword">UPDATE</span> event_queue
-<span class="hljs-keyword">SET</span> <span class="hljs-keyword">status</span> = {set_status_to}
+<span class="hljs-keyword">SET</span> status = {set_status_to}, updated_at = {now}
 <span class="hljs-keyword">WHERE</span> <span class="hljs-keyword">id</span> = <span class="hljs-keyword">ANY</span>(<span class="hljs-keyword">SELECT</span> <span class="hljs-keyword">id</span> <span class="hljs-keyword">FROM</span> ids)
 <span class="hljs-keyword">RETURNING</span> <span class="hljs-keyword">id</span>
 </code></pre>
@@ -148,39 +148,45 @@ UUID | SMALLINT | TIMESTAMP WITH TIME ZONE
 <h2 id="shutdown-handler">Shutdown handler</h2>
 <p>The following is a nice helper for polling loops that aids with shutdown handling, and times itself out after an hour
     of no activity.</p>
-<pre><code class="lang-python"><span class="hljs-keyword">import</span> os, signal, threading
+<pre><code class="lang-python">import os
+import signal
+import threading
+from types import FrameType
+from typing import Iterator
 
-INTERRUPT_TIMEOUT = <span class="hljs-number">60</span> * <span class="hljs-number">60</span>  <span class="hljs-comment"># 1 hour</span>
-work_done: threading.Event
-
-
-<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">kill_after_timeout</span><span class="hljs-params">()</span> -&gt; <span class="hljs-keyword">None</span>:</span>
-    <span class="hljs-keyword">global</span> work_done
-    work_done = threading.Event()
-    <span class="hljs-keyword">if</span> work_done.wait(INTERRUPT_TIMEOUT):
-        <span class="hljs-keyword">return</span>
-    os.kill(os.getpid(), signal.SIGKILL)
+INTERRUPT_TIMEOUT = 60 * 60.0  # 1 hour
 
 
-<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">ShutdownHandler</span>:</span>
-    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span><span class="hljs-params">(self, max_loops: int | None = None)</span> -&gt; <span class="hljs-keyword">None</span>:</span>
-        self.exit_flag = <span class="hljs-keyword">False</span>
+class ShutdownHandler:
+    work_done: threading.Event
+
+    def __init__(self) -> None:
+        self.exit_flag = False
+        # For ctrl-c from terminal
         signal.signal(signal.SIGINT, self.signal_handler)
+        # for normal Unix usage
         signal.signal(signal.SIGTERM, self.signal_handler)
 
-    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">signal_handler</span><span class="hljs-params">(self, signal: int, frame: FrameType | None)</span> -&gt; <span class="hljs-keyword">None</span>:</span>
-        self.exit_flag = <span class="hljs-keyword">True</span>
+    def signal_handler(self, signal: int, frame: FrameType | None) -> None:
+        self.exit_flag = True
 
-    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">loop</span><span class="hljs-params">(self)</span> -&gt; Iterator[<span class="hljs-keyword">None</span>]:</span>
-        <span class="hljs-keyword">global</span> work_done
-        <span class="hljs-keyword">while</span> <span class="hljs-keyword">True</span>:
-            <span class="hljs-keyword">if</span> self.exit_flag():
-                work_done.set()
-                <span class="hljs-keyword">return</span>
-            <span class="hljs-comment"># Making the thread a daemon means it will die if the parent thread dies.</span>
-            threading.Thread(target=kill_after_timeout, daemon=<span class="hljs-keyword">True</span>).start()
-            <span class="hljs-keyword">yield</span> <span class="hljs-keyword">None</span>
-            work_done.set()  <span class="hljs-comment"># tell the timeout thread we did some work</span>
+    def kill_after_timeout(self) -> None:
+        self.work_done = threading.Event()
+        if self.work_done.wait(INTERRUPT_TIMEOUT):
+            return
+        # If the timeout is reached, kill the parent process
+        os.kill(os.getpid(), signal.SIGKILL)
+
+    def loop(self) -> Iterator[None]:
+        while True:
+            if self.exit_flag:
+                self.work_done.set()
+                return
+
+            # Making the thread a daemon means it will die if the parent thread dies.
+            threading.Thread(target=self.kill_after_timeout, daemon=True).start()
+            yield None
+            self.work_done.set()
 </code></pre>
 
     </body>
