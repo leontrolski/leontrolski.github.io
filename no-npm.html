@@ -1,0 +1,93 @@
+<html>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <head>
+        <title>
+            leontrolski - avoiding npm hell with swc
+        </title>
+        <style>
+            body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 63%;}
+            @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+            pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
+            a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
+            a:hover {border-bottom: 0;}
+            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em; white-space: nowrap;}
+            blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
+            details {border-bottom:solid 5px gray;}
+        </style>
+        <link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js"></script>
+
+    </head>
+    <body>
+        <a href="index.html">
+            <img src="pic.png" style="height:2em">
+            ⇦
+        </a>
+        <p><i>2024-05-31</i></p>
+        <h1>Avoiding npm hell with swc</h1>
+<p><img src="todo.gif" alt="screen-recording" style="width:10rem"></p>
+<p>Sometimes your janky ad-hoc JavaScript file reaches a complexity threshold where you wouldn&#39;t mind a bit of typing and a taste of some sweet sweet <code>JSX</code> sugar. You consider bringing in npm and friends, then shudder at the thought of the endless upgrade cycles and configuration cruft. Let&#39;s get to a halfway house using only the <a href="https://github.com/swc-project/swc">swc</a> binary.</p>
+<p><a href="https://github.com/leontrolski/using-tsx-without-npm">Working example repo</a>.</p>
+<h1 id="install-swc-https-github-com-swc-project-swc-">Install <a href="https://github.com/swc-project/swc">swc</a></h1>
+<p>Remember to pick the correct architecture. All releases listed <a href="https://github.com/swc-project/swc/releases">here</a>, for some reason many of the releases don&#39;t have a binary file, pick one like this:</p>
+<pre><code class="lang-shell">curl -L -o ~<span class="hljs-regexp">/bin/</span>swc https:<span class="hljs-regexp">//gi</span>thub.com<span class="hljs-regexp">/swc-project/</span>swc<span class="hljs-regexp">/releases/</span>download<span class="hljs-regexp">/v1.5.6/</span>swc-darwin-arm64
+chmod +x ~<span class="hljs-regexp">/bin/</span>swc
+</code></pre>
+<h1 id="write-a-dumb-dumb-s-react">Write a dumb-dumb&#39;s React</h1>
+<p>React is too complicated for our needs right now, let&#39;s just <a href="https://github.com/leontrolski/using-tsx-without-npm/blob/main/static/index.tsx#L35-L40">blat everything on the page on each render</a>, forget fancy <a href="33-line-react.html">DOM diffing shenanigans</a>.</p>
+<p>Remember that:</p>
+<pre><code class="lang-tsx"><span class="hljs-keyword">const</span> foo = <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">class</span>=<span class="hljs-string">"foo"</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">b</span>&gt;</span>Hi!<span class="hljs-tag">&lt;/<span class="hljs-name">b</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">input</span> <span class="hljs-attr">oninput</span>=<span class="hljs-string">{()</span> =&gt;</span> console.log("Oi!")}/&gt;
+<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span></span>
+</code></pre>
+<p>Just gets compiled to:</p>
+<pre><code class="lang-javascript"><span class="hljs-keyword">const</span> foo = React.createElement(<span class="hljs-string">"div"</span>, {<span class="hljs-attr">class</span>: <span class="hljs-string">"foo"</span>},
+    React.createElement(<span class="hljs-string">"b"</span>, <span class="hljs-literal">null</span>, <span class="hljs-string">"Hi!"</span>),
+    React.createElement(<span class="hljs-string">"input"</span>, {<span class="hljs-attr">oninput</span>: <span class="hljs-function"><span class="hljs-params">()</span>=&gt;</span><span class="hljs-built_in">console</span>.log(<span class="hljs-string">"Oi!"</span>)})
+);
+</code></pre>
+<p>We can bring along whatever <a href="https://github.com/leontrolski/using-tsx-without-npm/blob/main/static/not-react.tsx#L2-L27">dumbass <code>React.createElement(...)</code> we want</a>.</p>
+<h1 id="write-your-application">Write your application</h1>
+<p>Our application consists of two files:</p>
+<ul>
+<li><a href="https://github.com/leontrolski/using-tsx-without-npm/blob/main/static/index.tsx">static/index.tsx</a></li>
+<li><a href="https://github.com/leontrolski/using-tsx-without-npm/blob/main/static/index.html">static/index.html</a></li>
+</ul>
+<p>In condesed form, <code>index.tsx</code> just looks like:</p>
+<pre><code class="lang-tsx"><span class="xml">import </span><span class="hljs-template-variable">{ React }</span><span class="xml"> from "./not-react.js"
+
+type Todo = </span><span class="hljs-template-variable">{ message: string, done: boolean}</span><span class="xml">
+const todos: Todo[] = [...]
+
+const TodoListItem = (todo: Todo) =&gt; <span class="hljs-tag">&lt;<span class="hljs-name">li</span>&gt;</span>
+    </span><span class="hljs-template-variable">{todo.done ? &lt;s&gt;{todo.message}</span><span class="xml"><span class="hljs-tag">&lt;/<span class="hljs-name">s</span>&gt;</span> : todo.message}
+    <span class="hljs-tag">&lt;<span class="hljs-name">input</span> <span class="hljs-attr">type</span>=<span class="hljs-string">"checkbox"</span> <span class="hljs-attr">checked</span>=</span></span><span class="hljs-template-variable">{todo.done}</span><span class="xml"><span class="hljs-tag"> <span class="hljs-attr">onclick</span>=</span></span><span class="hljs-template-variable">{() =&gt; {
+        todo.done = !todo.done
+        render()
+    }</span><span class="xml"><span class="hljs-tag">}/&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">li</span>&gt;</span>
+
+const App = (todos: Todo[]) =&gt; <span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">h1</span>&gt;</span>Todos<span class="hljs-tag">&lt;/<span class="hljs-name">h1</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">ul</span>&gt;</span></span><span class="hljs-template-variable">{todos.map(TodoListItem)}</span><span class="xml"><span class="hljs-tag">&lt;/<span class="hljs-name">ul</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
+
+const appEl = document.getElementById("app")
+const render = () =&gt; </span><span class="hljs-template-variable">{
+    while (appEl.firstChild) appEl.removeChild(appEl.firstChild)
+    appEl.appendChild(App(todos))
+}</span><span class="xml">
+render()</span>
+</code></pre>
+<p>Simple enough huh?</p>
+<h1 id="compile-your-tsx-files">Compile your <code>.tsx</code> files</h1>
+<p>We can just compile our files in place with:</p>
+<pre><code class="lang-shell">~<span class="hljs-regexp">/bin/</span>swc <span class="hljs-keyword">compile</span> --config-<span class="hljs-keyword">file</span>=<span class="hljs-keyword">static</span><span class="hljs-regexp">/.swcrc --out-dir=. static/</span>**<span class="hljs-comment">/*.tsx</span>
+</code></pre>
+<h1 id="serve-your-app">Serve your app</h1>
+<p>Run <code>python -m http.server</code>, open <code>localhost:8000/static</code>, easy.</p>
+    </body>
+
+</html>
