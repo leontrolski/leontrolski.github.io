@@ -1,0 +1,143 @@
+<html>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <head>
+        <title>
+            leontrolski - weenie LISP
+        </title>
+        <style>
+            body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 63%;}
+            @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+            pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
+            a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
+            a:hover {border-bottom: 0;}
+            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em; white-space: nowrap;}
+            blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
+            details {border-bottom:solid 5px gray;}
+        </style>
+        <link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js"></script>
+
+    </head>
+    <body>
+        <a href="index.html">
+            <img src="pic.png" style="height:2em">
+            ⇦
+        </a>
+        <p><i>2024-06-10</i></p>
+        <h1>Weenie lisp</h1>
+<p>Let&#39;s write a super weenie LISP interpreter in nice typed Python.</p>
+<p>Our program to interpret looks like:</p>
+<pre><code class="lang-clojure">(<span class="hljs-name">add</span> <span class="hljs-number">2</span>
+    (<span class="hljs-name">multiply</span> <span class="hljs-number">4</span> <span class="hljs-number">5</span>))
+</code></pre>
+<p>In mathspeak: <code>2 + (4 * 5)</code> which equals <code>22</code></p>
+<p>First, some imports and definitions: </p>
+<pre><code class="lang-python"><span class="hljs-keyword">from</span> __future__ <span class="hljs-keyword">import</span> annotations
+<span class="hljs-keyword">from</span> dataclasses <span class="hljs-keyword">import</span> dataclass
+<span class="hljs-keyword">import</span> <span class="hljs-built_in">string</span>
+<span class="hljs-keyword">from</span> typing <span class="hljs-keyword">import</span> <span class="hljs-type">Iterator</span>, <span class="hljs-type">Literal</span>
+<span class="hljs-type">EOF</span> = <span class="hljs-string">"\x1a"</span>
+<span class="hljs-type">Atom</span> = <span class="hljs-built_in">int</span>
+</code></pre>
+<p>Now we define an <code>Iterator</code> with a small difference, we can look at the current value with <code>.peek</code></p>
+<pre><code class="lang-python"><span class="hljs-variable">@dataclass</span>
+class PeekableIterator:
+    <span class="hljs-symbol">iter:</span> Iterator[str]
+    <span class="hljs-symbol">peek:</span> str = EOF
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__post_init__</span></span>(<span class="hljs-keyword">self</span>) -&gt; <span class="hljs-symbol">None:</span>
+        <span class="hljs-keyword">next</span>(<span class="hljs-keyword">self</span>)
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__next__</span></span>(<span class="hljs-keyword">self</span>) -&gt; <span class="hljs-symbol">None:</span>
+        <span class="hljs-keyword">self</span>.peek = <span class="hljs-keyword">next</span>(<span class="hljs-keyword">self</span>.iter, EOF)
+</code></pre>
+<p>Now a tokenizer, this splits our language up into brackets <code>(</code> or <code>)</code>, names and numbers, ignoring whitespace:</p>
+<pre><code class="lang-python">def tokenize(<span class="hljs-keyword">chars</span>: PeekableIterator) -&gt; Iterator[str]:
+    <span class="hljs-keyword">while</span> <span class="hljs-keyword">chars</span>.peek != <span class="hljs-literal">EOF</span>:
+        <span class="hljs-keyword">if</span> <span class="hljs-keyword">chars</span>.peek <span class="hljs-keyword">in</span> <span class="hljs-keyword">string</span>.whitespace:
+            next(<span class="hljs-keyword">chars</span>)
+        elif <span class="hljs-keyword">chars</span>.peek <span class="hljs-keyword">in</span> <span class="hljs-string">"()"</span>:
+            yield <span class="hljs-keyword">chars</span>.peek
+            next(<span class="hljs-keyword">chars</span>)
+        <span class="hljs-keyword">else</span>:
+            current = <span class="hljs-string">""</span>
+            <span class="hljs-keyword">while</span> <span class="hljs-keyword">chars</span>.peek <span class="hljs-keyword">in</span> <span class="hljs-keyword">string</span>.ascii_letters + <span class="hljs-keyword">string</span>.digits:
+                current += <span class="hljs-keyword">chars</span>.peek
+                next(<span class="hljs-keyword">chars</span>)
+            yield current
+</code></pre>
+<p>Doing:</p>
+<pre><code class="lang-python">chars = PeekableIterator(<span class="hljs-name">iter</span>(<span class="hljs-name">code</span>))
+list(<span class="hljs-name">tokenize</span>(<span class="hljs-name">chars</span>))
+</code></pre>
+<p>Should give us:</p>
+<pre><code class="lang-python">['(', 'add', '<span class="hljs-number">2</span>', '(', 'multiply', '<span class="hljs-number">4</span>', '<span class="hljs-number">5</span>', ')', ')']
+</code></pre>
+<p>Now to the parser, each time we use a token, we consume it with <code>next(tokens)</code>, we construct a tree of <code>Node</code>s:</p>
+<pre><code class="lang-python">@dataclass
+<span class="hljs-keyword">class</span> Node:
+    operator: str
+    <span class="hljs-keyword">args</span>: <span class="hljs-keyword">list</span>[Node | Atom]
+
+
+def <span class="hljs-keyword">parse</span>(tokens: PeekableIterator) -&gt; Node | Atom:
+    <span class="hljs-keyword">if</span> tokens.peek == <span class="hljs-string">"("</span>:
+        next(tokens)
+        <span class="hljs-keyword">out</span> = Node(operator=tokens.peek, <span class="hljs-keyword">args</span>=[])
+        next(tokens)
+        <span class="hljs-keyword">while</span> tokens.peek != <span class="hljs-string">")"</span>:
+            <span class="hljs-keyword">out</span>.<span class="hljs-keyword">args</span>.<span class="hljs-keyword">append</span>(<span class="hljs-keyword">parse</span>(tokens))  # recursion!
+        next(tokens)
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">out</span>
+    <span class="hljs-keyword">if</span> tokens.peek.isdigit():
+        <span class="hljs-keyword">out</span> = int(tokens.peek)
+        next(tokens)
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">out</span>
+    raise RuntimeError(f<span class="hljs-string">"Unexpected token: '{tokens.peek}'"</span>)
+</code></pre>
+<p>Doing:</p>
+<pre><code class="lang-python">chars = PeekableIterator(<span class="hljs-name">iter</span>(<span class="hljs-name">code</span>))
+tokens = PeekableIterator(<span class="hljs-name">tokenize</span>(<span class="hljs-name">chars</span>))
+ast = parse(<span class="hljs-name">tokens</span>)
+</code></pre>
+<p>Should give us:</p>
+<pre><code class="lang-python"><span class="hljs-keyword">Node</span><span class="hljs-title">(
+    operator</span>='add',
+    <span class="hljs-attr">args=</span>[
+        <span class="hljs-number">2</span>,
+        <span class="hljs-keyword">Node</span><span class="hljs-title">(
+            operator</span>='multiply',
+            <span class="hljs-attr">args=</span>[<span class="hljs-number">4</span>, <span class="hljs-number">5</span>],
+        ),
+    ]
+)
+</code></pre>
+<p>Now an interpreter:</p>
+<pre><code class="lang-python">def interpret(<span class="hljs-keyword">node</span><span class="hljs-title">: Node</span> | Atom) -&gt; int:
+    if isinstance(<span class="hljs-keyword">node</span><span class="hljs-title">, int</span>):
+        return <span class="hljs-keyword">node</span>
+    <span class="hljs-title">if</span> <span class="hljs-keyword">node</span>.<span class="hljs-title">operator</span> == <span class="hljs-string">"add"</span>:
+        a, b = <span class="hljs-keyword">node</span>.<span class="hljs-title">args</span>
+        return interpret(a) + interpret(b)
+    if <span class="hljs-keyword">node</span>.<span class="hljs-title">operator</span> == <span class="hljs-string">"multiply"</span>:
+        a, b = <span class="hljs-keyword">node</span>.<span class="hljs-title">args</span>
+        return interpret(a) * interpret(b)
+
+    raise RuntimeError(f<span class="hljs-string">"Unknown node {node}"</span>)
+</code></pre>
+<p>Finally, running everything:</p>
+<pre><code class="lang-python">code = <span class="hljs-string">""</span><span class="hljs-string">"
+(add 2
+    (multiply 4 5))
+"</span><span class="hljs-string">""</span>
+chars = PeekableIterator(<span class="hljs-name">iter</span>(<span class="hljs-name">code</span>))
+tokens = PeekableIterator(<span class="hljs-name">tokenize</span>(<span class="hljs-name">chars</span>))
+ast = parse(<span class="hljs-name">tokens</span>)
+print(<span class="hljs-name">interpret</span>(<span class="hljs-name">ast</span>))
+</code></pre>
+<p>Should give us <code>22</code>.</p>
+
+    </body>
+
+</html>
