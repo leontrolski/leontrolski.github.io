@@ -1,0 +1,174 @@
+<html>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <head>
+        <title>
+            leontrolski -
+        </title>
+        <style>
+
+            body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 63%;}
+            @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+            pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;background-color:white;padding:0.5rem;overflow-x:auto;}
+            a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
+            a:hover {border-bottom: 0;}
+            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em; white-space: nowrap;}
+            details {border-bottom:solid 5px gray;}
+
+        </style>
+        <link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js">
+
+        </script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js">
+
+        </script>
+
+    </head>
+    <body>
+        <a href="index.html">
+            <img src="pic.png" style="height:2em">
+            ⇦
+        </a>
+        <p><i>2024-07-10</i></p>
+        <h1>Covariance for the practically inclined</h1>
+<p><code>mypy</code> is happy with this:</p>
+<pre><code class="lang-python">a = tuple[<span class="hljs-string">str | int, ...</span>](<span class="hljs-link"></span>)
+b = tuple[<span class="hljs-string">int, ...</span>](<span class="hljs-link"></span>)
+a = b
+</code></pre>
+<p>But not with this:</p>
+<pre><code class="lang-python">a = list[<span class="hljs-string">str | int</span>](<span class="hljs-link"></span>)
+b = list[<span class="hljs-string">int</span>](<span class="hljs-link"></span>)
+a = b
+</code></pre>
+<p>It gives the error:</p>
+<pre><code>Incompatible types <span class="hljs-keyword">in</span> assignment (expression has <span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">list</span></span>[<span class="hljs-keyword">int</span>], variable has <span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">list</span></span>[<span class="hljs-keyword">str</span> | <span class="hljs-keyword">int</span>])
+</code></pre><h1 id="why-">Why?</h1>
+<h2 id="the-short-answer">The short answer</h2>
+<pre><code class="lang-python"><span class="hljs-title">.append()</span>
+</code></pre>
+<p>If we had the following function:</p>
+<pre><code class="lang-python"><span class="hljs-keyword">def</span> sum_list(<span class="hljs-string">l:</span> list[<span class="hljs-keyword">int</span>]) -&gt; <span class="hljs-string">int:</span> ...
+</code></pre>
+<p>Imagine if this type-checked:</p>
+<pre><code class="lang-python">a = list[<span class="hljs-string">str | int</span>](<span class="hljs-link"></span>)
+b = list[<span class="hljs-string">int</span>](<span class="hljs-link"></span>)
+a = b
+a.append("foo")
+sum_list(b)
+</code></pre>
+<p>We&#39;ll clearly get an error when we <code>sum_list(b)</code>, as <code>b</code> contains a <code>str</code>.</p>
+<p>Note the equivalent isn&#39;t true for immutable things like <code>tuple</code>s:</p>
+<pre><code class="lang-python">a = tuple[<span class="hljs-string">str | int, ...</span>](<span class="hljs-link"></span>)
+b = tuple[<span class="hljs-string">int, ...</span>](<span class="hljs-link"></span>)
+a = b
+a += ("foo", )
+sum_tuple(b)
+</code></pre>
+<p>The same applies when we write our own classes, the following raises a <code>mypy</code> error:</p>
+<pre><code class="lang-python">T = TypeVar("T")
+
+class MyList(Generic[T]):
+<span class="hljs-code">    ...</span>
+
+a = MyList[<span class="hljs-string">str | int</span>](<span class="hljs-link"></span>)
+b = MyList[<span class="hljs-string">int</span>](<span class="hljs-link"></span>)
+a = b
+</code></pre>
+<p>Whereas the following is valid:</p>
+<pre><code class="lang-python">T<span class="hljs-emphasis">_co = TypeVar("T_</span>co", covariant=True)
+
+class MyList(Generic[T_co]):
+<span class="hljs-code">    ...</span>
+
+a = MyList[<span class="hljs-string">str | int</span>](<span class="hljs-link"></span>)
+b = MyList[<span class="hljs-string">int</span>](<span class="hljs-link"></span>)
+a = b
+</code></pre>
+<p>What happens if we try make <code>MyList</code> mutable like a real <code>list</code> though:</p>
+<pre><code class="lang-python">T_co = TypeVar(<span class="hljs-string">"T_co"</span>, covariant=<span class="hljs-keyword">True</span>)
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MyList</span><span class="hljs-params">(Generic[T_co])</span>:</span>
+    internal: tuple[T_co, ...]
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">append</span><span class="hljs-params">(self, v: T_co)</span> -&gt; <span class="hljs-keyword">None</span>:</span>
+        self.internal += (v, )
+</code></pre>
+<p>We get different error:</p>
+<pre><code>Cannot use <span class="hljs-keyword">a</span> covariant type <span class="hljs-built_in">variable</span> <span class="hljs-keyword">as</span> <span class="hljs-keyword">a</span> parameter
+</code></pre><p>This is a good thing, we can&#39;t introduce the same bug we made earlier!</p>
+<p>If we want an immutable <code>MyList</code> method, we can just use an invariant <code>T</code>:</p>
+<pre><code class="lang-python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MyList</span>(<span class="hljs-title">Generic</span>[<span class="hljs-title">T_co</span>]):</span>
+    <span class="hljs-symbol">internal:</span> tuple[T_co, ...]
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">append</span><span class="hljs-params">(<span class="hljs-keyword">self</span>, <span class="hljs-symbol">v:</span> T)</span></span> -&gt; MyList[T]:
+        <span class="hljs-keyword">return</span> MyList(<span class="hljs-keyword">self</span>.internal + (v, ))
+</code></pre>
+<h2 id="contravariance">Contravariance</h2>
+<p>But why can&#39;t we use a covariant type variable as a parameter?</p>
+<p>Consider the following functions:</p>
+<pre><code class="lang-python"><span class="hljs-keyword">def</span> f_int(<span class="hljs-string">x:</span> <span class="hljs-keyword">int</span>) -&gt; <span class="hljs-string">int:</span> ...
+<span class="hljs-keyword">def</span> f_int_or_str(<span class="hljs-string">x:</span> <span class="hljs-keyword">int</span> | str) -&gt; <span class="hljs-string">int:</span> ...
+</code></pre>
+<p>And the following types:</p>
+<pre><code class="lang-python">FInt      = Callable[[<span class="hljs-keyword">int</span>], <span class="hljs-keyword">int</span>]
+FIntOrStr = Callable[[<span class="hljs-keyword">int</span> | <span class="hljs-keyword">str</span>], <span class="hljs-keyword">int</span>]
+</code></pre>
+<p>Now let&#39;s typecheck the following:</p>
+<pre><code class="lang-python"><span class="hljs-symbol">a:</span> FInt      = f_int        <span class="hljs-meta"># f_int(4)            makes sense</span>
+<span class="hljs-symbol">b:</span> FInt      = f_int_or_str <span class="hljs-meta"># f_int_or_str(4)     makes sense</span>
+<span class="hljs-symbol">c:</span> FIntOrStr = f_int        <span class="hljs-meta"># f_int(<span class="hljs-string">"foo"</span>)        makes no sense!</span>
+<span class="hljs-symbol">d:</span> FIntOrStr = f_int_or_str <span class="hljs-meta"># f_int_or_str(<span class="hljs-string">"foo"</span>) makes sense</span>
+</code></pre>
+<p>We indeed get an error from <code>mypy</code> for <code>c</code>, whoop!</p>
+<p>How is this achieved in <code>Callable</code>&#39;s definition?</p>
+<p>Well, let&#39;s write our own class <code>Schmallable</code>, firstly with an invariant <code>T</code>:</p>
+<pre><code class="lang-python">class Schmallable(Generic[T]):
+    ...
+
+FInt      = Schmallable[int]
+FIntOrStr = Schmallable[int | str]
+<span class="hljs-symbol">f_int:</span> FInt
+<span class="hljs-symbol">f_int_or_str:</span> FIntOrStr
+
+<span class="hljs-symbol">a:</span> FInt      = f_int
+<span class="hljs-symbol">b:</span> FInt      = f_int_or_str
+<span class="hljs-symbol">c:</span> FIntOrStr = f_int
+<span class="hljs-symbol">d:</span> FIntOrStr = f_int_or_str
+</code></pre>
+<p>We get an error for <code>b</code> <strong>and</strong> <code>c</code> - this isn&#39;t what we wanted!</p>
+<p>Lets try again with a covariant <code>T</code>:</p>
+<pre><code class="lang-python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-type">Schmallable</span>(<span class="hljs-type">Generic</span>[<span class="hljs-type">T_co</span>]):
+    ...</span>
+</code></pre>
+<p>Now we get an error for <code>b</code> - still not we wanted :-(</p>
+<p>Finally, let&#39;s try using a contravariant <code>T</code>:</p>
+<pre><code class="lang-python"><span class="hljs-type">T_con</span> = <span class="hljs-type">TypeVar</span>(<span class="hljs-string">"T_con"</span>, contravariant=<span class="hljs-type">True</span>)
+<span class="hljs-class">
+<span class="hljs-keyword">class</span> <span class="hljs-type">Schmallable</span>(<span class="hljs-type">Generic</span>[<span class="hljs-type">T_con</span>]):
+    ...</span>
+</code></pre>
+<p>We get an error for <code>c</code> only - just the type variable we wanted!</p>
+<h2 id="slightly-more-formal-definitions">Slightly more formal definitions</h2>
+<p>Here&#39;s the definitions of covariant and contravariant from the <a href="https://mypy.readthedocs.io/en/latest/generics.html#variance-of-generic-types">mypy docs</a> (where <code>X &lt; Y</code> means &quot;<code>X</code> is a subtype of <code>Y</code>&quot;):</p>
+<pre><code>Given B &lt; A, <span class="hljs-keyword">for</span> C[T]
+
+<span class="hljs-keyword">if</span> C[B] &lt; C[A], T <span class="hljs-keyword">is</span> covariant
+<span class="hljs-keyword">if</span> C[A] &lt; C[B], T <span class="hljs-keyword">is</span> contravariant
+<span class="hljs-keyword">else</span> T <span class="hljs-keyword">is</span> <span class="hljs-keyword">invariant</span>
+</code></pre><p>Or slightly more concretely:</p>
+<pre><code>Given B = <span class="hljs-keyword">int</span>, A = <span class="hljs-keyword">int</span> | str, <span class="hljs-keyword">for</span> C[T]
+
+<span class="hljs-keyword">if</span> C[<span class="hljs-keyword">int</span>] &lt; C[<span class="hljs-keyword">int</span> | str], T <span class="hljs-keyword">is</span> covariant
+<span class="hljs-keyword">if</span> C[<span class="hljs-keyword">int</span> | str] &lt; C[<span class="hljs-keyword">int</span>], T <span class="hljs-keyword">is</span> contravariant
+<span class="hljs-keyword">else</span> T <span class="hljs-keyword">is</span> <span class="hljs-keyword">invariant</span>
+</code></pre><p>Or even more concretely, with <code>tuple</code>, <code>Callable</code> and <code>list</code>:</p>
+<pre><code>tuple<span class="hljs-comment">[int]</span> &lt; tuple<span class="hljs-comment">[int | str, ...]</span>,
+    therefore T in tuple<span class="hljs-comment">[T, ...]</span> <span class="hljs-keyword">is</span> covariant
+Callable<span class="hljs-comment">[<span class="hljs-comment">[int | str]</span>, ...]</span> &lt; Callable<span class="hljs-comment">[<span class="hljs-comment">[int]</span>, ...]</span>,
+    therefore Ts in Callable<span class="hljs-comment">[<span class="hljs-comment">[T, T', ...]</span>, ...]</span> <span class="hljs-keyword">are</span> contravariant
+list<span class="hljs-comment">[int]</span> !&lt; list<span class="hljs-comment">[int | str, ...]</span> and list<span class="hljs-comment">[int | str]</span> !&lt; list<span class="hljs-comment">[int]</span>,
+    therefore T in list<span class="hljs-comment">[T]</span> <span class="hljs-keyword">is</span> invariant
+</code></pre>
+    </body>
+</html>
