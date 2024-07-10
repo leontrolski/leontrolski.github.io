@@ -44,10 +44,16 @@ a = b
 <p>It gives the error:</p>
 <pre><code>Incompatible types <span class="hljs-keyword">in</span> assignment (expression has <span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">list</span></span>[<span class="hljs-keyword">int</span>], variable has <span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">list</span></span>[<span class="hljs-keyword">str</span> | <span class="hljs-keyword">int</span>])
 </code></pre><h1 id="why-">Why?</h1>
-<h2 id="the-short-answer">The short answer</h2>
-<pre><code class="lang-python"><span class="hljs-title">.append()</span>
+<h2 id="the-short-theoretical-answer">The really short theoretical answer</h2>
+<p>The <code>T</code> in <code>list[T]</code> is invariant, <code>T</code> in <code>tuple[T, ...]</code> is covariant.</p>
+<br>
+<p>Huh?</p>
+<br>
+<h2 id="the-short-practical-answer">The short practical answer</h2>
+<pre><code class="lang-python"><span class="hljs-title">.append(...)</span>
 </code></pre>
-<p>If we had the following function:</p>
+<br>
+<p>If we have the following function:</p>
 <pre><code class="lang-python"><span class="hljs-keyword">def</span> sum_list(<span class="hljs-string">l:</span> list[<span class="hljs-keyword">int</span>]) -&gt; <span class="hljs-string">int:</span> ...
 </code></pre>
 <p>Imagine if this type-checked:</p>
@@ -94,10 +100,10 @@ a = b
     <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">append</span><span class="hljs-params">(self, v: T_co)</span> -&gt; <span class="hljs-keyword">None</span>:</span>
         self.internal += (v, )
 </code></pre>
-<p>We get different error:</p>
+<p>We get different error for <code>def append(...)</code>:</p>
 <pre><code>Cannot use <span class="hljs-keyword">a</span> covariant type <span class="hljs-built_in">variable</span> <span class="hljs-keyword">as</span> <span class="hljs-keyword">a</span> parameter
 </code></pre><p>This is a good thing, we can&#39;t introduce the same bug we made earlier!</p>
-<p>If we want an immutable <code>MyList</code> method, we can just use an invariant <code>T</code>:</p>
+<p>If we want an immutable <code>MyList</code> method, we can just use an invariant <code>T</code> in the method:</p>
 <pre><code class="lang-python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MyList</span>(<span class="hljs-title">Generic</span>[<span class="hljs-title">T_co</span>]):</span>
     <span class="hljs-symbol">internal:</span> tuple[T_co, ...]
 
@@ -126,7 +132,7 @@ FIntOrStr = Callable[[<span class="hljs-keyword">int</span> | <span class="hljs-
 <pre><code class="lang-python">class Schmallable(Generic[T]):
     ...
 
-FInt      = Schmallable[int]
+FInt = Schmallable[int]
 FIntOrStr = Schmallable[int | str]
 <span class="hljs-symbol">f_int:</span> FInt
 <span class="hljs-symbol">f_int_or_str:</span> FIntOrStr
