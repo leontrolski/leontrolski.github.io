@@ -1,0 +1,72 @@
+<html>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <head>
+        <title>
+            leontrolski - Using TypeIs
+        </title>
+        <style>
+
+            body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 63%;}
+            @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+            pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
+            a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
+            a:hover {border-bottom: 0;}
+            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em; white-space: nowrap;}
+            blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
+            details {border-bottom:solid 5px gray;}
+
+        </style>
+        <link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js"></script>
+
+    </head>
+    <body>
+        <a href="index.html">
+            <img src="pic.png" style="height:2em">
+            ⇦
+        </a>
+        <p><i>2024-07-17</i></p>
+        <h1>
+            Using <code class="inline">TypeIs</code>
+        </h1>
+
+<p><a href="https://peps.python.org/pep-0742/">PEP 742</a> adds <code>TypeIs</code>, it is very similar to <code>TypeGuard</code> (<a href="https://docs.python.org/3/library/typing.html#typing.TypeGuard">docs</a>), but makes up for a particular shortcoming.</p>
+<h2 id="support">Support</h2>
+<p><code>TypeIs</code> will be present in Python 3.13, but you can use it (at time of writing) currently - it is exists in <code>typing_extensions&gt;=4.10.0</code> and is supported by <code>mypy&gt;=1.10.1</code>.</p>
+<h2 id="example">Example</h2>
+<p>First, some preamble:</p>
+<pre><code class="lang-python"><span class="hljs-keyword">from</span> typing <span class="hljs-keyword">import</span> <span class="hljs-keyword">Any</span>, TypeVar, TypeGuard
+<span class="hljs-keyword">from</span> typing_extensions <span class="hljs-keyword">import</span> TypeIs
+T = TypeVar(<span class="hljs-string">"T"</span>)
+</code></pre>
+<p>If we use a plain ol&#39; <code>isinstance</code>, types are correctly narrowed in both branches of this <code>if</code> statement:</p>
+<pre><code class="lang-python">x: <span class="hljs-keyword">int</span> | str
+<span class="hljs-keyword">if</span> isinstance_b(x, <span class="hljs-keyword">int</span>):
+    reveal_type(x)  # <span class="hljs-keyword">int</span>
+<span class="hljs-keyword">else</span>:
+    reveal_type(x)  # str
+</code></pre>
+<p>If we implement out own <code>isinstance</code> using <code>TypeGuard</code> to help the typechecker, this doesn&#39;t work properly (note that it <em>does</em> work in the positive case):</p>
+<pre><code class="lang-python">def isinstance_a(<span class="hljs-variable">v:</span> Any, <span class="hljs-keyword">cl</span><span class="hljs-variable">s:</span> <span class="hljs-built_in">type</span>[T]) -&gt; TypeGuard[T]:
+    <span class="hljs-keyword">return</span> isinstance(v, cls)
+
+<span class="hljs-keyword">x</span>: <span class="hljs-keyword">int</span> | str
+<span class="hljs-keyword">if</span> isinstance_a(<span class="hljs-keyword">x</span>, <span class="hljs-keyword">int</span>):
+    reveal_type(<span class="hljs-keyword">x</span>)  # <span class="hljs-keyword">int</span>
+<span class="hljs-keyword">else</span>:
+    reveal_type(<span class="hljs-keyword">x</span>)  # <span class="hljs-keyword">int</span> | str
+</code></pre>
+<p><code>TypeIs</code> makes up for this, we can now correctly implement our own <code>isinstance</code> for both branches, yay!</p>
+<pre><code class="lang-python">def isinstance_b(v: Any, <span class="hljs-keyword">cls</span>: type[T]) -&gt; TypeIs[T]:
+    <span class="hljs-keyword">return</span> isinstance(v, <span class="hljs-keyword">cls</span>)
+
+x: <span class="hljs-keyword">int</span> | <span class="hljs-keyword">str</span>
+<span class="hljs-keyword">if</span> isinstance_b(x, <span class="hljs-keyword">int</span>):
+    reveal_type(x)  <span class="hljs-meta"># int</span>
+<span class="hljs-keyword">else</span>:
+    reveal_type(x)  <span class="hljs-meta"># str</span>
+</code></pre>
+
+    </body>
+</html>
