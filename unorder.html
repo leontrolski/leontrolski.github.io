@@ -136,6 +136,7 @@
 <li>It would be nice if there was just a built in <code>SET row_order_without_explicit_clause = &#39;random&#39;</code>. Thought might want to be given to random seeding and such.</li>
 <li>I haven&#39;t thought what the best approach might be for running against large test suites - take a cut of <code>main</code> every day and run with <code>--unorder-tables</code>?</li>
 <li>Could a similar approach be applied to the other sources of non-determinism?</li>
+<li>Instead of mucking around with the db itself, could we inspect all queries at test-time and just raise errors for anything that returns unordered rows?</li>
 <li>Email me (see homepage) if you have any fixes.</li>
 </ul>
     </body>
