@@ -1,0 +1,142 @@
+<html>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <head>
+        <title>
+            leontrolski - UNORDER
+        </title>
+        <style>
+
+            body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 63%;}
+            @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+            pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;background-color:white;padding:0.5rem;overflow-x:auto;}
+            a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
+            a:hover {border-bottom: 0;}
+            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em; white-space: nowrap;}
+            details {border-bottom:solid 5px gray;}
+            p code, ul code {background-color: white; padding: 0 0.2rem 0 0.2rem;}
+
+        </style>
+        <link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js">
+
+        </script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js">
+
+        </script>
+
+    </head>
+    <body>
+        <a href="index.html">
+            <img src="pic.png" style="height:2em">
+            ⇦
+        </a>
+        <p><i>2024-07-23</i></p>
+        <h1>Weeding out flakey database tests</h1>
+<p>Flakey tests are caused by non-determinism - using the current time, calls to random number generators, relying on hashmap/set ordering, mutable globals leaking between tests, relying on implicit database ordering. Let&#39;s focus on the latter.</p>
+<p>In Postgres, doing <code>SELECT * FROM t</code> without an <code>ORDER BY</code> returns rows in no guaranteed order. However, the order is <em>somewhat</em> predictable, meaning that a test relying on the row order may pass most of the time, but eg. <em>the introduction of a preceding test that writes to the database</em> might change said order and cause the test to fail.</p>
+<p>Doing the following yields consistent results for me at the time of writing (rows returned somewhat in order of insert/update time), but again, Postgres provides no guarantees to that effect.</p>
+<pre><code class="lang-sql"><span class="hljs-keyword">CREATE</span> <span class="hljs-keyword">TABLE</span> t (x <span class="hljs-built_in">INT</span>);
+<span class="hljs-keyword">INSERT</span> <span class="hljs-keyword">INTO</span> t <span class="hljs-keyword">VALUES</span> (<span class="hljs-number">1</span>), (<span class="hljs-number">2</span>), (<span class="hljs-number">3</span>);
+<span class="hljs-keyword">SELECT</span> * <span class="hljs-keyword">FROM</span> t;  <span class="hljs-comment">-- 1, 2, 3</span>
+<span class="hljs-keyword">DELETE</span> <span class="hljs-keyword">FROM</span> t <span class="hljs-keyword">WHERE</span> x = <span class="hljs-number">1</span>;
+<span class="hljs-keyword">INSERT</span> <span class="hljs-keyword">INTO</span> t <span class="hljs-keyword">VALUES</span> (<span class="hljs-number">1</span>);
+<span class="hljs-keyword">SELECT</span> * <span class="hljs-keyword">FROM</span> t;  <span class="hljs-comment">-- 2, 3, 1</span>
+</code></pre>
+<p>It would be nice if Postgres had a <code>SET row_order_without_explicit_clause = &#39;random&#39;</code> setting - then we could run all of our tests a few times with it turned on and weed out any tests that fail. It doesn&#39;t, but with some hackery, we can acheive similar results.</p>
+<br>
+<p>Consider a classic test run:</p>
+<ul>
+<li>Set up a database with a <code>SCHEMA</code>.</li>
+<li>For each test:<ul>
+<li>Run the test.</li>
+<li>Clean up any data the test wrote.</li>
+</ul>
+</li>
+</ul>
+<p>Let&#39;s add some extra steps:</p>
+<ul>
+<li>Set up a database with a <code>SCHEMA</code>.</li>
+<li><strong>Rename each table name with the prefix <code>_original_...</code>.</strong></li>
+<li><strong>Proxy each original table through a <code>VIEW</code> that unorders the data.</strong></li>
+<li>For each test:<ul>
+<li>Run the test.</li>
+<li>Clean up any data the test wrote.</li>
+</ul>
+</li>
+<li><strong>Clean up the <code>VIEW</code> proxies.</strong></li>
+</ul>
+<p>Some notes on this implementation:</p>
+<ul>
+<li>A proxy looks like <code>CREATE VIEW t AS SELECT * FROM _original_t ORDER BY ctid DESC</code>.</li>
+<li>Doing <code>ORDER BY ctid DESC</code> (<code>ctid</code> is an internal Postgres id) as opposed to <code>ORDER BY RANDOM()</code> is somewhat the opposite of the &quot;rows returned somewhat in order of insert/update time&quot; mentioned above. This induces more consistent failures for me.</li>
+<li>The proxies are dumb enough to be <a href="https://www.postgresql.org/docs/current/sql-createview.html#SQL-CREATEVIEW-UPDATABLE-VIEWS">&quot;updatable&quot;</a> so <code>UPDATE</code>/<code>INSERT</code> continue to work.</li>
+<li>It might not catch implicit ordering from subqueries.</li>
+<li>I haven&#39;t measured the performance overhead.</li>
+<li>If the clean up step is never reached/fails, there is a lot of muck left around.</li>
+</ul>
+<h1 id="python-pytest-postgres-django-implementation">Python + Pytest + Postgres + Django implementation</h1>
+<p>Following is an implementation for Python + Pytest + Postgres + Django, place the fixture in your <code>conftest.py</code>, then call by running:</p>
+<pre><code class="lang-shell"><span class="hljs-function"><span class="hljs-title">pytest</span></span> ... --unorder-tables
+</code></pre>
+<p>Conftest code:</p>
+<pre><code class="lang-python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">pytest_addoption</span><span class="hljs-params">(parser: Any)</span> -&gt; <span class="hljs-keyword">None</span>:</span>
+    parser.addoption(
+        <span class="hljs-string">"--unorder-tables"</span>,
+        action=<span class="hljs-string">"store_true"</span>,
+        help=<span class="hljs-string">"Proxy the db tables through unordered VIEWs"</span>,
+    )
+</code></pre>
+<pre><code class="lang-python"><span class="hljs-meta">@pytest.fixture(autouse=True, scope="session")</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">unorder_tables</span><span class="hljs-params">(request: Any, django_db_setup: None)</span> -&gt; Iterator[<span class="hljs-keyword">None</span>]:</span>
+    <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> request.config.getoption(<span class="hljs-string">"--unorder-tables"</span>):
+        <span class="hljs-keyword">yield</span> <span class="hljs-keyword">None</span>
+        <span class="hljs-keyword">return</span>
+    conn = psycopg2.connect(
+        dbname=settings.DATABASES[<span class="hljs-string">"default"</span>][<span class="hljs-string">"NAME"</span>],
+        host=settings.DATABASES[<span class="hljs-string">"default"</span>][<span class="hljs-string">"HOST"</span>],
+        port=settings.DATABASES[<span class="hljs-string">"default"</span>][<span class="hljs-string">"PORT"</span>],
+        user=settings.DATABASES[<span class="hljs-string">"default"</span>][<span class="hljs-string">"USER"</span>],
+        password=settings.DATABASES[<span class="hljs-string">"default"</span>][<span class="hljs-string">"PASSWORD"</span>],
+    )
+    cur = conn.cursor()
+
+    <span class="hljs-comment"># Get all the table names</span>
+    qry = <span class="hljs-string">"""
+        SELECT table_name
+        FROM information_schema.tables
+        WHERE table_schema='public'
+        AND table_type='BASE TABLE'
+        AND table_name != 'django_migrations'
+    """</span>
+    cur.execute(qry)
+    table_names: list[str] = [table_name <span class="hljs-keyword">for</span> (table_name,) <span class="hljs-keyword">in</span> cur.fetchall()]
+
+    <span class="hljs-comment"># Make a VIEW proxy for each table, ORDERed by the internal Postgres id, DESC</span>
+    prefix = <span class="hljs-string">"_original_"</span>
+    <span class="hljs-keyword">for</span> table_name <span class="hljs-keyword">in</span> table_names:
+        cur.execute(f<span class="hljs-string">"ALTER TABLE {table_name} RENAME TO {prefix}{table_name}"</span>)
+    <span class="hljs-keyword">for</span> table_name <span class="hljs-keyword">in</span> table_names:
+        cur.execute(
+            f<span class="hljs-string">"CREATE VIEW {table_name} AS SELECT * FROM {prefix}{table_name} ORDER BY ctid DESC"</span>
+        )
+    conn.commit()
+
+    <span class="hljs-keyword">yield</span> <span class="hljs-keyword">None</span>
+
+    <span class="hljs-comment"># Reinstate the original tables</span>
+    <span class="hljs-keyword">for</span> table_name <span class="hljs-keyword">in</span> table_names:
+        cur.execute(f<span class="hljs-string">"DROP VIEW {table_name}"</span>)
+    <span class="hljs-keyword">for</span> table_name <span class="hljs-keyword">in</span> table_names:
+        cur.execute(f<span class="hljs-string">"ALTER TABLE {prefix}{table_name} RENAME TO {table_name}"</span>)
+    conn.commit()
+</code></pre>
+<p>There&#39;s probably edge cases that won&#39;t work - so no guarantees - but on my machine it weeded out 3 tests in our suite that were reliant on implicit ordering - success!</p>
+<h1 id="future">Future</h1>
+<ul>
+<li>It would be nice if there was just a built in <code>SET row_order_without_explicit_clause = &#39;random&#39;</code>. Thought might want to be given to random seeding and such.</li>
+<li>I haven&#39;t thought what the best approach might be for running against large test suites - take a cut of <code>main</code> every day and run with <code>--unorder-tables</code>?</li>
+<li>Could a similar approach be applied to the other sources of non-determinism?</li>
+<li>Email me (see homepage) if you have any fixes.</li>
+</ul>
+    </body>
+</html>
