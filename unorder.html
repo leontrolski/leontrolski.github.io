@@ -87,10 +87,12 @@
     )
 </code></pre>
 <pre><code class="lang-python"><span class="hljs-meta">@pytest.fixture(autouse=True, scope="session")</span>
-<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">unorder_tables</span><span class="hljs-params">(request: Any, django_db_setup: None)</span> -&gt; Iterator[<span class="hljs-keyword">None</span>]:</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">unorder_tables</span><span class="hljs-params">(request: Any)</span> -&gt; Iterator[<span class="hljs-keyword">None</span>]:</span>
     <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> request.config.getoption(<span class="hljs-string">"--unorder-tables"</span>):
         <span class="hljs-keyword">yield</span> <span class="hljs-keyword">None</span>
         <span class="hljs-keyword">return</span>
+
+    request.getfixturevalue("django_db_setup")
     conn = psycopg2.connect(
         dbname=settings.DATABASES[<span class="hljs-string">"default"</span>][<span class="hljs-string">"NAME"</span>],
         host=settings.DATABASES[<span class="hljs-string">"default"</span>][<span class="hljs-string">"HOST"</span>],
