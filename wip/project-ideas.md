@@ -9,4 +9,3 @@
 - Write up "Patterns for Postgres as a queue".
 - Write up "Can your type system do this? For non-TypeScript devs".
 - Write up "Understanding through UnObjectOrientating".
-- Fix Pratt Parser demo.

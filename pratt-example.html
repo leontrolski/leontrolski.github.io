@@ -14,7 +14,8 @@
             .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em; white-space: nowrap;}
             blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
             details {border-bottom:solid 5px gray;}
-
+            table{background-color: white;}
+            td{padding-right:1rem;}
         </style>
         <link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet">
         <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js">
@@ -30,124 +31,183 @@
             <img src="pic.png" style="height:2em">
             ⇦
         </a>
-        <p><i>2021-11-24</i></p>
+        <p><i>2024-07-26</i></p>
         <h1>
             Pratt parser for a subset of JavaScript
         </h1>
-        <p>
-            This post presents a Pratt parser for a subset of JavaScript using TypeScript. It&#39;s very similar to the one used in             <a href="https://github.com/leontrolski/dnjs">
-                dnjs.
-            </a>
 
-        </p>
-        <p>
-            This type of parser has become fairly popular due to the simplicity with which it handles things like operator precedence. In fact I&#39;m part of a             <a href="https://www.oilshell.org/blog/2017/03/31.html">
-                long lineage
-            </a>
-             of bloggers - it&#39;s the &#34;monad is a burrito&#34; of parsing posts. I thought I&#39;d bother writing up my attempt as I had a fun time writing it and was particularly happy with the brevity of the resulting code - I think this really exposes how lovely a parsing method it is. Thank you thank you             <a href="https://andychu.net/">
-                Andy C
-            </a>
-             for bringing it into my life.
-        </p>
-        <p>
-            The parser will turn the following source:
-        </p>
-        <pre class="language-javascript"><code>{
-    &#34;a&#34;: {&#34;b&#34;: {&#34;c&#34;: &#34;d&#34;}},
-    &#34;foo&#34;: (1 === 2)
-        ? &#34;bar&#34;
-        : 3 + 4 * 5
-}</code>
-</pre>
-        <p>
-            Into the following AST:
-        </p>
-        <pre class="language-javascript"><code>({
-    (: &#34;a&#34; ({ (: &#34;b&#34; ({ (: &#34;c&#34; &#34;d&#34;)))))
-    (:
-        &#34;foo&#34;
-        (?
-            (=== 1 2)
-            &#34;bar&#34;
-            (+ 3 (* 4 5)))))</code>
-</pre>
-        <p>
-            Each S-expression is of the form:
-        </p>
-        <pre class="language-javascript"><code>(operator child child ...)</code>
-</pre>
-        <p>
-            Here&#39;s le parsing code:
-        </p>
-        <pre class="language-javascript"><code>const source = &#39;...&#39;  // see above
-const split = source.match(/{|}|:|,|\(|\)|===|:|\?|\+|\*|\d+|(?:&#34;[^&#34;]+&#34;)/g)
-
-type Token = {
-    type: string
-    value: string
+<p>This post presents a Pratt parser for a subset of JavaScript implemented in Python.</p>
+<p>This type of parser has become fairly popular due to the simplicity with which it handles operator precedence. In fact I&#39;m part of a <a href="https://www.oilshell.org/blog/2017/03/31.html">long lineage</a> of bloggers - it&#39;s the &quot;monad is a burrito&quot; of parsing posts. I thought I&#39;d bother writing up my attempt as I had a fun time writing it and was particularly happy with the brevity of the resulting code. Thank you thank you <a href="https://andychu.net/">Andy C</a> for bringing it into my life.</p>
+<p>The parser will turn the following source:</p>
+<pre><code class="lang-javascript">{
+    <span class="hljs-attr">"a"</span>: {<span class="hljs-attr">"b"</span>: {<span class="hljs-attr">"c"</span>: <span class="hljs-string">"d"</span>}},
+    <span class="hljs-attr">"foo"</span>: (<span class="hljs-number">1</span> === <span class="hljs-number">2</span>)
+        ? <span class="hljs-string">"bar"</span>
+        : <span class="hljs-number">3</span> * <span class="hljs-number">4</span> + <span class="hljs-number">5</span>
 }
+</code></pre>
+<p>Into the following AST:</p>
+<pre><code class="lang-clojure">({
+    (<span class="hljs-name">:</span> <span class="hljs-string">"a"</span> ({ (<span class="hljs-name">:</span> <span class="hljs-string">"b"</span> ({ (<span class="hljs-name">:</span> <span class="hljs-string">"c"</span> <span class="hljs-string">"d"</span>)))))
+    (<span class="hljs-name">:</span> <span class="hljs-string">"foo"</span> (<span class="hljs-name">?</span> (<span class="hljs-name">===</span> <span class="hljs-number">1</span> <span class="hljs-number">2</span>)
+        <span class="hljs-string">"bar"</span>
+        (<span class="hljs-name"><span class="hljs-builtin-name">+</span></span> (<span class="hljs-name"><span class="hljs-builtin-name">*</span></span> <span class="hljs-number">3</span> <span class="hljs-number">4</span>) <span class="hljs-number">5</span>))))
+</code></pre>
+<p>Some more examples:</p>
+<table>
+<tr>
+<td><code>1</code></td>
+<td><code>1</code></td>
+</tr>
+<tr>
+<td><code>1 + 2</code></td>
+<td><code>(+ 1 2)</code></td>
+</tr>
+<tr>
+<td><code>1 + 2 * 3</code></td>
+<td><code>(+ 1 (* 2 3))</code></td>
+</tr>
+<tr>
+<td><code>1 * 2 + 3</code></td>
+<td><code>(+ (* 1 2) 3)</code></td>
+</tr>
+<tr>
+<td><code>1 * (2 + 3)</code></td>
+<td><code>(* 1 (+ 2 3))</code></td>
+</tr>
+<tr>
+<td><code>{1, 2, 3}</code></td>
+<td><code>({ 1 2 3)</code></td>
+</tr>
+<tr>
+<td><code>{&quot;a&quot;: 1, &quot;c&quot;: 1 + 2}</code></td>
+<td><code>({ (: &quot;a&quot; 1) (: &quot;c&quot; (+ 1 2)))</code></td>
+</tr>
+</table>
 
-const tokens: Token[] = (split || []).map(value =&gt; ({
-    type: value[0] === &#39;&#34;&#39; ? &#34;string&#34; : value.match(/\d+/) ? &#34;number&#34; : value,
-    value
-}))
+<br>
+<br>
+<details>
+    <summary>Firstly, some imports and a tokenizer, for more details on these, see my <a href="weenie-lisp.html">other parsing post</a>.</summary>
 
-type Node_ = {
-    token: Token
-    children: Node_[]
+<pre><code class="lang-python"><span class="hljs-built_in">from</span> __future__ import annotations
+<span class="hljs-built_in">from</span> dataclasses import dataclass
+import <span class="hljs-keyword">string</span>
+<span class="hljs-built_in">from</span> typing import Iterator
+
+<span class="hljs-literal">EOF</span> = <span class="hljs-string">"\x1a"</span>
+
+@dataclass
+class PeekableIterator:
+    iter: Iterator[str]
+    peek: str = <span class="hljs-literal">EOF</span>
+
+    def __post_init__(self) -&gt; None:
+        next(self)
+
+    def __next__(self) -&gt; None:
+        self.peek = next(self.iter, <span class="hljs-literal">EOF</span>)
+
+def tokenize(<span class="hljs-keyword">chars</span>: PeekableIterator) -&gt; Iterator[str]:
+    <span class="hljs-keyword">while</span> <span class="hljs-keyword">chars</span>.peek != <span class="hljs-literal">EOF</span>:
+        <span class="hljs-keyword">if</span> <span class="hljs-keyword">chars</span>.peek <span class="hljs-keyword">in</span> <span class="hljs-keyword">string</span>.whitespace:
+            next(<span class="hljs-keyword">chars</span>)
+        elif <span class="hljs-keyword">chars</span>.peek <span class="hljs-keyword">in</span> <span class="hljs-string">"{}():?+*,"</span>:
+            yield <span class="hljs-keyword">chars</span>.peek
+            next(<span class="hljs-keyword">chars</span>)
+        elif <span class="hljs-keyword">chars</span>.peek == <span class="hljs-string">"="</span>:
+            next(<span class="hljs-keyword">chars</span>)
+            assert <span class="hljs-keyword">chars</span>.peek == <span class="hljs-string">"="</span>
+            next(<span class="hljs-keyword">chars</span>)
+            assert <span class="hljs-keyword">chars</span>.peek == <span class="hljs-string">"="</span>
+            next(<span class="hljs-keyword">chars</span>)
+            yield <span class="hljs-string">"==="</span>
+        elif <span class="hljs-keyword">chars</span>.peek == <span class="hljs-string">'"'</span>:
+            current = <span class="hljs-string">""</span>
+            current += <span class="hljs-keyword">chars</span>.peek
+            next(<span class="hljs-keyword">chars</span>)
+            <span class="hljs-keyword">while</span> <span class="hljs-keyword">chars</span>.peek != <span class="hljs-string">'"'</span>:
+                current += <span class="hljs-keyword">chars</span>.peek
+                next(<span class="hljs-keyword">chars</span>)
+            current += <span class="hljs-keyword">chars</span>.peek
+            next(<span class="hljs-keyword">chars</span>)
+            yield current
+        <span class="hljs-keyword">else</span>:
+            current = <span class="hljs-string">""</span>
+            <span class="hljs-keyword">while</span> <span class="hljs-keyword">chars</span>.peek <span class="hljs-keyword">in</span> <span class="hljs-string">"0123456789"</span>:
+                current += <span class="hljs-keyword">chars</span>.peek
+                next(<span class="hljs-keyword">chars</span>)
+            yield current
+</code></pre>
+</details>
+
+<br>
+<br>
+<p>With that defined, given the example <code>source</code> from above, <code>list(tokenize(PeekableIterator(iter(source))))</code> should give:</p>
+<pre><code class="lang-python">['{', '<span class="hljs-string">"a"</span>', <span class="hljs-symbol">':</span>', '{', '<span class="hljs-string">"b"</span>', <span class="hljs-symbol">':</span>', '{', '<span class="hljs-string">"c"</span>', <span class="hljs-symbol">':</span>', '<span class="hljs-string">"d"</span>', '}', '}', ',', '<span class="hljs-string">"foo"</span>', <span class="hljs-symbol">':</span>', '(', <span class="hljs-symbol">'1</span>', <span class="hljs-symbol">'===</span>', <span class="hljs-symbol">'2</span>', ')', <span class="hljs-symbol">'?</span>', '<span class="hljs-string">"bar"</span>', <span class="hljs-symbol">':</span>', <span class="hljs-symbol">'3</span>', <span class="hljs-symbol">'*</span>', <span class="hljs-symbol">'4</span>', <span class="hljs-symbol">'+</span>', <span class="hljs-symbol">'5</span>', '}']
+</code></pre>
+
+<br>
+<br>
+
+<p>Now we define the AST <code>Node</code> type and a small helper:</p>
+<pre><code class="lang-python"><span class="hljs-meta">@dataclass</span>
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Node</span>:</span>
+    token: str
+    children: list[Node]
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">next_assert</span><span class="hljs-params">(tokens: PeekableIterator, to: str)</span> -&gt; <span class="hljs-keyword">None</span>:</span>
+    <span class="hljs-keyword">assert</span> tokens.peek == to
+    next(tokens)
+</code></pre>
+<p>Then the relative precedence of each of the infix operators:</p>
+<pre><code class="lang-python"><span class="hljs-attr">INFIX_PRECEDENCES</span> = {
+    <span class="hljs-string">"==="</span>: <span class="hljs-number">2</span>,
+    <span class="hljs-string">":"</span>: <span class="hljs-number">11</span>,
+    <span class="hljs-string">"?"</span>: <span class="hljs-number">12</span>,
+    <span class="hljs-string">"+"</span>: <span class="hljs-number">14</span>,
+    <span class="hljs-string">"*"</span>: <span class="hljs-number">15</span>,
 }
+</code></pre>
+<p>The parser itself is then pretty simple!</p>
+<pre><code class="lang-python">def <span class="hljs-keyword">parse</span>(tokens: PeekableIterator, precedence: int) -&gt; Node:
+    <span class="hljs-keyword">token</span> = tokens.peek
+    next(tokens)
 
-const sexpr = (node: Node_): string =&gt; {
-    if (node.token.type === &#34;number&#34; || node.token.type === &#34;string&#34;)
-        return node.token.value
-    const args = node.children.map(sexpr).join(&#34; &#34;)
-    return `(${node.token.type}${args.length ? &#39; &#39; : &#39;&#39;}${args})`
-}
+    <span class="hljs-keyword">if</span> <span class="hljs-keyword">token</span>[0] <span class="hljs-keyword">in</span> '"0123456789':
+        node = <span class="hljs-keyword">token</span>  # atom
+    elif <span class="hljs-keyword">token</span> == <span class="hljs-string">"{"</span>:
+        node = Node(<span class="hljs-keyword">token</span>, [])
+        <span class="hljs-keyword">while</span> tokens.peek != <span class="hljs-string">"}"</span>:
+            <span class="hljs-keyword">if</span> tokens.peek == <span class="hljs-string">","</span>:
+                next(tokens)
+            <span class="hljs-keyword">else</span>:
+                node.children.<span class="hljs-keyword">append</span>(<span class="hljs-keyword">parse</span>(tokens, 2))
+        next_assert(tokens, <span class="hljs-string">"}"</span>)
+    elif <span class="hljs-keyword">token</span> == <span class="hljs-string">"("</span>:
+        node = <span class="hljs-keyword">parse</span>(tokens, -1)
+        next_assert(tokens, <span class="hljs-string">")"</span>)
+    <span class="hljs-keyword">else</span>:
+        raise ValueError(f<span class="hljs-string">"Unrecognised token: {token}"</span>)
 
-const infixPrecedences = {&#34;===&#34;: 2, &#34;+&#34;: 14, &#34;*&#34;: 15, &#34;:&#34;: 11, &#34;?&#34;: 12}
-let i = 0
-const advance = () =&gt; i += 1
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">infix</span>(tokens, precedence, node)
 
-const parse = (precedence: number): Node_ =&gt; {
-    const token = tokens[i]
-    let node = {token, children: []}
-    if (token.type === &#34;number&#34; || token.type === &#34;string&#34;){
-        advance()
-    }
-    else if (token.type === &#34;{&#34;) {
-        advance()
-        while (tokens[i].type !== &#34;}&#34;)
-            tokens[i].type === &#34;,&#34; ? advance() : node.children.push(parse(2))
-        advance()
-    }
-    else if (token.type === &#34;(&#34;) {
-        advance()
-        node = parse(-1)
-        advance()  // advance the &#34;)&#34;
-    }
-    else {
-        throw new Error(`must be atom or object, got: ${JSON.stringify(token)}`)
-    }
-    if (i === tokens.length) return node
-    return infix(precedence, node)
-}
+def <span class="hljs-keyword">infix</span>(tokens: PeekableIterator, precedence: int, left: Node) -&gt; Node:
+    <span class="hljs-keyword">token</span> = tokens.peek
+    next_precedence = INFIX_PRECEDENCES.<span class="hljs-built_in">get</span>(<span class="hljs-keyword">token</span>)
+    <span class="hljs-keyword">if</span> next_precedence is None or precedence &gt;= next_precedence:
+        <span class="hljs-keyword">return</span> left
 
-const infix = (precedence: number, left: Node_): Node_ =&gt; {
-    const token = tokens[i]
-    const nextPrecedence = infixPrecedences[token.type]
-    if (nextPrecedence === undefined || precedence &gt;= nextPrecedence) return left
+    next(tokens)
+    node = Node(<span class="hljs-keyword">token</span>, [left, <span class="hljs-keyword">parse</span>(tokens, next_precedence)])
+    <span class="hljs-keyword">if</span> <span class="hljs-keyword">token</span> == <span class="hljs-string">"?"</span>:  # ? is a ternary expression, <span class="hljs-keyword">so</span> we <span class="hljs-keyword">parse</span> <span class="hljs-keyword">one</span> <span class="hljs-keyword">more</span> child
+        next_assert(tokens, <span class="hljs-string">":"</span>)
+        node.children.<span class="hljs-keyword">append</span>(<span class="hljs-keyword">parse</span>(tokens, next_precedence))
 
-    advance()
-    const children = [left, parse(nextPrecedence)]
-    if (token.type === &#34;?&#34;){
-        advance()  // advance the &#34;:&#34;
-        children.push(parse(nextPrecedence))
-    }
-    return {token, children}
-}
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">infix</span>(tokens, precedence, node)
+</code></pre>
+<p>If that was fun, here&#39;s a more complicated <a href="https://github.com/leontrolski/dnjs/blob/master/dnjs/parser.py#L43">parser</a> for <a href="https://github.com/leontrolski/dnjs">an old hobby project of mine</a>.</p>
 
-console.log(sexpr(parse(0)))</code>
-</pre>
 
     </body>
 
