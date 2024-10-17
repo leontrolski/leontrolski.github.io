@@ -86,7 +86,6 @@ FALSE	FALSE	TRUE	FALSE	FALSE	5
 df = pd.read_csv(io.StringIO(TSV), sep=<span class="hljs-string">"\t"</span>)
 flags = [c <span class="hljs-keyword">for</span> c <span class="hljs-keyword">in</span> df.columns <span class="hljs-keyword">if</span> c != <span class="hljs-string">"count"</span>]
 df = df.set_index(flags)
-df = df.groupby(flags).sum()
 upsetplot.plot(df[<span class="hljs-string">"count"</span>])
 plt.show()
 </code></pre>
