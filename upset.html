@@ -25,71 +25,76 @@
             <img src="pic.png" style="height:2em">
             ⇦
         </a>
-        <p><i>2023-11-16</i></p>
+        <p><i>2024-10-17</i></p>
         <h1>UpSet plots, succinctly</h1>
         <p>
             <a href="https://en.wikipedia.org/wiki/UpSet_Plot">UpSet plots</a> are not widely known and are useful for understanding the intersections of categorised data - think of them as Venn diagrams on steroids. Let's go straight to an example:
         </p>
 
-        <p>
-            First, let's put data into a csv file, in this case from Postgres:
-        </p>
-        <pre class="language-bash"><code>psql postgres://... -t -A -F ',' -c \
-'COPY ( SELECT ... ) TO STDOUT WITH CSV HEADER' > ~/example.csv</code></pre>
+        <p>Say we have a load of information about dogs in the form of flags (<code>is_happy</code>, <code>is_yappy</code>, etc). Let&#39;s select out all of the data and aggregate:</p>
+<pre><code class="lang-sql"><span class="hljs-keyword">SELECT</span>
+  is_happy,
+  is_yappy,
+  is_hairy,
+  is_waggy,
+  is_tall,
+  <span class="hljs-keyword">count</span>(*) <span class="hljs-keyword">AS</span> c
+<span class="hljs-keyword">FROM</span> (
+  <span class="hljs-keyword">SELECT</span>
+    <span class="hljs-keyword">id</span>,
+    is_happy,
+    <span class="hljs-keyword">coalesce</span>(is_yappy, <span class="hljs-literal">FALSE</span>),
+    <span class="hljs-keyword">coalesce</span>(is_hairy, <span class="hljs-literal">FALSE</span>),
+    <span class="hljs-keyword">coalesce</span>(is_waggy, <span class="hljs-literal">FALSE</span>),
+    <span class="hljs-keyword">coalesce</span>(is_tall, <span class="hljs-literal">FALSE</span>)
+  <span class="hljs-keyword">FROM</span> happy_table
+  <span class="hljs-keyword">LEFT</span> <span class="hljs-keyword">JOIN</span> yappy_table <span class="hljs-keyword">USING</span> (<span class="hljs-keyword">id</span>)
+  ...
+)
+<span class="hljs-keyword">GROUP</span> <span class="hljs-keyword">BY</span>
+  is_happy,
+  is_yappy,
+  is_hairy,
+  is_waggy,
+  is_tall
+</code></pre>
+<p>Note that the <code>count</code> in each row is a <b>distinct set of dogs</b> from the count in every other row.</p>
+<pre><code class="lang-csv">is_happy is_yappy is_hairy is_waggy is_tall count
+<span class="hljs-literal">TRUE</span>     <span class="hljs-literal">FALSE</span>    <span class="hljs-literal">TRUE</span>     <span class="hljs-literal">FALSE</span>    <span class="hljs-literal">TRUE</span>    <span class="hljs-number">12</span>
+<span class="hljs-literal">FALSE</span>    <span class="hljs-literal">FALSE</span>    <span class="hljs-literal">TRUE</span>     <span class="hljs-literal">FALSE</span>    <span class="hljs-literal">TRUE</span>    <span class="hljs-number">7</span>
+...
+</code></pre>
+<p>Now some setup:</p>
+<pre><code class="lang-shell">pip <span class="hljs-keyword">install</span> upsetplot pandas
+</code></pre>
+<p>And the Python to make the plot:</p>
+<pre><code class="lang-python"><span class="hljs-keyword">import</span> io
+<span class="hljs-keyword">import</span> pandas <span class="hljs-keyword">as</span> pd
+<span class="hljs-keyword">import</span> upsetplot
+<span class="hljs-keyword">from</span> matplotlib <span class="hljs-keyword">import</span> pyplot <span class="hljs-keyword">as</span> plt
 
-        <p>
-            Our example data looks like:
-        </p>
-        <pre class="language-csv"><code>id,animal,dob
-1,cat,2021-01-01
-2,dog,2021-01-02
-3,cat,2021-01-03
-4,cat,2021-01-04
-5,snail,2021-01-05
-6,dog,2021-01-06</code></pre>
+TSV = <span class="hljs-string">"""
+is_happy	is_yappy	is_hairy	is_waggy	is_tall	count
+TRUE	TRUE	TRUE	TRUE	TRUE	12
+TRUE	TRUE	TRUE	TRUE	FALSE	8
+TRUE	TRUE	FALSE	FALSE	TRUE	23
+TRUE	FALSE	TRUE	TRUE	TRUE	1
+TRUE	FALSE	TRUE	TRUE	FALSE	3
+FALSE	FALSE	TRUE	FALSE	TRUE	4
+FALSE	FALSE	TRUE	FALSE	FALSE	5
+"""</span>
+df = pd.read_csv(io.StringIO(TSV), sep=<span class="hljs-string">"\t"</span>)
+flags = [c <span class="hljs-keyword">for</span> c <span class="hljs-keyword">in</span> df.columns <span class="hljs-keyword">if</span> c != <span class="hljs-string">"count"</span>]
+df = df.set_index(flags)
+df = df.groupby(flags).sum()
+upsetplot.plot(df[<span class="hljs-string">"count"</span>])
+plt.show()
+</code></pre>
+<p>The plot:</p>
+<p><img src="images/upset.png" alt="UpSet Plot"></p>
+<p>So, unhappy dogs are largely hairy and tall, there are a lot of tall yappy dogs, etc.</p>
 
-        <p>
-            Now we set up a Python environment with all the <a href="https://upsetplot.readthedocs.io/en/stable/api.html">libraries</a> we need:
-        </p>
-        <pre class="language-bash"><code>mkdir i-can-do-data-science; cd i-can-do-data-science
-python -m venv venv; source venv/bin/activate
-pip install pandas jupyter upsetplot
-jupyter notebook  # this will open a browser window</code></pre>
-
-        <p>
-            Let's import some junk in a new cell:
-        </p>
-        <pre class="language-python"><code>import warnings
-warnings.filterwarnings('ignore')  # Disable all warnings
-from collections import defaultdict
-import pandas as pd
-import upsetplot</code></pre>
-
-        <p>
-            Now let's plot our data:
-        </p>
-        <div class="overflow">
-            <img src="images/upset-jupyter.png"/>
-        </div>
-
-        <p>
-            This is maybe not the most efficient way of doing things, but I find it the most intuitive.
-            We simply construct a dict of "which ids are in which category":
-        </p>
-        <pre class="language-python"><code>grouped = {
-    "CATEGORY_1": {"id_1", "id_2", ...},
-    "CATEGORY_2": {"id_2", ...},
-}</code></pre>
-
-        <p>
-            Our plot tells us some useful facts:
-            <ul>
-                <li>There are in total 5 animals born >= 2021-01-02</li>
-                <li>1 cat is born < 2021-01-02</li>
-                <li>2 dogs are born >= 2021-01-02</li>
-                <li>...</li>
-            </ul>
-        </p>
-
+    <br>
+    <p><em><a href="upset-old.html">Old version</a> of this post munging data from a different format.</em></p>
     </body>
 </html>

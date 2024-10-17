@@ -1,0 +1,95 @@
+<html>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <head>
+        <title>
+            leontrolski - UpSet
+        </title>
+        <style>
+            body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 63%;}
+            @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+            pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
+            a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
+            a:hover {border-bottom: 0;}
+            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em; white-space: nowrap;}
+            blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
+            details {border-bottom:solid 5px gray;}
+            img{max-width:30rem;}
+            .overflow{overflow-x: scroll;max-width:30rem;box-shadow:0 0 5px 0 gray;}
+        </style>
+        <link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    </head>
+    <body>
+        <a href="index.html">
+            <img src="pic.png" style="height:2em">
+            ⇦
+        </a>
+        <p><i>2023-11-16</i></p>
+        <h1>UpSet plots, succinctly</h1>
+        <p>
+            <a href="https://en.wikipedia.org/wiki/UpSet_Plot">UpSet plots</a> are not widely known and are useful for understanding the intersections of categorised data - think of them as Venn diagrams on steroids. Let's go straight to an example:
+        </p>
+
+        <p>
+            First, let's put data into a csv file, in this case from Postgres:
+        </p>
+        <pre class="language-bash"><code>psql postgres://... -t -A -F ',' -c \
+'COPY ( SELECT ... ) TO STDOUT WITH CSV HEADER' > ~/example.csv</code></pre>
+
+        <p>
+            Our example data looks like:
+        </p>
+        <pre class="language-csv"><code>id,animal,dob
+1,cat,2021-01-01
+2,dog,2021-01-02
+3,cat,2021-01-03
+4,cat,2021-01-04
+5,snail,2021-01-05
+6,dog,2021-01-06</code></pre>
+
+        <p>
+            Now we set up a Python environment with all the <a href="https://upsetplot.readthedocs.io/en/stable/api.html">libraries</a> we need:
+        </p>
+        <pre class="language-bash"><code>mkdir i-can-do-data-science; cd i-can-do-data-science
+python -m venv venv; source venv/bin/activate
+pip install pandas jupyter upsetplot
+jupyter notebook  # this will open a browser window</code></pre>
+
+        <p>
+            Let's import some junk in a new cell:
+        </p>
+        <pre class="language-python"><code>import warnings
+warnings.filterwarnings('ignore')  # Disable all warnings
+from collections import defaultdict
+import pandas as pd
+import upsetplot</code></pre>
+
+        <p>
+            Now let's plot our data:
+        </p>
+        <div class="overflow">
+            <img src="images/upset-jupyter.png"/>
+        </div>
+
+        <p>
+            This is maybe not the most efficient way of doing things, but I find it the most intuitive.
+            We simply construct a dict of "which ids are in which category":
+        </p>
+        <pre class="language-python"><code>grouped = {
+    "CATEGORY_1": {"id_1", "id_2", ...},
+    "CATEGORY_2": {"id_2", ...},
+}</code></pre>
+
+        <p>
+            Our plot tells us some useful facts:
+            <ul>
+                <li>There are in total 5 animals born >= 2021-01-02</li>
+                <li>1 cat is born < 2021-01-02</li>
+                <li>2 dogs are born >= 2021-01-02</li>
+                <li>...</li>
+            </ul>
+        </p>
+
+    </body>
+</html>
