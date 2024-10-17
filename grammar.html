@@ -1,0 +1,97 @@
+<html>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <head>
+        <title>
+            leontrolski - adding Python syntax
+        </title>
+        <style>
+
+            body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 63%;}
+            @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+            pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
+            a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
+            a:hover {border-bottom: 0;}
+            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em; white-space: nowrap;}
+            blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
+            details {border-bottom:solid 5px gray;}
+
+        </style>
+        <link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js">
+
+        </script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js">
+
+        </script>
+
+    </head>
+    <body>
+        <a href="index.html">
+            <img src="pic.png" style="height:2em">
+            ⇦
+        </a>
+        <p><i>2024-10-17</i></p>
+        <h1>
+            Adding syntax to the cpython interpreter
+        </h1>
+
+<p><em>Condensed version of <a href="https://miguendes.me/what-if-python-had-this-ruby-feature">this cool blog post</a>.</em></p>
+<p>Let&#39;s add some new syntax to Python! Making a small change is not so hard.</p>
+<p>Our aim is to make ternary statements default to <code>None</code> as they do in Ruby:</p>
+<pre><code class="lang-python">&gt;&gt;&gt; <span class="hljs-string">"hello"</span> if <span class="hljs-number">2</span> + <span class="hljs-number">2</span> == <span class="hljs-number">4</span>
+<span class="hljs-string">"hello"</span>
+&gt;&gt;&gt; <span class="hljs-string">"hello"</span> if <span class="hljs-number">2</span> + <span class="hljs-number">2</span> == <span class="hljs-number">5</span>
+None
+</code></pre>
+<p>In existing Python, we get an error:</p>
+<pre><code class="lang-python"><span class="hljs-keyword">File</span> <span class="hljs-string">"&lt;python-input-0&gt;"</span>, <span class="hljs-literal">line</span> <span class="hljs-number">1</span>
+    <span class="hljs-string">"hello"</span> <span class="hljs-keyword">if</span> <span class="hljs-number">2</span> + <span class="hljs-number">2</span> == <span class="hljs-number">5</span>
+    ^^^^^^^^^^^^^^^^^^^^^
+SyntaxError: expected <span class="hljs-symbol">'else</span>' <span class="hljs-keyword">after</span> <span class="hljs-symbol">'if</span>' expression
+</code></pre>
+<p>First, let&#39;s clone and build Python:</p>
+<pre><code class="lang-shell">git clone git@github<span class="hljs-selector-class">.com</span>:python/cpython<span class="hljs-selector-class">.git</span>
+cd cpython
+./configure
+make
+</code></pre>
+<p>Now let&#39;s run the Python interpreter we built and check it works:</p>
+<pre><code class="lang-shell">./python.exe
+&gt;&gt;&gt; <span class="hljs-number">2</span> + <span class="hljs-number">2</span>
+<span class="hljs-number">4</span>
+</code></pre>
+<p>Now lets&#39;s change the grammar so that if we don&#39;t have an <code>else</code> condition we default to <code>None</code>.</p>
+<p>First find the following in <code>Grammar/python.gram</code>:</p>
+<pre class="lang-python"><code>expression[expr_ty] (memo):
+    | <span class="hljs-type">invalid_expression</span>
+    | <span class="hljs-type">invalid_legacy_expression</span>
+    | <span class="hljs-type">a</span>=disjunction '<span class="hljs-keyword">if</span>' b=disjunction '<span class="hljs-keyword">else</span>' c=expression { _PyAST_IfExp(b, a, c, EXTRA) }
+    | <span class="hljs-type">disjunction</span>
+    | <span class="hljs-type">lambdef</span>
+</code></pre><p>And change it to:</p>
+<pre class="lang-python"><code>expression[expr_ty] (memo):
+    | <span class="hljs-type">invalid_expression</span>
+    | <span class="hljs-type">invalid_legacy_expression</span>
+    | <span class="hljs-type">a</span>=disjunction '<span class="hljs-keyword">if</span>' b=disjunction '<span class="hljs-keyword">else</span>' c=expression { _PyAST_IfExp(b, a, c, EXTRA) }
+    | <span class="hljs-type">a</span>=disjunction '<span class="hljs-keyword">if</span>' b=disjunction { _PyAST_IfExp(b, a, _PyAST_Constant(Py_None, NULL, EXTRA), EXTRA) }
+    | <span class="hljs-type">disjunction</span>
+    | <span class="hljs-type">lambdef</span>
+</code></pre><p>Now lets regenerate the <code>c</code> files from the grammar:</p>
+<pre><code class="lang-shell"><span class="hljs-built_in">make</span> regen-pegen
+git diff  <span class="hljs-meta"># to see what changed</span>
+</code></pre>
+<p>And compile the interpreter again:</p>
+<pre><code class="lang-shell"><span class="hljs-attribute">make</span>
+</code></pre>
+<p>Now we have our shiny new ternary expressions:</p>
+<pre><code class="lang-python">./python.exe
+<span class="hljs-meta">&gt;&gt;&gt; </span>print(<span class="hljs-string">"hello"</span> <span class="hljs-keyword">if</span> <span class="hljs-number">2</span> + <span class="hljs-number">2</span> == <span class="hljs-number">4</span>)
+hello
+<span class="hljs-meta">&gt;&gt;&gt; </span>print(<span class="hljs-string">"hello"</span> <span class="hljs-keyword">if</span> <span class="hljs-number">2</span> + <span class="hljs-number">2</span> == <span class="hljs-number">5</span>)
+<span class="hljs-keyword">None</span>
+&gt;&gt;&gt;
+</code></pre>
+<p>Yay!</p>
+
+    </body>
+</html>
