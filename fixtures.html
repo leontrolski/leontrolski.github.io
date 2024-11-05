@@ -1,0 +1,192 @@
+<html>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <head>
+        <title>
+            leontrolski -             succinct git bisect
+        </title>
+        <style>
+
+            body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 63%;}
+            @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+            pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
+            a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
+            a:hover {border-bottom: 0;}
+            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em; white-space: nowrap;}
+            blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
+            details {border-bottom:solid 5px gray;}
+
+        </style>
+        <link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js">
+
+        </script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js">
+
+        </script>
+
+    </head>
+    <body>
+        <a href="index.html">
+            <img src="pic.png" style="height:2em">
+            ⇦
+        </a>
+        <p><em>Part of a series - <a href="index.html#stop">Stop doing things</a></em></p>
+        <br>
+        <p><i>2024-11-05</i></p>
+        <h1 id="stop-using-pytest-fixtures">Stop using pytest fixtures</h1>
+<p>Pytest fixtures are great for everything with a teardown - these kind of things:</p>
+<pre><code class="lang-python"><span class="hljs-variable">@pytest</span>.fixture(scope=<span class="hljs-string">"session"</span>)
+def db() -&gt; Iterator[str]:
+    create_db()
+    yield db_url
+    teardown_db()
+
+<span class="hljs-variable">@pytest</span>.fixture()
+def conn(<span class="hljs-attribute">db</span>: str) -&gt; Iterator[psycopg.Connection]:
+    with psycopg.conn(db) as <span class="hljs-attribute">conn</span>:
+        yield conn
+    clean_up_tables()
+
+<span class="hljs-variable">@pytest</span>.fixture()
+def monkey_patch_thing() -&gt; <span class="hljs-attribute">Iterator[None]</span>:
+    before = foo.bar
+    foo.bar = TEST_VALUE
+    yield
+    foo.bar = before
+</code></pre>
+<p>Pytest fixtures are bad because:</p>
+<ul>
+<li>They bypass standard import mechanisms, making tooling/linting hard to write.</li>
+<li>That means editor/IDE <a href="cmd-click-manifesto.html">support</a> can be limited/slow.</li>
+<li>The resolution/call order can be opaque.</li>
+<li>Typing support can be bad and is often unenforced.</li>
+<li>Paramaterisation is awkward compare to plain ol&#39; functions - you sometimes see things like this:</li>
+</ul>
+<pre><code class="lang-python"><span class="hljs-meta">@pytest.fixture()</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">create_user</span><span class="hljs-params">(conn: psycopg.Connection)</span> -&gt; User:</span>
+    <span class="hljs-keyword">return</span> db.add_user(username=<span class="hljs-string">"test-user"</span>, ...)
+</code></pre>
+<p>Evolve into monstrosities like:</p>
+<pre><code class="lang-python">@pytest.fixture()
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">create_user</span><span class="hljs-params">(<span class="hljs-symbol">conn:</span> psycopg.Connection)</span></span> -&gt; Callable[[str] User]:
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">_create_user</span><span class="hljs-params">(<span class="hljs-symbol">username:</span> str)</span></span>
+        <span class="hljs-keyword">return</span> db.add_user(username=username, ...)
+
+    <span class="hljs-keyword">return</span> _create_user
+</code></pre>
+<p>In general, why introduce a whole new (and fairly hairy) construct - fixtures - when boring function calls will suffice?</p>
+<h1 id="alternatives">Alternatives</h1>
+<p>OK, so what should I do instead?</p>
+<p>Have a very small number of primitives in your <code>conftest.py</code> that require teardown, things like <code>db</code>, <code>conn</code>, <code>monkeypatch</code> etc.</p>
+<p>Have various <code>helpers.py</code>/<code>factories.py</code>/whatever that contain <strong>normal functions that you import and call</strong> like:</p>
+<pre><code class="lang-python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">create_user</span><span class="hljs-params">(conn: psycopg.Connection)</span> -&gt; User:</span>
+    <span class="hljs-keyword">return</span> db.add_user(username=<span class="hljs-string">"test-user"</span>, ...)
+</code></pre>
+<p>Call them in your tests as normal functions:</p>
+<pre><code class="lang-python"><span class="hljs-keyword">from</span> tests.foo <span class="hljs-keyword">import</span> factories
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test_foo</span><span class="hljs-params">(conn: psycopg.Connection)</span> -&gt; <span class="hljs-keyword">None</span>:</span>
+    user = factories.create_user(conn)
+</code></pre>
+<p>All of your favourite features of plain ol&#39; functions (ability to add arguments/refactor, reason about imports etc) are all provided out of the box!</p>
+<h1 id="aside-on-factory-boy-model-bakery-etc-etc">Aside on Factory Boy, Model Bakery, etc etc</h1>
+<p>There are various libraries out there that promise to remove boiler plate by inspecting your models and filling in random values for those you don&#39;t provide at <code>__init__</code> time. These:</p>
+<ul>
+<li>Screw up the typing.</li>
+<li>Often have bizarre, non-standard interfaces for creating nested data (think <code>inner__nested_thing__add=0</code>).</li>
+<li>Introduce indeterminacy to your test runs.</li>
+</ul>
+<p>Bad!</p>
+<p>Don&#39;t bother, instead:</p>
+<ul>
+<li>Type out plain boilerplate functions, it ain&#39;t so arduous, promise.</li>
+<li>Lean on the type system to tell you which of these factory functions need updating on changes to the models.</li>
+<li>If lots of stuff you&#39;re testing is functions that take and return boring data (not crazy ORM instances), just construct and mutate, or use <code>deepcopy</code> eg:</li>
+</ul>
+<pre><code class="lang-python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">make_standard_item</span><span class="hljs-params">()</span> -&gt; Item:</span>
+    <span class="hljs-keyword">return</span> Item(...)
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">make_weird_item</span><span class="hljs-params">()</span> -&gt; Item:</span>
+    item = make_standard_item()
+    item.weird_exception = <span class="hljs-number">42</span>
+    <span class="hljs-keyword">return</span> item
+</code></pre>
+<h1 id="aside-on-typed-monkeypatch">Aside on typed monkeypatch</h1>
+<p>Wouldn&#39;t it be nice to have a typed <code>monkeypatch</code> with a nice interface where <code>mypy</code> can catch any errors. You can!</p>
+<p>Usage:</p>
+<pre><code class="lang-python">def test_foo<span class="hljs-function"><span class="hljs-params">(patch: conftest.MonkeyPatch)</span> -&gt;</span> None:
+    patch(my.<span class="hljs-built_in">module</span>.f).<span class="hljs-keyword">to</span>(_dummy_f)  <span class="hljs-comment"># typechecked!</span>
+    ...
+</code></pre>
+<p>Mildly terrifying implementation:</p>
+<pre><code class="lang-python"><span class="hljs-meta">@dataclass</span>
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">_MonkeyPatchSetAttr</span><span class="hljs-params">(Generic[T])</span>:</span>
+    monkeypatch: Any
+    module: Any
+    attr: str
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">to</span><span class="hljs-params">(self, to: T)</span> -&gt; <span class="hljs-keyword">None</span>:</span>
+        self.monkeypatch.setattr(self.module, self.attr, to)
+
+<span class="hljs-meta">@dataclass</span>
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MonkeyPatch</span>:</span>
+    monkeypatch: Any
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__call__</span><span class="hljs-params">(self, from_: T)</span> -&gt; _MonkeyPatchSetAttr[T]:</span>
+        call_site = inspect.stack()[<span class="hljs-number">1</span>]
+        code: str = call_site.code_context[<span class="hljs-number">0</span>]
+        match = re.match(<span class="hljs-string">r".+patch\(([\w+.]+)\)"</span>, code)
+        module_name, _, attr = match.groups()[<span class="hljs-number">0</span>].rpartition(<span class="hljs-string">"."</span>)
+        module = eval(module_name, call_site.frame.f_globals, call_site.frame.f_locals)
+        <span class="hljs-keyword">return</span> _MonkeyPatchSetAttr(self.monkeypatch, module, attr)
+
+<span class="hljs-meta">@pytest.fixture</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">patch</span><span class="hljs-params">(monkeypatch: Any)</span> -&gt; Iterator[MonkeyPatch]:</span>
+    <span class="hljs-keyword">yield</span> MonkeyPatch(monkeypatch)
+</code></pre>
+<h1 id="speculative-future">Speculative future test runner</h1>
+<p>Instead of test files looking like:</p>
+<pre><code class="lang-python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test_make_a_user</span><span class="hljs-params">(
+    conn: psycopg.Connection,
+    patch_settings: None
+)</span> -&gt; <span class="hljs-keyword">None</span>:</span>
+    ...
+    <span class="hljs-keyword">assert</span> foo == bar
+</code></pre>
+<p>Could we ditch a whole bunch of the <code>pytest</code> magic and just have files like:</p>
+<pre><code class="lang-python"><span class="hljs-keyword">with</span> (
+    pytest.test(<span class="hljs-string">"Make a user"</span>),
+    conftest.conn() <span class="hljs-keyword">as</span> conn,
+    patch_settings(),
+):
+    ...
+    assert foo == bar
+</code></pre>
+<p>Implementation something along the lines of:</p>
+<pre><code class="lang-python"><span class="hljs-meta">@contextmanager</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test</span><span class="hljs-params">(name: str)</span> -&gt; Iterator[pytest.Test]:</span>
+    <span class="hljs-keyword">if</span> <span class="hljs-string">"PYTEST_UNDER_TEST"</span> <span class="hljs-keyword">in</span> os.environ:
+        <span class="hljs-keyword">yield</span> pytest.Test(name)
+    <span class="hljs-keyword">else</span>:
+        <span class="hljs-keyword">raise</span> Error(<span class="hljs-string">"Not possible to import from test files."</span>)
+
+<span class="hljs-meta">@contextmanager</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">db</span><span class="hljs-params">()</span> -&gt; Iterator[str]:</span>
+    <span class="hljs-keyword">if</span> pytest.is_first_test():
+        create_db()
+    <span class="hljs-keyword">yield</span> db_url
+    <span class="hljs-keyword">if</span> pytest.is_last_test():
+        teardown_db()
+
+<span class="hljs-meta">@contextmanager</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">conn</span><span class="hljs-params">()</span> -&gt; Iterator[psycopg.Connection]:</span>
+    <span class="hljs-keyword">with</span> conftest.db() <span class="hljs-keyword">as</span> db:
+        <span class="hljs-keyword">with</span> psycopg.conn(db) <span class="hljs-keyword">as</span> conn:
+            <span class="hljs-keyword">yield</span> conn
+    clean_up_tables()
+</code></pre>
+
+
+    </body>
+
+</html>
