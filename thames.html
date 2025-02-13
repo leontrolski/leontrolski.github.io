@@ -1,0 +1,163 @@
+<html>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <head>
+        <title>
+            leontrolski - Thames
+        </title>
+        <style>
+            body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 63%;}
+            @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+            pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
+            a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
+            a:hover {border-bottom: 0;}
+            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em; white-space: nowrap;}
+            blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
+            details {border-bottom:solid 5px gray;}
+        </style>
+    </head>
+    <body>
+        <a href="index.html">
+            <img src="pic.png" style="height:2em">
+            ⇦
+        </a>
+        <p><i>2025-02-13</i></p>
+        <h1>Thames Path Distances</h1>
+        <div id="app"></div>
+    </body>
+</html>
+<script src="33-line-react.js"></script>
+<script>
+const distances = [
+    ["Source", 0.0],
+    ["Somerford Keynes", 4.3],
+    ["Ashton Keynes", 6.8],
+    ["Water Hay Car Park", 8.1],
+    ["Cricklade", 12.2],
+    ["Castle Eaton", 16.5],
+    ["Hannington Bridge", 18.6],
+    ["Lechlade", 23.0],
+    ["Buscot", 24.9],
+    ["Kelmscott", 26.7],
+    ["Radcot Bridge", 29.4],
+    ["Tadpole Bridge", 33.4],
+    ["Shifford Lock", 36.7],
+    ["Newbridge", 39.4],
+    ["Northmoor Lock", 41.6],
+    ["Bablock Hythe", 43.1],
+    ["Pinkhill", 45.9],
+    ["Swinford Bridge", 46.9],
+    ["Godstow Bridge", 50.5],
+    ["Osney Bridge, Oxford", 52.9],
+    ["Folly Bridge, Oxford", 54.0],
+    ["Donnington Bridge", 55.0],
+    ["Iffley Lock", 55.4],
+    ["Sandford Lock", 57.1],
+    ["Radley Boat House", 58.8],
+    ["Abingdon", 62.5],
+    ["Culham Old Bridge", 63.4],
+    ["Culham Lock", 64.7],
+    ["Clifton Hampden", 67.9],
+    ["Days Lock/Little Wittenham", 70.3],
+    ["Dorchester", 71.0],
+    ["Shillingford", 72.9],
+    ["Benson", 73.9],
+    ["Wallingford", 75.7],
+    ["Cholsey", 78.4],
+    ["Moulsford", 80.2],
+    ["Goring & Streatley", 82.4],
+    ["Whitchurch & Pangbourne", 86.8],
+    ["Purley on Thames", 89.4],
+    ["Tilehurst", 90.3],
+    ["Reading Bridge", 93.6],
+    ["Kennet Canal", 94.5],
+    ["Sonning", 96.7],
+    ["Shiplake College Boathouse", 98.8],
+    ["Shiplake", 100.1],
+    ["Henley", 102.4],
+    ["Remenham", 103.6],
+    ["Hambleden", 104.3],
+    ["Aston", 105.4],
+    ["Hurley", 108.7],
+    ["Marlow", 111.0],
+    ["Bourne End", 113.9],
+    ["Cookham", 115.3],
+    ["Maidenhead", 118.6],
+    ["Dorney/Bray Marina", 121.0],
+    ["Dorney Lake", 122.8],
+    ["Eton and Windsor", 125.1],
+    ["Datchet", 127.2],
+    ["Albert Bridge, Old Windsor", 128.3],
+    ["Bells of Ouzeley", 130.0],
+    ["Runnymede", 130.5],
+    ["Staines", 133.1],
+    ["Laleham", 135.6],
+    ["Chertsey Bridge", 137.1],
+    ["Shepperton Landing", 139.0],
+    ["Walton", 140.3],
+    ["Sunbury Lock", 142.0],
+    ["Hampton Court", 145.1],
+    ["Kingston upon Thames", 148.1],
+    ["Teddington", 149.7],
+    ["Ham House Ferry/Twickenham", 151.4],
+    ["Richmond", 152.5],
+    ["Richmond Lock & Isleworth", 153.1],
+    ["Kew Bridge", 155.5],
+    ["Barnes Bridge", 157.6],
+    ["Hammersmith Bridge", 159.3],
+    ["Putney Bridge", 161.0],
+    ["Wandsworth Bridge", 162.6],
+    ["Battersea Bridge", 164.1],
+    ["Albert Bridge", 164.4],
+    ["Chelsea Bridge", 165.1],
+    ["Vauxhall Bridge", 166.7],
+    ["Lambeth Bridge", 167.3],
+    ["Westminster Bridge", 167.8],
+    ["Waterloo Bridge", 168.3],
+    ["Blackfriars Bridge", 168.8],
+    ["Southwark Bridge", 169.2],
+    ["London Bridge", 169.6],
+    ["Tower Bridge", 170.2],
+    ["Rotherhithe & Wapping", 171.3],
+    ["Canary Wharf Pier", 173.1],
+    ["Greenwich", 175.4],
+    ["North Greenwich", 178.0],
+    ["Thames Barrier", 179.6],
+    ["Woolwich", 180.8],
+]
+let selected = []
+let ds = [0.0, 0.0]
+const f = (name, km) => {
+    if (selected.length == 2 || selected.includes(name)){
+        selected = [name]
+        ds[0] = km
+    }
+    else if (selected.length == 0){
+        selected.push(name)
+        ds[0] = km
+    }
+    else if (selected.length == 1){
+        selected.push(name)
+        ds[1] = km
+    }
+    render()
+}
+const View = () => [
+    m("table", distances.map(([name, km]) =>
+        m("tr", m("td", m("button", {
+            onclick: () => f(name, km),
+            style: selected.includes(name) ? `background-color: lightgreen` : ``
+        }, name))))),
+    selected.length == 2
+        ? m('', {style: `
+            position: fixed;
+            top: 0;
+            left: 0;
+            padding: 1rem;
+            background-color: white;
+            border: solid black 1px;
+        `}, `${Math.round((Math.max(...ds) - Math.min(...ds)) * 10) / 10}km`)
+        : m('', '')
+]
+render = ()=>m.render(document.getElementById('app'), {children: View()})
+render()
+</script>
