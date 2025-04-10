@@ -1,0 +1,78 @@
+<html>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <head>
+        <title>
+            leontrolski - Commonly used Pydantic features
+        </title>
+        <style>
+            body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 63%;}
+            @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+            pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
+            a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
+            a:hover {border-bottom: 0;}
+            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em; white-space: nowrap;}
+            blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
+            details {border-bottom:solid 5px gray;}
+        </style>
+        <link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js"></script>
+
+    </head>
+    <body>
+        <a href="index.html">
+            <img src="pic.png" style="height:2em">
+            ⇦
+        </a>
+        <p><i>2025-04-10</i></p>
+        <h1>
+            (Un)commonly used <a href="pydantic.html">Pydantic</a> features
+        </h1>
+
+<p>In the spirit of <a href="https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/">parse, don&#39;t validate</a>, here&#39;s some Pydantic features I use a lot that I don't see very wide usage of.</p>
+<p>These days I tend to feed <em>all</em> external data through Pydantic as early as possible, for those sweet, sweet types.</p>
+<p>A classic place to use these features would be parsing a csv. Instead of manually validating numbers, datetimes etc, just set up your types and:</p>
+<pre><code class="lang-python">typed_rows = [MyType.validate_python(<span class="hljs-built_in">row</span>) <span class="hljs-keyword">for</span> <span class="hljs-built_in">row</span> <span class="hljs-keyword">in</span> csv.reader(...)]
+</code></pre>
+<p>Features used:</p>
+<ul>
+<li>Custom parsing/serialisation of weird strings.
+    <ul>
+        <li>Just raise a <code>ValueError</code> on errors - Pydantic will handle &#39;em</li>
+        <li>You only need to do the initial parsing - in this case, Pydantic itself is still doing <code>list[str] -> list[float]</code></li>
+    </ul>
+</li>
+<li>Usage of <code>TypeAdaptor</code> for when the thing we&#39;re trying to deserialize is list-like and we can&#39;t use a <code>pydantic.BaseModel</code>.</li>
+<li>Usage of <code>.dump_python(..., mode=&quot;json&quot;)</code> for eg. preparing data for an ORM insert.</li>
+</ul>
+<pre><code class="lang-python"><span class="hljs-keyword">import</span> datetime <span class="hljs-keyword">as</span> dt
+from typing <span class="hljs-keyword">import</span> Annotated, Any
+<span class="hljs-keyword">import</span> pydantic
+
+
+<span class="hljs-keyword">def</span> underscore_split(<span class="hljs-string">v:</span> Any) -&gt; <span class="hljs-string">Any:</span>
+    <span class="hljs-keyword">if</span> isinstance(v, str):
+        <span class="hljs-keyword">return</span> v.split(<span class="hljs-string">"_"</span>)
+    <span class="hljs-keyword">return</span> v
+
+
+<span class="hljs-keyword">def</span> underscore_serialize(<span class="hljs-string">vs:</span> list[<span class="hljs-keyword">float</span>]) -&gt; <span class="hljs-string">str:</span>
+    <span class="hljs-keyword">return</span> <span class="hljs-string">"_"</span>.join(str(v) <span class="hljs-keyword">for</span> v <span class="hljs-keyword">in</span> vs)
+
+
+UnderscoreFloats = Annotated[
+    list[<span class="hljs-keyword">float</span>],
+    pydantic.BeforeValidator(underscore_split),
+    pydantic.PlainSerializer(underscore_serialize),
+]
+MyTuple = pydantic.TypeAdapter(
+    tuple[<span class="hljs-keyword">int</span>, dt.datetime, UnderscoreFloats],
+)
+
+my_tuple = MyTuple.validate_python((<span class="hljs-string">"42"</span>, <span class="hljs-string">"2012-01-30"</span>, <span class="hljs-string">"3.14_2.72"</span>))
+<span class="hljs-keyword">assert</span> my_tuple == (<span class="hljs-number">42</span>, dt.datetime(<span class="hljs-number">2012</span>, <span class="hljs-number">1</span>, <span class="hljs-number">30</span>), [<span class="hljs-number">3.14</span>, <span class="hljs-number">2.72</span>])
+<span class="hljs-keyword">assert</span> MyTuple.dump_python(my_tuple, mode=<span class="hljs-string">"json"</span>) == [<span class="hljs-number">42</span>, <span class="hljs-string">"2012-01-30T00:00:00"</span>, <span class="hljs-string">"3.14_2.72"</span>]
+</code></pre>
+
+    </body>
+</html>
