@@ -1,0 +1,5 @@
+Do:
+
+```shell
+for file in *.png; do base="${file%.png}"; magick "$file" -resize 800x -quality 75 "${base}.webp"; done;
+```
