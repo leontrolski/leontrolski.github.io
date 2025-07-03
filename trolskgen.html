@@ -1,0 +1,105 @@
+<html>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <head>
+        <title>
+            leontrolski - Python 3.14 templates
+        </title>
+        <style>
+            body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 63%;}
+            @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+            pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
+            a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
+            a:hover {border-bottom: 0;}
+            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em; white-space: nowrap;}
+            blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
+            details {border-bottom:solid 5px gray;}
+        </style>
+        <link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js">
+        </script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js">
+        </script>
+    </head>
+    <body>
+        <a href="index.html">
+            <img src="pic.png" style="height:2em">
+            ⇦
+        </a>
+        <p><i>2025-07-03</i></p>
+        <h1>Using Python 3.14 template strings to write Python</h1>
+
+<p><a href="https://docs.python.org/it/3.14/whatsnew/3.14.html#pep-750-template-strings">Python 3.14 template strings</a> look pretty groovy right?</p>
+<p>Let&#39;s use a new library of mine - <a href="https://github.com/leontrolski/trolskgen">trolskgen</a> - that utilises them for maximum cuteness. </p>
+<p><em>Note that it is still possible to use this library with Python &lt; 3.14 - see the docs.</em></p>
+<p>Imagine you have some weird schema definition from somewhere, for example:</p>
+<pre><code class="lang-xml">&lt;A x="</span>st<span class="hljs-string">r" y="</span><span class="hljs-keyword">int</span><span class="hljs-string">"&gt;
+    &lt;B many="</span><span class="hljs-literal">true</span><span class="hljs-string">" z="</span><span class="hljs-keyword">int</span><span class="hljs-string">" /&gt;
+    &lt;C x="</span>st<span class="hljs-string">r" /&gt;
+&lt;/A&gt;</code></pre>
+<p>And you want to codegen the Python:</p>
+<pre><code class="lang-python"><span class="hljs-title">from</span> __future__ <span class="hljs-keyword">import</span> annotations
+<span class="hljs-keyword">import</span> pydantic
+<span class="hljs-class">
+<span class="hljs-keyword">class</span> <span class="hljs-type">A</span>(<span class="hljs-title">pydantic</span>.<span class="hljs-type">BaseModel</span>):
+    x: str
+    y: int
+    b: list[<span class="hljs-type">B</span>]
+    c: <span class="hljs-type">C</span>
+
+<span class="hljs-keyword">class</span> <span class="hljs-type">B</span>(<span class="hljs-title">pydantic</span>.<span class="hljs-type">BaseModel</span>):
+    z: int
+
+<span class="hljs-keyword">class</span> <span class="hljs-type">C</span>(<span class="hljs-title">pydantic</span>.<span class="hljs-type">BaseModel</span>):
+    x: str</span>
+</code></pre>
+<p>Well, let&#39;s go and do it - with template strings!</p>
+<p>Firstly:</p>
+<pre><code class="lang-shell">pip <span class="hljs-keyword">install</span> trolskgen
+</code></pre>
+<p>Then:</p>
+<pre><code class="lang-python"><span class="hljs-keyword">import</span> io
+<span class="hljs-keyword">from</span> string.templatelib <span class="hljs-keyword">import</span> Template
+<span class="hljs-keyword">import</span> xml.etree.ElementTree <span class="hljs-keyword">as</span> ET
+
+<span class="hljs-keyword">import</span> trolskgen
+
+schema = <span class="hljs-string">"""
+&lt;A x="str" y="int"&gt;
+    &lt;B many="true" z="int" /&gt;
+    &lt;C x="str" /&gt;
+&lt;/A&gt;
+"""</span>
+schema_xml = ET.parse(io.StringIO(schema)).getroot()
+
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">as_field</span><span class="hljs-params">(node: ET.Element)</span> -&gt; Template:</span>
+    t = trolskgen.t(node.tag)
+    <span class="hljs-keyword">if</span> node.attrib.get(<span class="hljs-string">"many"</span>) == <span class="hljs-string">"true"</span>:
+        t = list[t]
+    <span class="hljs-keyword">return</span> t<span class="hljs-string">"{node.tag.lower()}: {t}"</span>
+
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">yield_classes</span><span class="hljs-params">(node: ET.Element)</span> -&gt; Template:</span>
+    fields = [t<span class="hljs-string">"{k}: {trolskgen.t(v)}"</span> <span class="hljs-keyword">for</span> k, v <span class="hljs-keyword">in</span> node.attrib.items() <span class="hljs-keyword">if</span> k != <span class="hljs-string">"many"</span>]
+    fields += [as_field(c) <span class="hljs-keyword">for</span> c <span class="hljs-keyword">in</span> node]
+    <span class="hljs-keyword">yield</span> t<span class="hljs-string">"""
+        class {node.tag}(pydantic.BaseModel):
+            {fields:*}
+    """</span>
+    <span class="hljs-keyword">for</span> c <span class="hljs-keyword">in</span> node:
+        <span class="hljs-keyword">yield</span> <span class="hljs-keyword">from</span> yield_classes(c)
+
+
+source_template = t<span class="hljs-string">"""
+from __future__ import annotations
+import pydantic
+
+{list(yield_classes(schema_xml)):*}
+"""</span>
+
+print(trolskgen.to_source(source_template))
+</code></pre>
+<p>Neat huh?</p>
+
+    </body>
+</html>
