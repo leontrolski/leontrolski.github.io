@@ -16,7 +16,7 @@
             details {border-bottom:solid 5px gray;}
 
         </style>
-        <link href="https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css" rel="stylesheet">
+        <link href="https://unpkg.com/prism-themes@1.9.0/themes/prism-darcula.min.css" rel="stylesheet">
         <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js">
 
         </script>
@@ -110,8 +110,7 @@ users = [
     ),
 ]
 session.add_all(users)
-session.commit()</code>
-</pre>
+session.commit()</code></pre>
 
         </details>
         <br>
@@ -119,8 +118,7 @@ session.commit()</code>
         <b>
             Note from the above:
         </b>
-        <pre class="language-python"><code>backref=backref(&#34;baskets&#34;, lazy=&#34;raise&#34;)</code>
-</pre>
+        <pre class="language-python"><code>backref=backref(&#34;baskets&#34;, lazy=&#34;raise&#34;)</code></pre>
         <b>
             This should probably be the default as it forces you to pick a loading technique at query time.
         </b>
@@ -139,37 +137,30 @@ for user in qry:  # Point A
     print(f&#34;User: {user.user_id}&#34;)
 
     for basket in user.baskets:  # Point B
-        print(f&#34;Basket {basket.basket_id}&#34;)</code>
-</pre>
+        print(f&#34;Basket {basket.basket_id}&#34;)</code></pre>
         <p>
             We&#39;re going to swap out             <code class="inline">someloadingtechnique</code>
              with each of SQLAlchemy&#39;s and inspect the SQL.
         </p>
         <br>
-        <pre class="language-python"><code>.options(lazyload(User.baskets))  # SQLAlchemy&#39;s default on a relationship</code>
-</pre>
+        <pre class="language-python"><code>.options(lazyload(User.baskets))  # SQLAlchemy&#39;s default on a relationship</code></pre>
         <pre class="language-sql"><code>-- At point A
 SELECT ...
 FROM user
-WHERE user.name = ?</code>
-</pre>
+WHERE user.name = ?</code></pre>
         <pre class="language-sql"><code>-- Each time at point B - classic N+1!
 SELECT ...
 FROM basket
-WHERE ? = basket.user_id</code>
-</pre>
+WHERE ? = basket.user_id</code></pre>
         <br>
-        <pre class="language-python"><code>.options(joinedload(User.baskets))  # I&#39;m informed this is similar to Django&#39;s select_related</code>
-</pre>
+        <pre class="language-python"><code>.options(joinedload(User.baskets))  # I&#39;m informed this is similar to Django&#39;s select_related</code></pre>
         <pre class="language-sql"><code>-- At point A, nothing at point B
 SELECT ...
 FROM user
 LEFT OUTER JOIN basket ON user.user_id = basket.user_id
-WHERE user.name = ?</code>
-</pre>
+WHERE user.name = ?</code></pre>
         <br>
-        <pre class="language-python"><code>.options(subqueryload(User.baskets))</code>
-</pre>
+        <pre class="language-python"><code>.options(subqueryload(User.baskets))</code></pre>
         <pre class="language-sql"><code>-- At point A, nothing at point B
 SELECT ...
 FROM (
@@ -177,11 +168,9 @@ FROM (
     FROM user
     WHERE user.name = ?
 ) AS anon_1
-JOIN basket ON anon_1.user_user_id = basket.user_id</code>
-</pre>
+JOIN basket ON anon_1.user_user_id = basket.user_id</code></pre>
         <br>
-        <pre class="language-python"><code>.options(selectinload(User.baskets))  # I&#39;m informed this is similar to Django&#39;s prefetch_related</code>
-</pre>
+        <pre class="language-python"><code>.options(selectinload(User.baskets))  # I&#39;m informed this is similar to Django&#39;s prefetch_related</code></pre>
         <pre class="language-sql"><code>-- Both at point A!
 SELECT ...
 FROM user
@@ -192,19 +181,16 @@ FROM user
 JOIN basket ON user.user_id = basket.user_id
 WHERE user.user_id IN (?, ?) -- The ids we SELECT-ed above earlier
 
--- SQLAlchemy &#34;joins&#34; the results together in memory</code>
-</pre>
+-- SQLAlchemy &#34;joins&#34; the results together in memory</code></pre>
         <br>
         <pre class="language-python"><code>.options(raiseload(User.baskets))
 
-# At point B, raises an error, no second query performed</code>
-</pre>
+# At point B, raises an error, no second query performed</code></pre>
         <br>
         <pre class="language-python"><code>.options(noload(User.baskets))
 
 # At point B, no second query performed
-# user.baskets is just an empty list</code>
-</pre>
+# user.baskets is just an empty list</code></pre>
 
     </body>
 

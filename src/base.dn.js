@@ -12,7 +12,7 @@ export const page = (title, h1, content) => m("html",
             blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
             details {border-bottom:solid 5px gray;}
         `)),
-        m("link", {href: "https://unpkg.com/prism-themes@1.4.0/themes/prism-vs.css", rel: "stylesheet"}),
+        m("link", {href: "https://unpkg.com/prism-themes@1.9.0/themes/prism-darcula.min.css", rel: "stylesheet"}),
         m("script", {src: "https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js"}),
         m("script", {src: "https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js"}),
     ),
