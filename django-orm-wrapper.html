@@ -1,0 +1,110 @@
+<html>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <head>
+        <title>
+            leontrolski - wrapping SQL with TEMPORARY VIEW
+        </title>
+        <style>
+            body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 63%;}
+            @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+            pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
+            a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
+            a:hover {border-bottom: 0;}
+            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em; white-space: nowrap;}
+            blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
+            details {border-bottom:solid 5px gray;}
+        </style>
+        <link href="https://unpkg.com/prism-themes@1.9.0/themes/prism-darcula.min.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js">
+        </script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js">
+        </script>
+    </head>
+    <body>
+        <a href="index.html">
+            <img src="pic.png" style="height:2em">
+            ⇦
+        </a>
+        <p><i>2025-07-08</i></p>
+        <h1>
+            Wrapping raw SQL with Django models + TEMPORARY VIEW for composabilty
+        </h1>
+
+<p>The Django ORM is terrible in many ways (versus eg. SQLAlchemy) - much of this results from the inability to dip down to the SQL level without resorting to SQL string munging and throwing away all your typing.</p>
+<p>Following is a technique to combine complex raw SQL queries with dynamic, composable <code>.filter()</code>, <code>.exclude()</code>, etc. from the ORM.</p>
+
+<details>
+    <summary>
+        <em>Imports for below.</em>
+    </summary>
+<pre><code class="lang-python"><span class="hljs-keyword">from</span> contextlib <span class="hljs-keyword">import</span> contextmanager
+<span class="hljs-keyword">from</span> typing <span class="hljs-keyword">import</span> Iterator, TypeVar
+<span class="hljs-keyword">from</span> django <span class="hljs-keyword">import</span> db
+<span class="hljs-keyword">from</span> django.db <span class="hljs-keyword">import</span> connection
+<span class="hljs-keyword">from</span> django.db.models <span class="hljs-keyword">import</span> Model, QuerySet
+
+TModel = TypeVar(<span class="hljs-string">"TModel"</span>, bound=Model)
+</code></pre>
+</details>
+
+<p>Say you have a complex query:</p>
+<pre><code class="lang-sql"><span class="hljs-keyword">SELECT</span> x, y
+<span class="hljs-keyword">FROM</span> (complex_subqueries)
+<span class="hljs-keyword">GROUP</span> <span class="hljs-keyword">BY</span> (loads_of_things)
+</code></pre>
+<p>Let&#39;s define a throwaway model to use as a row type:</p>
+<pre><code class="lang-python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-type">Row</span>(<span class="hljs-title">models</span>.<span class="hljs-type">Model</span>):
+    x = models.<span class="hljs-type">CharField</span>()
+    y = models.<span class="hljs-type">IntegerField</span>()</span>
+</code></pre>
+<p>Now we write a function that creates a <a href="https://www.postgresql.org/docs/current/sql-createview.html#id-1.9.3.97.6">TEMPORARY VIEW</a> from the query, wrapped in a bit that adds an arbitrary <code>id</code> column to placate Django:</p>
+<pre><code class="lang-python"><span class="hljs-meta">@contextmanager</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">from_query</span><span class="hljs-params">(cls: type[TModel], sql: str)</span> -&gt; Iterator[QuerySet[TModel]]:</span>
+    cls._meta.db_table = <span class="hljs-string">"__temporary_view"</span>  # We mutate the class 🤷
+    cls._meta.managed = <span class="hljs-keyword">False</span>
+    <span class="hljs-keyword">with</span> connection.cursor() <span class="hljs-keyword">as</span> cursor:
+        sql = f<span class="hljs-string">"""
+            CREATE OR REPLACE TEMPORARY VIEW __temporary_view AS
+            SELECT ROW_NUMBER() OVER (ORDER BY NULL) AS id, *
+            FROM ({sql}) AS __subquery
+        """</span>
+        cursor.execute(sql)
+        <span class="hljs-keyword">yield</span> cls.objects  <span class="hljs-comment"># type: ignore[attr-defined]</span>
+</code></pre>
+<p>Usage:</p>
+<pre><code class="lang-python">with from_query(Row, sql) as <span class="hljs-keyword">query</span>:
+    <span class="hljs-keyword">query</span> = <span class="hljs-keyword">query</span>.filter(x=<span class="hljs-string">"foo"</span>)
+    ...
+</code></pre>
+<br>
+<hr>
+<h2 id="typing-and-performance">Typing and performance</h2>
+<p>This approach seemingly plays well with the <a href="https://github.com/typeddjango/django-stubs">Django mypy plugin</a>.</p>
+<p>Although the <code>TEMPORARY VIEW</code> does introduce some session state, <code>__temporary_view</code>&nbsp; <a href="(https://www.postgresql.org/docs/current/sql-createview.html#id-1.9.3.97.6">won&#39;t collide</a> with any other sessions:</p>
+<blockquote>
+<p>Existing permanent relations with the same name are not visible to the current session while the temporary view exists...</p>
+</blockquote>
+<p>I did a budget benchmark of <code>CREATE TEMPORARY VIEW</code> vs plain ol&#39; CTEs and they&#39;re quick enough™:</p>
+<pre><code class="lang-python">N, temporary_views, ctes = <span class="hljs-number">100</span>, <span class="hljs-number">0.0</span>, <span class="hljs-number">0.0</span>
+<span class="hljs-keyword">for</span> <span class="hljs-keyword">_</span> <span class="hljs-built_in">in</span> range(N):
+    <span class="hljs-built_in">with</span> connection.cursor() <span class="hljs-built_in">as</span> cur:
+        <span class="hljs-built_in">before</span> = <span class="hljs-built_in">time</span>.<span class="hljs-built_in">time</span>()
+        cur.execute(<span class="hljs-string">"CREATE OR REPLACE TEMPORARY VIEW t AS SELECT 1 AS x, 2 AS y"</span>)
+        cur.execute(<span class="hljs-string">"SELECT * FROM t"</span>)
+        temporary_views += (<span class="hljs-built_in">time</span>.<span class="hljs-built_in">time</span>() - <span class="hljs-built_in">before</span>)
+
+    <span class="hljs-built_in">with</span> connection.cursor() <span class="hljs-built_in">as</span> cur:
+        <span class="hljs-built_in">before</span> = <span class="hljs-built_in">time</span>.<span class="hljs-built_in">time</span>()
+        cur.execute(<span class="hljs-string">"WITH t AS (SELECT 1 AS x, 2 AS y) SELECT * FROM t"</span>)
+        ctes += (<span class="hljs-built_in">time</span>.<span class="hljs-built_in">time</span>() - <span class="hljs-built_in">before</span>)
+
+print(f<span class="hljs-string">"TEMPORARY VIEW: {temporary_views/N*1000:2f}ms\nCTE: {ctes/N*1000:2f}ms"</span>)
+</code></pre>
+<p>Results:</p>
+<pre><code><span class="hljs-selector-tag">TEMPORARY</span> <span class="hljs-selector-tag">VIEW</span>: 0<span class="hljs-selector-class">.6ms</span>
+<span class="hljs-selector-tag">CTE</span>: 0<span class="hljs-selector-class">.25ms</span>
+</code></pre>
+
+    </body>
+
+</html>
