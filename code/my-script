@@ -1,0 +1,29 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = "==3.13"
+# dependencies = [
+#   "typer==0.16.0",
+# ]
+# ///
+from pathlib import Path
+import re
+from subprocess import check_output
+import typer
+
+app = typer.Typer()
+
+
+def sh(cmd: str) -> str:
+    return check_output(cmd, shell=True).decode()
+
+
+def main(counts: list[int], *, name: str = "Oli"):
+    for txt in Path().glob("*.txt"):
+        for line in txt.read_text().splitlines():
+            if match := re.search(r"==([\d.]+)", line):
+                print(match.groups()[0])
+    commits = sh('git log --pretty=format:"%H" | head -10').splitlines()
+    print(f"Hello {name} {counts=} {' '.join(commits)}")
+
+
+typer.run(main)
