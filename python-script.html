@@ -45,10 +45,10 @@
 <li>Some filthy shell command running</li>
 </ul>
 <p>A lot of not-using-Python comes down to friction, so make your own skeleton script with your favourite tidbits, then add the equivalent to your <code>.zshrc</code> or whatever:</p>
-<pre><code class="lang-shell">alias new-script=<span class="hljs-string">'alias new-script='</span><span class="hljs-keyword">function</span> _f(){curl https:<span class="hljs-regexp">//</span>raw.githubusercontent.com<span class="hljs-regexp">/leontrolski/</span>leontrolski.github.io<span class="hljs-regexp">/refs/</span>heads<span class="hljs-regexp">/master/</span>code<span class="hljs-regexp">/my-script &gt; $1 &amp;&amp; chmod +x ./</span><span class="hljs-variable">$1</span>;}; _f<span class="hljs-string">''</span>
+<pre><code class="lang-shell">function py-script(){curl https://raw.githubusercontent.com/leontrolski/leontrolski.github.io/refs/heads/master/code/my-script > $1 &amp;&amp; chmod +x ./$1;}
 </code></pre>
 <p>Then just</p>
-<pre><code class="lang-shell"><span class="hljs-keyword">new</span>-script foo
+<pre><code class="lang-shell">py-script foo
 ./foo <span class="hljs-comment">--help</span>
 </code></pre>
 <p>bang!</p>
