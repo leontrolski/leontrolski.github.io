@@ -1,0 +1,153 @@
+<html>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <head>
+        <title>
+            leontrolski - interpreter
+        </title>
+        <style>
+
+            body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 63%;}
+            @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+            pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
+            a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
+            a:hover {border-bottom: 0;}
+            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em; white-space: nowrap;}
+            blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
+            details {border-bottom:solid 5px gray;}
+
+        </style>
+        <link href="https://unpkg.com/prism-themes@1.9.0/themes/prism-darcula.min.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js">
+
+        </script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js">
+
+        </script>
+
+    </head>
+    <body>
+        <a href="index.html">
+            <img src="pic.png" style="height:2em">
+            ⇦
+        </a>
+        <p><i>2022-04-29</i></p>
+        <h1>Smol interpreter</h1>
+
+
+<p>The smallest readable interpreter I could come up with that handles integers, assignments, lexical scope, first class functions.</p>
+<pre><code class="lang-python">from __future__ import annotations
+from dataclasses import dataclass
+from typing import Callable, Union
+
+@dataclass(<span class="hljs-attr">frozen=</span><span class="hljs-literal">True</span>)
+class Symbol:
+    value: str
+
+@dataclass
+class List:
+    is_macro: bool
+    values: list[<span class="hljs-keyword">Node</span><span class="hljs-title">]
+
+Atom</span> = int
+<span class="hljs-keyword">Node</span> <span class="hljs-title">= Union</span>[Atom, Symbol, List]
+Value = Union[int, <span class="hljs-keyword">Node</span><span class="hljs-title">, Callable</span>[..., int], None]
+Scope = dict[Symbol, Value]
+
+is_whitespace = lambda c: c <span class="hljs-keyword">in</span> <span class="hljs-string">" \n"</span>
+is_number = lambda c: c.isdigit()
+is_symbol = lambda c: c not <span class="hljs-keyword">in</span> <span class="hljs-string">" \n()"</span>
+
+i = <span class="hljs-number">0</span>
+def parse(source: str) -&gt; <span class="hljs-keyword">Node</span><span class="hljs-title">:
+    global</span> i
+    def gobble(f: Callable[[str], bool]) -&gt; str:
+        global i
+        value = <span class="hljs-string">""</span>
+        while f(source[i]):
+            value += source[i]
+            i += <span class="hljs-number">1</span>
+        return value
+
+    gobble(is_whitespace)
+    if is_number(source[i]):
+        return int(gobble(is_number))
+    if is_symbol(source[i]):
+        return Symbol(gobble(is_symbol))
+    if source[i] == <span class="hljs-string">"("</span>:
+        i += <span class="hljs-number">1</span>  <span class="hljs-comment"># gobble (</span>
+        is_macro = source[i] == <span class="hljs-string">"#"</span>
+        if is_macro:
+            i += <span class="hljs-number">1</span>  <span class="hljs-comment"># gobble #</span>
+        items = List(is_macro, [])
+        while source[i] != <span class="hljs-string">")"</span>:
+            items.values.append(parse(source))
+            gobble(is_whitespace)
+        i += <span class="hljs-number">1</span>  <span class="hljs-comment"># gobble )</span>
+        return items
+    raise RuntimeError(<span class="hljs-string">"Unknown character"</span>)
+
+def block(scope: Scope, *nodes: <span class="hljs-keyword">Node</span><span class="hljs-title">) -&gt; Value</span>:
+    local_scope = scope.copy()
+    values = [interpret(local_scope, child) for child <span class="hljs-keyword">in</span> nodes]
+    return values[-<span class="hljs-number">1</span>]  <span class="hljs-comment"># blocks evaluate to the final value</span>
+
+def assign(scope: Scope, *nodes: <span class="hljs-keyword">Node</span><span class="hljs-title">) -&gt; Value</span>:
+    symbol, <span class="hljs-keyword">node</span> <span class="hljs-title">= nodes</span>
+    scope[symbol] = interpret(scope, <span class="hljs-keyword">node</span><span class="hljs-title">)
+    return</span> None
+
+def function(scope: Scope, *nodes: <span class="hljs-keyword">Node</span><span class="hljs-title">) -&gt; Value</span>:
+    local_scope = scope.copy()
+    vars, <span class="hljs-keyword">node</span> <span class="hljs-title">= nodes</span>
+    return lambda *args: interpret(local_scope | dict(zip(vars.values, args)), <span class="hljs-keyword">node</span><span class="hljs-title">)
+
+builtins</span> = {
+    Symbol(<span class="hljs-string">"{"</span>): block,
+    Symbol(<span class="hljs-string">"="</span>): assign,
+    Symbol(<span class="hljs-string">"=&gt;"</span>): function,
+    Symbol(<span class="hljs-string">"print"</span>): lambda *args: print(*args),
+    Symbol(<span class="hljs-string">"-"</span>): lambda a: -a,
+    Symbol(<span class="hljs-string">"*"</span>): lambda a, b: a * b,
+    Symbol(<span class="hljs-string">"+"</span>): lambda a, b: a + b,
+}
+
+def interpret(scope: Scope, <span class="hljs-keyword">node</span><span class="hljs-title">: Node</span>) -&gt; Value:
+    if isinstance(<span class="hljs-keyword">node</span><span class="hljs-title">, int</span>):
+        return <span class="hljs-keyword">node</span>
+    <span class="hljs-title">if</span> isinstance(<span class="hljs-keyword">node</span><span class="hljs-title">, Symbol</span>):
+        return scope[<span class="hljs-keyword">node</span><span class="hljs-title">]
+    if</span> <span class="hljs-keyword">node</span>.is_macro:<span class="hljs-title">
+        f</span>, *args = <span class="hljs-keyword">node</span>.<span class="hljs-title">values</span>
+        f = interpret(scope, f)
+        return f(scope, *args)
+    f, *args = [interpret(scope, child) for child <span class="hljs-keyword">in</span> <span class="hljs-keyword">node</span>.<span class="hljs-title">values</span>]
+    return f(*args)
+</code></pre>
+<p>Let&#39;s run it:</p>
+<pre><code class="lang-python">source = <span class="hljs-string">""</span><span class="hljs-string">"
+(<span class="hljs-subst">#{
+    (<span class="hljs-comment">#= make-adder</span>
+        (<span class="hljs-comment">#=&gt; (a) (#=&gt; (b) (+ a b))))</span>
+    (<span class="hljs-comment">#= add-one (make-adder 1))</span>
+    (print (add-one <span class="hljs-number">3</span>))
+
+    (<span class="hljs-comment">#= x 5)</span>
+    (<span class="hljs-comment">#= f</span>
+        (<span class="hljs-comment">#=&gt; (a b) (#{</span>
+            (<span class="hljs-comment">#= c (+ a b))</span>
+            (* (- c) x)
+        ))
+    )
+    (print (f <span class="hljs-number">1</span> <span class="hljs-number">3</span>))
+)
+<span class="hljs-string">""</span><span class="hljs-string">"
+interpret(builtins, parse(source))</span></span></span>
+</code></pre>
+<p>Should give you:</p>
+<pre><code><span class="hljs-number">4</span>
+<span class="hljs-number">-20</span>
+</code></pre>
+
+<p><em>Heads up - the typing is a bit all over the shop and doesn't actually typecheck..</em></p>
+</body>
+</html>
