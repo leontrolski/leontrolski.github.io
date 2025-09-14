@@ -23,8 +23,8 @@
   <canvas id="c"></canvas>
 
   <div class="controls">
-    <button id="a2hs" class="big" aria-label="Add to home screen">➕ Add to Home</button>
-    <button id="clear" class="big" aria-label="Reset screen">🔄 Reset</button>
+    <!-- <button id="a2hs" class="big" aria-label="Add to home screen">➕ Add to Home</button>
+    <button id="clear" class="big" aria-label="Reset screen">🔄 Reset</button> -->
   </div>
 
   <div id="iosInstr" class="ios-instr">To add: tap Share → "Add to Home Screen".</div>
@@ -69,8 +69,31 @@ let last = null;
 
 function pointerStart(x,y){
   drawing = true; frozen = false; last = {x,y};
-  try{ if(document.fullscreenElement==null && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{}); }catch(e){}
+//   try{ if(document.fullscreenElement==null && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{}); }catch(e){}
 }
+
+let fadeInterval = null;
+
+// Start fading loop once after resize
+function startFadeLoop(){
+  if(fadeInterval) clearInterval(fadeInterval);
+  fadeInterval = setInterval(()=>{
+    if(!drawing){ // only fade when not actively painting
+        const r = 30 + Math.floor(Math.random()*200);
+  const g = 30 + Math.floor(Math.random()*200);
+  const b = 30 + Math.floor(Math.random()*200);
+  currentColor = {r,g,b};
+  frozen = false;
+  fillSolid(currentColor);
+//   setTimeout(()=>{ frozen = true; }, 80);
+        // reset()
+    // ctx.fillStyle = `rgb(${currentColor.r|0},${currentColor.g|0},${currentColor.b|0})`
+    //   ctx.globalCompositeOperation = 'source-over';
+    //   ctx.fillRect(0,0,w,h);
+    }
+  }, 2000); // runs every 50ms (~20fps)
+}
+startFadeLoop();
 
 function pointerMove(x,y){
   if(!drawing) return;
@@ -79,10 +102,10 @@ function pointerMove(x,y){
   const baseRadius = 4 + Math.random()*6;
   for(let i=0;i<5;i++){
     const hue = (Math.random()*360)|0;
-    const sat = 80+Math.random()*50;
-    const light = 8+Math.random()*2;
+    const sat = 200+Math.random()*50;
+    const light = 6+Math.random()*2;
     const alpha = 0.4+Math.random()*0.8;
-    const radius = baseRadius * (0 + Math.random()*2.2);
+    const radius = baseRadius * (0 + Math.random()*3);
     const offsetX = x + (Math.random()-0.5)*radius;
     const offsetY = y + (Math.random()-0.5)*radius;
 
@@ -99,7 +122,7 @@ function pointerMove(x,y){
     ctx.fill();
 
     ctx.strokeStyle = `hsla(${(hue+180)%360},100%,80%,0.1)`;
-    ctx.lineWidth = 1.2;
+    ctx.lineWidth = 2;
     ctx.stroke();
   }
   ctx.globalCompositeOperation = 'source-over';
@@ -108,7 +131,7 @@ function pointerMove(x,y){
   const sample = ctx.getImageData(Math.max(0,x|0), Math.max(0,y|0), 1, 1).data;
   currentColor = {r:sample[0], g:sample[1], b:sample[2]};
 }
-pointerMove = debounce(pointerMove, 14);
+pointerMove = debounce(pointerMove, 12);
 
 function pointerEnd(){
   drawing = false; frozen = true; last = null;
@@ -138,15 +161,15 @@ canvas.addEventListener('mousedown', (e)=>{ mouseDown = true; pointerStart(e.cli
 window.addEventListener('mousemove',(e)=>{ if(mouseDown) pointerMove(e.clientX, e.clientY); });
 window.addEventListener('mouseup',(e)=>{ if(mouseDown){ mouseDown=false; pointerEnd(); } });
 
-document.getElementById('clear').addEventListener('click', ()=>{
-  const r = 30 + Math.floor(Math.random()*200);
-  const g = 30 + Math.floor(Math.random()*200);
-  const b = 30 + Math.floor(Math.random()*200);
-  currentColor = {r,g,b};
-  frozen = false;
-  fillSolid(currentColor);
-  setTimeout(()=>{ frozen = true; }, 80);
-});
+// document.getElementById('clear').addEventListener('click', ()=>{
+//   const r = 30 + Math.floor(Math.random()*200);
+//   const g = 30 + Math.floor(Math.random()*200);
+//   const b = 30 + Math.floor(Math.random()*200);
+//   currentColor = {r,g,b};
+//   frozen = false;
+//   fillSolid(currentColor);
+//   setTimeout(()=>{ frozen = true; }, 80);
+// });
 
 // Add to home screen handling
 let deferredPrompt = null;
@@ -155,29 +178,29 @@ const iosInstr = document.getElementById('iosInstr');
 function isIos(){ return /iphone|ipad|ipod/i.test(navigator.userAgent); }
 function isInStandaloneMode(){ return ('standalone' in navigator) && navigator.standalone; }
 
-window.addEventListener('beforeinstallprompt', (e)=>{
-  e.preventDefault(); deferredPrompt = e;
-  a2hsBtn.style.display = 'inline-block';
-});
+// window.addEventListener('beforeinstallprompt', (e)=>{
+//   e.preventDefault(); deferredPrompt = e;
+//   a2hsBtn.style.display = 'inline-block';
+// });
 
-a2hsBtn.addEventListener('click', async ()=>{
-  if(deferredPrompt){
-    deferredPrompt.prompt();
-    const choice = await deferredPrompt.userChoice;
-    deferredPrompt = null;
-    if(choice && choice.outcome==='accepted') a2hsBtn.textContent = '✅ Added';
-    else a2hsBtn.textContent = 'Maybe later';
-    setTimeout(()=>{ a2hsBtn.textContent = '➕ Add to Home'; }, 2500);
-  } else if(isIos()){
-    iosInstr.style.display = 'block';
-    setTimeout(()=>iosInstr.style.display='none',6000);
-  } else {
-    a2hsBtn.textContent = 'Use browser menu → Add to Home';
-    setTimeout(()=>a2hsBtn.textContent='➕ Add to Home',3000);
-  }
-});
+// a2hsBtn.addEventListener('click', async ()=>{
+//   if(deferredPrompt){
+//     deferredPrompt.prompt();
+//     const choice = await deferredPrompt.userChoice;
+//     deferredPrompt = null;
+//     if(choice && choice.outcome==='accepted') a2hsBtn.textContent = '✅ Added';
+//     else a2hsBtn.textContent = 'Maybe later';
+//     setTimeout(()=>{ a2hsBtn.textContent = '➕ Add to Home'; }, 2500);
+//   } else if(isIos()){
+//     iosInstr.style.display = 'block';
+//     setTimeout(()=>iosInstr.style.display='none',6000);
+//   } else {
+//     a2hsBtn.textContent = 'Use browser menu → Add to Home';
+//     setTimeout(()=>a2hsBtn.textContent='➕ Add to Home',3000);
+//   }
+// });
 
-if(isIos() && isInStandaloneMode()) document.getElementById('a2hs').style.display = 'none';
+// if(isIos() && isInStandaloneMode()) document.getElementById('a2hs').style.display = 'none';
 
 let lastTap = 0; document.addEventListener('touchend', (e)=>{ const t = performance.now(); if(t-lastTap < 800) e.preventDefault(); lastTap = t; }, {passive:false});
 
