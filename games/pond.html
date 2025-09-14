@@ -82,7 +82,7 @@
     // Ripples created on touch
     const ripples = [];
     function makeRipple(x, y) {
-      ripples.push({ x, y, r: 0, maxR: Math.max(W(), H()) * 0.6, alpha: 0.8 });
+      ripples.push({ x, y, r: 0, maxR: Math.max(W(), H()) * 0.3, alpha: 0.8 });
       // trim old
       if (ripples.length > 20) ripples.shift();
     }
