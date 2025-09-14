@@ -69,7 +69,7 @@ let last = null;
 
 function pointerStart(x,y){
   drawing = true; frozen = false; last = {x,y};
-//   try{ if(document.fullscreenElement==null && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{}); }catch(e){}
+  try{ if(document.fullscreenElement==null && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{}); }catch(e){}
 }
 
 function pointerMove(x,y){
