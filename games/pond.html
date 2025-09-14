@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>Baby Pond — Single Page</title>
+  <style>
+    /* Fullscreen, no scrolling or zooming, touch-friendly */
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: linear-gradient(#87CEEB 0%, #a4d2ff 30%, #bfeefc 100%);
+      -webkit-touch-callout: none; /* iOS: disable callout */
+      -webkit-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      touch-action: none; /* disable default touch gestures */
+      overscroll-behavior: none;
+    }
+
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      touch-action: none;
+    }
+
+    /* A tiny, clear helper UI for parents (not intrusive) */
+    .ui {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      background: rgba(255,255,255,0.6);
+      padding: 6px 8px;
+      border-radius: 10px;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+      font-size: 12px;
+      backdrop-filter: blur(4px);
+      pointer-events: none; /* so touches go to the canvas */
+    }
+
+    /* Big friendly help button in the bottom-right if you want to add later */
+    .hint {
+      position: absolute;
+      bottom: 14px;
+      right: 14px;
+      background: rgba(255,255,255,0.6);
+      padding: 8px 10px;
+      border-radius: 12px;
+      font-size: 13px;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <div class="ui">Touch anywhere — ripples &amp; friendly fish</div>
+
+  <script>
+    // Baby Pond: single file HTML game
+    // Designed to be touch-first, full-screen on phones
+
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+
+    // handle high DPI
+    function resize() {
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.floor(window.innerWidth * dpr);
+      canvas.height = Math.floor(window.innerHeight * dpr);
+      canvas.style.width = window.innerWidth + 'px';
+      canvas.style.height = window.innerHeight + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // Pond parameters
+    const W = () => canvas.width / (window.devicePixelRatio || 1);
+    const H = () => canvas.height / (window.devicePixelRatio || 1);
+
+    // Ripples created on touch
+    const ripples = [];
+    function makeRipple(x, y) {
+      ripples.push({ x, y, r: 0, maxR: Math.max(W(), H()) * 0.6, alpha: 0.8 });
+      // trim old
+      if (ripples.length > 20) ripples.shift();
+    }
+
+    // Simple fish objects
+    const fishCount = 6; // adjust for performance
+    const fish = [];
+
+    function rand(min, max) { return Math.random() * (max - min) + min; }
+
+    function createFish() {
+      for (let i = 0; i < fishCount; i++) {
+        fish.push({
+          x: rand(60, W() - 60),
+          y: rand(60, H() - 60),
+          vx: rand(-0.6, 0.6),
+          vy: rand(-0.3, 0.3),
+          speed: rand(0.3, 1.0),
+          hue: rand(150, 200), // bluish-green fish
+          size: rand(18, 34),
+          turnTimer: rand(60, 240) // frames until random turn
+        });
+      }
+    }
+
+    createFish();
+
+    // Touch handling: pointer events are recommended for cross-device
+    function getPointerPos(e) {
+      let rect = canvas.getBoundingClientRect();
+      let x = (e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0] && e.touches[0].clientX)) - rect.left;
+      let y = (e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0] && e.touches[0].clientY)) - rect.top;
+      return { x, y };
+    }
+
+    function onPointer(e) {
+      e.preventDefault();
+      const p = getPointerPos(e);
+      makeRipple(p.x, p.y);
+      // push fish away gently if close
+      for (let f of fish) {
+        const dx = f.x - p.x;
+        const dy = f.y - p.y;
+        const d = Math.sqrt(dx*dx + dy*dy);
+        const safe = f.size * 3;
+        if (d < safe) {
+          // set velocity away from touch
+          const strength = (safe - d) / safe * 4; // how hard to flee
+          f.vx += (dx / (d || 1)) * strength;
+          f.vy += (dy / (d || 1)) * strength;
+          // cap speed
+          const max = 3;
+          const sp = Math.sqrt(f.vx*f.vx + f.vy*f.vy);
+          if (sp > max) { f.vx = (f.vx/sp) * max; f.vy = (f.vy/sp) * max; }
+        }
+      }
+    }
+
+    canvas.addEventListener('pointerdown', onPointer, { passive: false });
+    canvas.addEventListener('pointermove', function(e){ if (e.pressure && e.pressure>0) onPointer(e); }, { passive: false });
+
+    // Draw scene
+    let frame = 0;
+    function draw() {
+      frame++;
+      const w = W();
+      const h = H();
+
+      // background: pond with radial gradient
+      const g = ctx.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, '#bfeefc');
+      g.addColorStop(0.4, '#9fdff8');
+      g.addColorStop(1, '#7bd1e8');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, w, h);
+
+      // subtle surface light pattern
+      ctx.save();
+      ctx.globalAlpha = 0.06;
+      ctx.fillStyle = 'white';
+      for (let i=0;i<6;i++) {
+        const rx = (Math.sin((frame/200)+i)*0.5+0.5) * w;
+        ctx.beginPath();
+        ctx.ellipse(rx, h*0.12 + i*20, w*0.2, 8, 0, 0, Math.PI*2);
+        ctx.fill();
+      }
+      ctx.restore();
+
+      // Update & draw ripples
+      for (let i = ripples.length-1; i >=0; i--) {
+        const r = ripples[i];
+        r.r += 2.8 + (r.r * 0.02);
+        r.alpha *= 0.985;
+        if (r.r > r.maxR || r.alpha < 0.02) {
+          ripples.splice(i,1);
+          continue;
+        }
+        ctx.beginPath();
+        ctx.strokeStyle = `rgba(255,255,255,${r.alpha})`;
+        ctx.lineWidth = Math.max(1, 10 * (1 - r.r / r.maxR));
+        ctx.arc(r.x, r.y, r.r, 0, Math.PI*2);
+        ctx.stroke();
+      }
+
+      // Update & draw fish
+      for (let f of fish) {
+        // gentle random drifting
+        f.turnTimer--;
+        if (f.turnTimer <= 0) {
+          f.turnTimer = rand(60, 240);
+          // slight randomized change
+          f.vx += rand(-0.6, 0.6);
+          f.vy += rand(-0.3, 0.3);
+        }
+
+        // gentle speed damping & limit
+        f.vx *= 0.995;
+        f.vy *= 0.995;
+        const sp = Math.sqrt(f.vx*f.vx + f.vy*f.vy) || 0.0001;
+        const desired = f.speed;
+        if (sp < desired) {
+          f.vx += (f.vx / (sp||1)) * 0.02;
+          f.vy += (f.vy / (sp||1)) * 0.02;
+        }
+
+        f.x += f.vx;
+        f.y += f.vy;
+
+        // keep fish inside pond with soft bounds
+        const margin = f.size*1.2;
+        if (f.x < margin) { f.x = margin; f.vx = Math.abs(f.vx) + 0.2; }
+        if (f.x > w - margin) { f.x = w - margin; f.vx = -Math.abs(f.vx) - 0.2; }
+        if (f.y < margin) { f.y = margin; f.vy = Math.abs(f.vy) + 0.1; }
+        if (f.y > h - margin) { f.y = h - margin; f.vy = -Math.abs(f.vy) - 0.1; }
+
+        // draw fish body
+        ctx.save();
+        ctx.translate(f.x, f.y);
+        const angle = Math.atan2(f.vy, f.vx);
+        ctx.rotate(angle);
+
+        // body
+        ctx.beginPath();
+        ctx.ellipse(0, 0, f.size*0.9, f.size*0.55, 0, 0, Math.PI*2);
+        ctx.fillStyle = `hsl(${f.hue}, 55%, 60%)`;
+        ctx.fill();
+
+        // tail
+        ctx.beginPath();
+        ctx.moveTo(-f.size*0.9, 0);
+        ctx.lineTo(-f.size*1.45, -f.size*0.45);
+        ctx.lineTo(-f.size*1.45, f.size*0.45);
+        ctx.closePath();
+        ctx.fillStyle = `hsl(${f.hue-10}, 60%, 45%)`;
+        ctx.fill();
+
+        // eye
+        ctx.beginPath();
+        ctx.arc(f.size*0.45, -f.size*0.15, Math.max(1.2, f.size*0.12), 0, Math.PI*2);
+        ctx.fillStyle = 'white';
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(f.size*0.55, -f.size*0.15, Math.max(0.7, f.size*0.06), 0, Math.PI*2);
+        ctx.fillStyle = '#222';
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      requestAnimationFrame(draw);
+    }
+
+    requestAnimationFrame(draw);
+
+    // Optional: make it easy to add-to-home-screen -- attempt fullscreen on first tap
+    let fullscreenTried = false;
+    function tryFullscreen() {
+      if (fullscreenTried) return; fullscreenTried = true;
+      const el = document.documentElement;
+      if (el.requestFullscreen) {
+        el.requestFullscreen().catch(()=>{});
+      } else if (el.webkitRequestFullscreen) {
+        el.webkitRequestFullscreen();
+      }
+    }
+
+    canvas.addEventListener('pointerdown', tryFullscreen, { once: true });
+
+    // Friendly accessibility: pause animations if page hidden
+    document.addEventListener('visibilitychange', function(){
+      if (document.hidden) {
+        // stop anim by not doing anything; draw loop keeps running but you could optimize
+      } else {
+        // resume (nothing special to do)
+      }
+    });
+
+    // Prevent double-tap-to-zoom on iOS Safari
+    let lastTouch = 0;
+    document.addEventListener('touchend', function(e){
+      const now = Date.now();
+      if (now - lastTouch <= 300) e.preventDefault();
+      lastTouch = now;
+    }, { passive: false });
+
+  </script>
+</body>
+</html>
