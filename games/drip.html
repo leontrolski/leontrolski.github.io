@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no" />
+  <title>Baby Swipe — Fullscreen</title>
+  <style>
+    html,body{height:100%;margin:0;background:#000;}
+    body{display:flex;align-items:center;justify-content:center;overflow:hidden;-webkit-user-select:none;-ms-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none;overscroll-behavior:none}
+    canvas{display:block;width:100vw;height:100vh;touch-action:none}
+
+    .controls{position:fixed;left:12px;top:12px;display:flex;gap:10px;z-index:20}
+    button.big{background:rgba(255,255,255,0.12);backdrop-filter:blur(6px);border:0;padding:14px 18px;border-radius:14px;font-size:16px;color:#fff}
+    button.big:active{transform:scale(0.98)}
+
+    .ios-instr{position:fixed;right:12px;top:12px;background:rgba(0,0,0,0.6);color:#fff;padding:12px;border-radius:12px;max-width:220px;font-size:13px;z-index:21;display:none}
+    .hint{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:rgba(0,0,0,0.5);color:#fff;padding:8px 14px;border-radius:999px;font-size:13px;z-index:21}
+
+    @media (min-width:720px){button.big{font-size:18px;padding:16px 20px}}
+  </style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+
+  <div class="controls">
+    <button id="a2hs" class="big" aria-label="Add to home screen">➕ Add to Home</button>
+    <button id="clear" class="big" aria-label="Reset screen">🔄 Reset</button>
+  </div>
+
+  <div id="iosInstr" class="ios-instr">To add: tap Share → "Add to Home Screen".</div>
+  <div id="hint" class="hint">Swipe anywhere — colorful smooshes!</div>
+
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d',{alpha:false});
+let w = innerWidth, h = innerHeight;
+function resize(){
+  w = innerWidth; h = innerHeight;
+  canvas.width = Math.floor(w * devicePixelRatio);
+  canvas.height = Math.floor(h * devicePixelRatio);
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+  if(!frozen) fillSolid(currentColor);
+}
+window.addEventListener('resize', resize);
+
+let currentColor = {r:20,g:120,b:200};
+let frozen = false;
+function fillSolid(c){
+  ctx.fillStyle = `rgb(${c.r|0},${c.g|0},${c.b|0})`;
+  ctx.fillRect(0,0,w,h);
+}
+resize();
+fillSolid(currentColor);
+
+const debounce = (callback, wait) => {
+  let timeoutId = null;
+  return (...args) => {
+    window.clearTimeout(timeoutId);
+    timeoutId = window.setTimeout(() => {
+      callback(...args);
+    }, wait);
+  };
+}
+
+let drawing = false;
+let last = null;
+
+function pointerStart(x,y){
+  drawing = true; frozen = false; last = {x,y};
+//   try{ if(document.fullscreenElement==null && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{}); }catch(e){}
+}
+
+function pointerMove(x,y){
+  if(!drawing) return;
+
+  // multicolored, variable-sized oil drop strokes
+  const baseRadius = 4 + Math.random()*6;
+  for(let i=0;i<5;i++){
+    const hue = (Math.random()*360)|0;
+    const sat = 80+Math.random()*50;
+    const light = 8+Math.random()*2;
+    const alpha = 0.4+Math.random()*0.8;
+    const radius = baseRadius * (0 + Math.random()*2.2);
+    const offsetX = x + (Math.random()-0.5)*radius;
+    const offsetY = y + (Math.random()-0.5)*radius;
+
+    const grd = ctx.createRadialGradient(offsetX,offsetY,0,offsetX,offsetY,radius*1.5);
+    grd.addColorStop(0.2,`hsla(${hue},${sat}%,${light-20}%,${alpha})`);
+    grd.addColorStop(0.3,`hsla(${(hue+90)%360},${sat}%,${light}%,${alpha*0.9})`);
+    grd.addColorStop(0.7,`hsla(${(hue+200)%360},${sat}%,${light-10}%,${alpha*0.6})`);
+    grd.addColorStop(1,`hsla(${hue},${sat}%,${light}%,0)`);
+
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.beginPath();
+    ctx.fillStyle = grd;
+    ctx.arc(offsetX,offsetY,radius*1.5,0,Math.PI*2);
+    ctx.fill();
+
+    ctx.strokeStyle = `hsla(${(hue+180)%360},100%,80%,0.1)`;
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+  }
+  ctx.globalCompositeOperation = 'source-over';
+
+  last = {x,y};
+  const sample = ctx.getImageData(Math.max(0,x|0), Math.max(0,y|0), 1, 1).data;
+  currentColor = {r:sample[0], g:sample[1], b:sample[2]};
+}
+pointerMove = debounce(pointerMove, 14);
+
+function pointerEnd(){
+  drawing = false; frozen = true; last = null;
+  try{
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.fillStyle = `rgba(${currentColor.r|0},${currentColor.g|0},${currentColor.b|0},0.05)`;
+    ctx.fillRect(0,0,w,h);
+    ctx.globalCompositeOperation = 'source-over';
+  }catch(e){}
+}
+
+let ongoingTouchId = null;
+canvas.addEventListener('touchstart', (e)=>{
+  e.preventDefault();
+  const t = e.changedTouches[0]; ongoingTouchId = t.identifier;
+  pointerStart(t.clientX, t.clientY);
+});
+canvas.addEventListener('touchmove', (e)=>{
+  e.preventDefault();
+  for(const t of e.changedTouches){ if(t.identifier===ongoingTouchId) pointerMove(t.clientX, t.clientY); }
+});
+canvas.addEventListener('touchend', (e)=>{ e.preventDefault(); pointerEnd(); ongoingTouchId = null; });
+canvas.addEventListener('touchcancel', (e)=>{ e.preventDefault(); pointerEnd(); ongoingTouchId = null; });
+
+let mouseDown = false;
+canvas.addEventListener('mousedown', (e)=>{ mouseDown = true; pointerStart(e.clientX, e.clientY); });
+window.addEventListener('mousemove',(e)=>{ if(mouseDown) pointerMove(e.clientX, e.clientY); });
+window.addEventListener('mouseup',(e)=>{ if(mouseDown){ mouseDown=false; pointerEnd(); } });
+
+document.getElementById('clear').addEventListener('click', ()=>{
+  const r = 30 + Math.floor(Math.random()*200);
+  const g = 30 + Math.floor(Math.random()*200);
+  const b = 30 + Math.floor(Math.random()*200);
+  currentColor = {r,g,b};
+  frozen = false;
+  fillSolid(currentColor);
+  setTimeout(()=>{ frozen = true; }, 80);
+});
+
+// Add to home screen handling
+let deferredPrompt = null;
+const a2hsBtn = document.getElementById('a2hs');
+const iosInstr = document.getElementById('iosInstr');
+function isIos(){ return /iphone|ipad|ipod/i.test(navigator.userAgent); }
+function isInStandaloneMode(){ return ('standalone' in navigator) && navigator.standalone; }
+
+window.addEventListener('beforeinstallprompt', (e)=>{
+  e.preventDefault(); deferredPrompt = e;
+  a2hsBtn.style.display = 'inline-block';
+});
+
+a2hsBtn.addEventListener('click', async ()=>{
+  if(deferredPrompt){
+    deferredPrompt.prompt();
+    const choice = await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    if(choice && choice.outcome==='accepted') a2hsBtn.textContent = '✅ Added';
+    else a2hsBtn.textContent = 'Maybe later';
+    setTimeout(()=>{ a2hsBtn.textContent = '➕ Add to Home'; }, 2500);
+  } else if(isIos()){
+    iosInstr.style.display = 'block';
+    setTimeout(()=>iosInstr.style.display='none',6000);
+  } else {
+    a2hsBtn.textContent = 'Use browser menu → Add to Home';
+    setTimeout(()=>a2hsBtn.textContent='➕ Add to Home',3000);
+  }
+});
+
+if(isIos() && isInStandaloneMode()) document.getElementById('a2hs').style.display = 'none';
+
+let lastTap = 0; document.addEventListener('touchend', (e)=>{ const t = performance.now(); if(t-lastTap < 800) e.preventDefault(); lastTap = t; }, {passive:false});
+
+function ariaAnnounce(msg){
+  let live = document.getElementById('a11y');
+  if(!live){ live = document.createElement('div'); live.id='a11y'; live.setAttribute('aria-live','polite'); live.style.position='absolute'; live.style.left='-9999px'; document.body.appendChild(live); }
+  live.textContent = msg;
+}
+ariaAnnounce('Screen ready. Swipe to paint.');
+
+let lastImageData = null;
+window.addEventListener('pagehide', ()=>{
+  try{ lastImageData = canvas.toDataURL(); sessionStorage.setItem('babySwipeSnapshot', lastImageData); }catch(e){}
+});
+window.addEventListener('pageshow', ()=>{
+  try{ const s = sessionStorage.getItem('babySwipeSnapshot'); if(s){ const img = new Image(); img.onload = ()=>{ ctx.drawImage(img,0,0,w,h); }; img.src = s; }}catch(e){}
+});
+
+setTimeout(()=>{ const h = document.getElementById('hint'); if(h) h.style.display='none'; }, 4200);
+</script>
+</body>
+</html>
