@@ -40,47 +40,47 @@
         <h1>The CMD-click manifesto</h1>
         <small><em>Or CTRL-click or META-click or whatever.</em></small>
         <ol>
-        <li>Being able to CMD-click through code >> any other theoretical concerns.</li>
-        <li>CMD-clickability is the opposite of indirection - <em>how does this function work?</em> CMD-click it.</li>
-        <li>Non-CMD-clickable codebases are filled with non-meaningful abstractions and tend to be longer.</li>
-        <li>Static analysis tooling should be easy to write.</li>
-        <li>Stack traces should correspond with the structure of the code.</li>
-        <li>Higher order functions break the golden property, use them as a last resort.
+        <li id="1">Being able to CMD-click through code >> any other theoretical concerns.</li>
+        <li id="2">CMD-clickability is the opposite of indirection - <em>how does this function work?</em> CMD-click it.</li>
+        <li id="3">Non-CMD-clickable codebases are filled with non-meaningful abstractions and tend to be longer.</li>
+        <li id="4">Static analysis tooling should be easy to write.</li>
+        <li id="5">Stack traces should correspond with the structure of the code.</li>
+        <li id="6">Higher order functions break the golden property, use them as a last resort.
         <pre class="language-python"><code>def do_something(data, f: Callable[...]):
     f(data)  # I can&#39;t CMD-click f</code></pre>
         </li>
-        <li>Trad Object Orientated code tends to break the golden property (this makes sense as <a href="https://leontrolski.github.io/poor-mans-object.html#:~:text=objects%20are%20a%20poor%20man%27s%20closures%20are%20a%20poor%20man%27s%20objects">objects are closures</a>), use it as a last resort.
+        <li id="7">Trad Object Orientated code tends to break the golden property (this makes sense as <a href="https://leontrolski.github.io/poor-mans-object.html#:~:text=objects%20are%20a%20poor%20man%27s%20closures%20are%20a%20poor%20man%27s%20objects">objects are closures</a>), use it as a last resort.
         <pre class="language-python" style="margin-bottom: 0.2em !important;"><code>def do_something(a: Animal):
     a.meow()  # I can&#39;t CMD-click meow</code></pre>
         <small><em>This case it is ambiguous as <code>meow()</code> could be on any <code>Cat</code>, <code>Lion</code>, <code>Tiger</code>...</em></small>
         </li>
-        <li>Use enum-like information to distinguish between otherwise similar data.
+        <li id="8">Use enum-like information to distinguish between otherwise similar data.
         <pre class="language-python"><code>class Cat(Animal): ...                # bad
 a = Animal(kind=AnimalKind.CAT, ...)  # good</code></pre>
         </li>
-        <li>Serializable enum-like <a href="https://basarat.gitbook.io/typescript/type-system/discriminated-unions">discriminants</a> in data can be trivially plonked into databases, regurgitated via JSON, etc.</li>
-        <li>Choose behaviour based on data, not class hierarchies:
+        <li id="9">Serializable enum-like <a href="https://basarat.gitbook.io/typescript/type-system/discriminated-unions">discriminants</a> in data can be trivially plonked into databases, regurgitated via JSON, etc.</li>
+        <li id="10">Choose behaviour based on data, not class hierarchies:
         <pre class="language-python"><code>def do_something(data):
     if data.kind == Kind.A:
         g(data)  # I can CMD-click g</code></pre>
         </li>
-        <li>Say arbitrarily complicated things about data, rather than be constrained by inflexible heirarchies.
+        <li id="11">Say arbitrarily complicated things about data, rather than be constrained by inflexible heirarchies.
         <pre class="language-python"><code>class Cat(Animal, FourLegged): ...                  # bad
 def has_even_number_of_legs(a: AnimalKind) -&gt; bool  # good</code></pre>
         </li>
-        <li>Strong typing aids CMD-clickability, this property of typing is more valuable than correctness.</li>
-        <li>Microservices in and of themselves are not bad, however:
+        <li id="12">Strong typing aids CMD-clickability, this property of typing is more valuable than correctness.</li>
+        <li id="13">Microservices in and of themselves are not bad, however:
             <ol type="i">
                 <li>Construct your codebase such that CMD-clicking <em>across</em> a service boundary is as easy as <em>within</em> a service. </li>
                 <li>Typecheck service boundaries as you would any other code.</li>
                 <li>Use correlation ids and a <a href="https://www.datadoghq.com/blog/request-log-correlation/">Datadog</a>-like tool to make cross-service stack traces comprehensible for debugging production.</li>
             </ol>
         </li>
-        <li>Where you might have to fall back on grepping - make it easy, use full literals:
+        <li id="14">Where you might have to fall back on grepping - make it easy, use full literals:
         <pre class="language-python"><code>@app.route(PREFIX + &quot;/v1/add&quot;)          # bad
 @app.route(&quot;/payments/inbound/v1/add&quot;)  # good</code></pre>
         </li>
-        <li>Good code expresses the smallest possible state space the program could operate in - <strong>YAGNI</strong>.
+        <li id="15">Good code expresses the smallest possible state space the program could operate in - <strong>YAGNI</strong>.
         <pre class="language-python"><code>def do_something(data, f: Callable[...]):
     # f could be anything - big state space
     f(data)
@@ -91,9 +91,9 @@ def do_something(data, kind: Kind):
         g(data)
     ...</code></pre>
         </li>
-        <li>Lean in on language features, don't introduce <a href="https://github.com/gcanti/fp-ts">unnecessary</a> <a href="https://github.com/ingolemo/python-lenses">abstractions</a>.</li>
-        <li>There exists deep library code where we want to allow consumers to do anything (extensibility). In application development, this is the exception - you have control over the whole codebase, the code by its nature is extensible.</li>
-        <li>Ignore this manifesto sooner than code anything outright barbarous.</li>
+        <li id="16">Lean in on language features, don't introduce <a href="https://github.com/gcanti/fp-ts">unnecessary</a> <a href="https://github.com/ingolemo/python-lenses">abstractions</a>.</li>
+        <li id="17">There exists deep library code where we want to allow consumers to do anything (extensibility). In application development, this is the exception - you have control over the whole codebase, the code by its nature is extensible.</li>
+        <li id="18">Ignore this manifesto sooner than code anything outright barbarous.</li>
         </ol>
     </body>
 </html>
