@@ -40,9 +40,17 @@
                     zoomEnabled: true,
                     controlIconsEnabled: true,
                     maxZoom: 20,
-                    zoomScaleSensitivity: 0.5,
-                    fit: false,
+                    zoomScaleSensitivity: 0.2,
+                    fit: true,
+                    contain: false,
+                    center: false,
                 })
+                setTimeout(() => panner.zoomAtPoint(3, {x: 200, y: 380}), 100)
+                setTimeout(() => panner.zoomAtPoint(4, {x: 200, y: 380}), 200)
+                setTimeout(() => panner.zoomAtPoint(5, {x: 200, y: 380}), 300)
+                setTimeout(() => panner.zoomAtPoint(6, {x: 200, y: 380}), 400)
+                setTimeout(() => panner.zoomAtPoint(7, {x: 200, y: 380}), 500)
+                setTimeout(() => panner.zoomAtPoint(8, {x: 200, y: 380}), 600)
             };
         </script>
     </body>
