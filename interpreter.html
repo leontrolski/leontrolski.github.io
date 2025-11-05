@@ -35,37 +35,22 @@
 
 
 <p>The smallest readable interpreter I could come up with that handles integers, assignments, lexical scope, first class functions.</p>
-<pre><code class="lang-python">from __future__ import annotations
-from dataclasses import dataclass
-from typing import Callable, Union
+<pre><code class="lang-python">class Symbol(str): ...
+Node = int | Symbol | list["Node"]
 
-@dataclass(<span class="hljs-attr">frozen=</span><span class="hljs-literal">True</span>)
-class Symbol:
-    value: str
+def is_whitespace(c: str) -> bool: return c in " \n"
+def is_number(c: str) -> bool: return c.isdigit()
+def is_symbol(c: str) -> bool: return c not in " \n()"
 
-@dataclass
-class List:
-    is_macro: bool
-    values: list[<span class="hljs-keyword">Node</span><span class="hljs-title">]
-
-Atom</span> = int
-<span class="hljs-keyword">Node</span> <span class="hljs-title">= Union</span>[Atom, Symbol, List]
-Value = Union[int, <span class="hljs-keyword">Node</span><span class="hljs-title">, Callable</span>[..., int], None]
-Scope = dict[Symbol, Value]
-
-is_whitespace = lambda c: c <span class="hljs-keyword">in</span> <span class="hljs-string">" \n"</span>
-is_number = lambda c: c.isdigit()
-is_symbol = lambda c: c not <span class="hljs-keyword">in</span> <span class="hljs-string">" \n()"</span>
-
-i = <span class="hljs-number">0</span>
-def parse(source: str) -&gt; <span class="hljs-keyword">Node</span><span class="hljs-title">:
-    global</span> i
-    def gobble(f: Callable[[str], bool]) -&gt; str:
+i = 0
+def parse(source: str) -> Node:
+    global i
+    def gobble(f: Callable[[str], bool]) -> str:
         global i
-        value = <span class="hljs-string">""</span>
+        value = ""
         while f(source[i]):
             value += source[i]
-            i += <span class="hljs-number">1</span>
+            i += 1
         return value
 
     gobble(is_whitespace)
@@ -73,76 +58,78 @@ def parse(source: str) -&gt; <span class="hljs-keyword">Node</span><span class="
         return int(gobble(is_number))
     if is_symbol(source[i]):
         return Symbol(gobble(is_symbol))
-    if source[i] == <span class="hljs-string">"("</span>:
-        i += <span class="hljs-number">1</span>  <span class="hljs-comment"># gobble (</span>
-        is_macro = source[i] == <span class="hljs-string">"#"</span>
-        if is_macro:
-            i += <span class="hljs-number">1</span>  <span class="hljs-comment"># gobble #</span>
-        items = List(is_macro, [])
-        while source[i] != <span class="hljs-string">")"</span>:
-            items.values.append(parse(source))
+    if source[i] == "(":
+        i += 1  # gobble (
+        items = []
+        while source[i] != ")":
+            items.append(parse(source))
             gobble(is_whitespace)
-        i += <span class="hljs-number">1</span>  <span class="hljs-comment"># gobble )</span>
+        i += 1  # gobble )
         return items
-    raise RuntimeError(<span class="hljs-string">"Unknown character"</span>)
+    raise RuntimeError("Unknown character")
 
-def block(scope: Scope, *nodes: <span class="hljs-keyword">Node</span><span class="hljs-title">) -&gt; Value</span>:
+from typing import Callable
+Value = int | Callable[..., int]
+Scope = dict[Symbol, Value]
+
+def block(scope: Scope, *nodes: Node) -> Value:
     local_scope = scope.copy()
-    values = [interpret(local_scope, child) for child <span class="hljs-keyword">in</span> nodes]
-    return values[-<span class="hljs-number">1</span>]  <span class="hljs-comment"># blocks evaluate to the final value</span>
+    values = [interpret(local_scope, child) for child in nodes]
+    return values[-1]  # blocks evaluate to the final value
 
-def assign(scope: Scope, *nodes: <span class="hljs-keyword">Node</span><span class="hljs-title">) -&gt; Value</span>:
-    symbol, <span class="hljs-keyword">node</span> <span class="hljs-title">= nodes</span>
-    scope[symbol] = interpret(scope, <span class="hljs-keyword">node</span><span class="hljs-title">)
-    return</span> None
+def assign(scope: Scope, *nodes: Node) -> Value:
+    symbol, node = nodes
+    value = interpret(scope, node)
+    scope[symbol] = value
+    return value
 
-def function(scope: Scope, *nodes: <span class="hljs-keyword">Node</span><span class="hljs-title">) -&gt; Value</span>:
+def function(scope: Scope, *nodes: Node) -> Value:
     local_scope = scope.copy()
-    vars, <span class="hljs-keyword">node</span> <span class="hljs-title">= nodes</span>
-    return lambda *args: interpret(local_scope | dict(zip(vars.values, args)), <span class="hljs-keyword">node</span><span class="hljs-title">)
+    *vars, node = nodes
+    return lambda *args: interpret(local_scope | dict(zip(vars, args)), node)
 
-builtins</span> = {
-    Symbol(<span class="hljs-string">"{"</span>): block,
-    Symbol(<span class="hljs-string">"="</span>): assign,
-    Symbol(<span class="hljs-string">"=&gt;"</span>): function,
-    Symbol(<span class="hljs-string">"print"</span>): lambda *args: print(*args),
-    Symbol(<span class="hljs-string">"-"</span>): lambda a: -a,
-    Symbol(<span class="hljs-string">"*"</span>): lambda a, b: a * b,
-    Symbol(<span class="hljs-string">"+"</span>): lambda a, b: a + b,
+macros = {
+    Symbol("{"): block,
+    Symbol("="): assign,
+    Symbol("=>"): function,
+}
+builtins = {
+    Symbol("print"): lambda *args: print(*args),
+    Symbol("-"): lambda a: -a,
+    Symbol("*"): lambda a, b: a * b,
+    Symbol("+"): lambda a, b: a + b,
 }
 
-def interpret(scope: Scope, <span class="hljs-keyword">node</span><span class="hljs-title">: Node</span>) -&gt; Value:
-    if isinstance(<span class="hljs-keyword">node</span><span class="hljs-title">, int</span>):
-        return <span class="hljs-keyword">node</span>
-    <span class="hljs-title">if</span> isinstance(<span class="hljs-keyword">node</span><span class="hljs-title">, Symbol</span>):
-        return scope[<span class="hljs-keyword">node</span><span class="hljs-title">]
-    if</span> <span class="hljs-keyword">node</span>.is_macro:<span class="hljs-title">
-        f</span>, *args = <span class="hljs-keyword">node</span>.<span class="hljs-title">values</span>
-        f = interpret(scope, f)
-        return f(scope, *args)
-    f, *args = [interpret(scope, child) for child <span class="hljs-keyword">in</span> <span class="hljs-keyword">node</span>.<span class="hljs-title">values</span>]
+def interpret(scope: Scope, node: Node) -> Value:
+    if isinstance(node, int):
+        return node
+    if isinstance(node, Symbol):
+        return scope[node]
+    f, *args = node
+    if f in macros:
+        return macros[f](scope, *args)
+    f, *args = [interpret(scope, child) for child in node]
     return f(*args)
 </code></pre>
 <p>Let&#39;s run it:</p>
-<pre><code class="lang-python">source = <span class="hljs-string">""</span><span class="hljs-string">"
-(<span class="hljs-subst">#{
-    (<span class="hljs-comment">#= make-adder</span>
-        (<span class="hljs-comment">#=&gt; (a) (#=&gt; (b) (+ a b))))</span>
-    (<span class="hljs-comment">#= add-one (make-adder 1))</span>
-    (print (add-one <span class="hljs-number">3</span>))
+<pre><code class="lang-python">source = """
+({
+    (= make-adder
+        (=> a (=> b (+ a b))))
+    (= add-one (make-adder 1))
+    (print (add-one 3))
 
-    (<span class="hljs-comment">#= x 5)</span>
-    (<span class="hljs-comment">#= f</span>
-        (<span class="hljs-comment">#=&gt; (a b) (#{</span>
-            (<span class="hljs-comment">#= c (+ a b))</span>
+    (= x 5)
+    (= f
+        (=> a b ({
+            (= c (+ a b))
             (* (- c) x)
         ))
     )
-    (print (f <span class="hljs-number">1</span> <span class="hljs-number">3</span>))
+    (print (f 1 3))
 )
-<span class="hljs-string">""</span><span class="hljs-string">"
-interpret(builtins, parse(source))</span></span></span>
-</code></pre>
+"""
+interpret(builtins, parse(source))</code></pre>
 <p>Should give you:</p>
 <pre><code><span class="hljs-number">4</span>
 <span class="hljs-number">-20</span>
