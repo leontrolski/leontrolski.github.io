@@ -1,0 +1,102 @@
+<html>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <head>
+        <title>
+            leontrolski - I 3D printed a running buggy
+        </title>
+        <style>
+
+            body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 63%;}
+            @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+            pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;}
+            a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
+            a:hover {border-bottom: 0;}
+            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em; white-space: nowrap;}
+            blockquote {font-style: italic;color:black;background-color:#f2f2f2;padding:2em;}
+            details {border-bottom:solid 5px gray;}
+            img{width:40vw;box-shadow: 0px 0px 4px 2px #00000045;}
+            @media screen and (max-width: 800px){img{width:85vw;}}
+            li {margin-bottom: 0.7em;margin-left: -1.5rem;}
+        </style>
+        <link href="https://unpkg.com/prism-themes@1.9.0/themes/prism-darcula.min.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js">
+
+        </script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js">
+
+        </script>
+
+    </head>
+    <body>
+        <a href="index.html#cycling">
+            <img src="pic.png" style="width:2rem;height:2em;box-shadow:none;">
+            ⇦
+        </a>
+        <p><i>2025-10-17</i></p>
+        <h1>
+            I 3D printed a running buggy
+        </h1>
+<p>Action shot:</p>
+<p><img src="images/buggy/action.webp" alt="Action"></p>
+<p>I built a jogging buggy for our first daughter. I was considering buying a Thule, but fancied making something more lightweight/techy - my original plan was to sell them to other dumb weight-weenie parents, but certifying it would cost around £10k - maybe one day.</p>
+<p>This post is a vague how-to with some lessons-learned. I&#39;m not sure there&#39;s much value in anything more detailed.</p>
+<h2 id="summer">Summer Mode</h2>
+<p><img src="images/buggy/summer.webp" alt="Summer"></p>
+<h2 id="winter">Winter Mode</h2>
+<p><img src="images/buggy/winter.webp" alt="Winter"></p>
+<h2 id="cad">CAD</h2>
+<p><img src="images/buggy/3d.webp" alt="3D"></p>
+<p>I used <a href="https://www.onshape.com/">onshape</a> - I&#39;ve used various bits of mech-eng CAD software in my life, onshape works in the browser and is seriously impressive. At time of writing, it&#39;s free if the designs are kept public and there's infinite YouTube videos on how to use it.</p>
+<h2 id="3d-printing">3D printing</h2>
+<p>I used <a href="https://www.3dprint-uk.co.uk/">3DPRINTUK</a> (Leyton based, quick, Ingerlandddd) and <a href="https://jlcpcb.com">JCLPCB</a> (slower, cheaper). The prints are all in MJF PA11-HP Nylon and seem plenty strong.</p>
+<h2 id="tubes">Tubes</h2>
+<p>The tubes are various diameters of 6081 Aluminium from <a href="https://www.metals4u.co.uk/materials/aluminium/aluminium-tube/12115-p">metals4u</a>. The forks are carbon, for added bling.</p>
+<h2 id="plate">Plate</h2>
+<p>The inanimate carbon plate is precut 4mm carbon fibre from <a href="https://hyperdrivecarbon.com">hyperdrivecarbon</a> (they can cut to size on request), I drilled the holes with a normal metal drill bit.</p>
+<h2 id="geometry">Geometry</h2>
+<p><img src="images/buggy/dimensions.webp" alt="Dimensions"></p>
+<p>So I didn&#39;t have to think too hard about geometry/balance, I drew over the side-on drawing of an existing buggy, then adjusted where I saw fit. The final frame looks like:</p>
+<p><img src="images/buggy/frame.webp" alt="Frame"></p>
+<h2 id="sewing">Sewing</h2>
+<p>I did a first &quot;form finding&quot; rough take of the fabric section in spare ripstop.</p>
+<p><img src="images/buggy/cutting.webp" alt="Cutting"></p>
+<p>Then I measured from that for the final dimensions.</p>
+<p><img src="images/buggy/fabric.webp" alt="Fabric"></p>
+<p>The final version is made from &quot;12oz Heavy Duty Denier Fabric Cordura Canvas Fabric with PVC Backing for Sewing&quot; and seems more than strong enough. It is supported by some plastic at the back - I ended up using some approx 3mm plastic sawed out of a large IKEA storage box.</p>
+<h2 id="donor-pram">Donor pram</h2>
+<p>The 5 point harness and fabric baby actually sits in are taken from a £20 donor buggy from the 90s. This included a zip-on winter sleeping bag bit that has been very useful, along with a sun shade bit that I&#39;ve yet to work out.</p>
+<h2 id="folding">Folding</h2>
+<p>Undoing two bolts allows the whole thing to fold flat:</p>
+<p><img src="images/buggy/folding.webp" alt="Folding"></p>
+<p>The rear wheels are attached with lynch pins so come off pretty easily.</p>
+<p><img src="images/buggy/hub.webp" alt="Hub"></p>
+<p>The nicest joint on the buggy is this one, there&#39;s two rotating/overlapping/slotted parts that are pretty neat.</p>
+<p><img src="images/buggy/rotate.webp" alt="Rotate"></p>
+<h2 id="wheels">Wheels</h2>
+<p>The wheels are AliExpress Brompton rims laced to MTB thru-axle hubs - I had to sand the tubes a bit to get them to slide on.</p>
+<h2 id="lessons">Lessons Learned</h2>
+<ul>
+<li>Ultimately, I didn&#39;t trust the M4 threaded insert clamping mechanism for any of the serious joints, so I epoxied the tubes to the joints. In the future, I&#39;d probably go straight to glue, although it&#39;s a bit stressful getting the distances/angles correct in one attempt. For anything where you still need adjustability, I&#39;d go M5+ threaded inserts.</li>
+<li>Get some test joints printed to match your tubes before printing everything.</li>
+<li>I never fold it as it as it&#39;s a bit of a faff. There&#39;s definitely a nicer folding mechanism out there whilst keeping the design simple and light.</li>
+<li>The original carbon plate was 2mm - the forks would flex loads around the axis marked below, with the plate twisting in the parallel axis:
+    <p><img src="images/buggy/flex.webp" alt="Rotate"></p>
+
+    <p>I just bought a thicker carbon plate, but it&#39;s pretty heavy and expensive, again, a better design is out there.</p>
+</li>
+<li>Some of the new home 3D printers are cheap, compact and get good reviews, <em>maybe</em> PLA would be strong enough?</li>
+<li>The geometry seems good while running. The centre of mass could maybe be a tad further back to make steering easier at the expense of stability. Currently back-wheel-to-back-wheel is around 50cm and the seat is much lower than on a Thule to make up for the narrowness. I think you could go narrower still if you lowered the seat even more - I can&#39;t see much good reason for it to be high - narrow is good for city running.</li>
+<li>On the first run, it would steer slightly to the left. I loosened a couple of bolts and moved one fork like 2mm - this fixed it - being able to adjust the front wheel angle is pretty useful.</li>
+<li>It is possible adjust how tightly the wheels are attached, but there&#39;s still some play. Something more similar to a modern bicycle thru axle would be better, but tricky to manufacture at home.</li>
+<li>Some kevlar cord keeps the back rectangle shape from flexing too much. I think you could probably make this bit a triangle too and avoid this ugliness.</li>
+<li>I carry a reusable ziptie to attach a wheel to the frame as a parking brake - works great!</li>
+</ul>
+<h2 id="cost">Cost</h2>
+<p>The cost was in the low hundreds of pounds. The 3D printing seems cheap as chips when you do your first test joint, but multiplied by 20 joints equals £150 or so. If you just want a buggy, buy a second hand Thule and resell it for near the same price. For what it's worth, I played with an Out n About Nipper in-person and the quality of the materials seemed wack.</p>
+<h2 id="final-take">Final take</h2>
+<p>We both do a 5km every morning and baby seems pretty happy  - result! It was really fun doing the design and build, to the point where I&#39;m tempted to do v2 for a friend. When the prices drop, I may attempt a 3D printed metal glued cargo bike frame à la <a href="https://www.athertonbikes.com/technology/build-srange.html">Atherton Bikes</a>.</p>
+<p>If you want any more tips on building your own or want to join me and become the Cervélo of the buggy world - drop us an email (see home page).</p>
+<p><em>Runner's eye view:</em></p>
+<p><img src="images/buggy/running.png" alt="Running"></p>
+</body>
+</html>
