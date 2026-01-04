@@ -1,9 +1,10 @@
 <style>
     body {font-family: Arial, sans-serif;}
-    th {text-align: left;border-bottom: solid 1px gray;padding: 0.3rem;}
-    td {border: solid 1px gray;padding: 0.3rem;}
-    table {border-collapse: collapse;}
+    th {text-align:left;border-bottom: solid 1px gray;padding: 0.3rem;}
+    td {border:solid 1px gray;padding:0.3rem;white-space:nowrap;}
+    table {border-collapse:collapse;}
 </style>
+<h3>Minutes 'til train/bus</h3>
 <div style="display:flex;flex-direction:row;gap:3rem;">
     <table>
         <thead>
@@ -131,7 +132,7 @@
         ? `
             <td>
                 <a href="https://tfl.gov.uk/bus/stop/${stopId}/?lineId=${line}">🍭</a>
-                <sub id="${stopId}-${line}"><sub>
+                <code id="${stopId}-${line}"></code>
             </td>
         `
         : "<td></td>"
@@ -157,12 +158,11 @@
         const arrivals = await response.json()
         arrivals.sort((a, b) => new Date(a.expectedArrival) - new Date(b.expectedArrival))
         for (const arrival of arrivals.slice(0, 8)){
-            console.log(arrival.lineId)
             const minutes = Math.round(arrival.timeToStation / 60)
             el = document.createElement("tr")
             el.innerHTML = `
             <td>${arrival.destinationName.replace(" Rail Station", "").replace( "(London)", "")}</td>
-            <td>${minutes}mins</td>
+            <td><code>${minutes}<code></td>
             <td>${arrival.lineName}</td>
             `
             document.getElementById(stopId).appendChild(el)
@@ -178,10 +178,10 @@
         }
         for (const [number, arrivals] of Object.entries(m)){
             arrivals.sort((a, b) => new Date(a.expectedArrival) - new Date(b.expectedArrival))
-            for (const arrival of arrivals.slice(0, 2)){
+            for (const arrival of arrivals.slice(0, 3)){
                 const minutes = Math.round(arrival.timeToStation / 60)
                 const el = document.getElementById(`${stopId}-${arrival.lineId}`)
-                if (el) el.appendChild(document.createTextNode(`${minutes}mins `))
+                if (el) el.appendChild(document.createTextNode(`${minutes} `))
             }
         }
     }
