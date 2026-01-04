@@ -157,7 +157,7 @@
         const response = await fetch(url)
         const arrivals = await response.json()
         arrivals.sort((a, b) => new Date(a.expectedArrival) - new Date(b.expectedArrival))
-        for (const arrival of arrivals.slice(0, 5)){
+        for (const arrival of arrivals.slice(0, 10)){
             console.log(arrival.lineId)
             const minutes = Math.round(arrival.timeToStation / 60)
             el = document.createElement("tr")
