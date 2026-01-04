@@ -116,7 +116,7 @@
             stopName: "Lower Clapton Road",
             stopIdWest: "490007220Z",
             stopIdEast: "490009195S",
-            eastToWest: "Bow → Hackney Wick → Homertorn → 🏠 → Dalston",
+            eastToWest: "Bow → Hackney Wick → Homerton → 🏠 → Dalston",
         },
         {
             number: "30",
@@ -162,7 +162,7 @@
             el = document.createElement("tr")
             el.innerHTML = `
             <td>${arrival.destinationName.replace(" Rail Station", "").replace( "(London)", "")}</td>
-            <td><sub>${minutes}mins</sub></td>
+            <td>${minutes}mins</td>
             <td>${arrival.lineName}</td>
             `
             document.getElementById(stopId).appendChild(el)
