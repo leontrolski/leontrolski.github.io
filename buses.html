@@ -1,0 +1,206 @@
+<style>
+    body {font-family: Arial, sans-serif;}
+    th {text-align: left;border-bottom: solid 1px gray;padding: 0.3rem;}
+    td {border: solid 1px gray;padding: 0.3rem;}
+    table {border-collapse: collapse;}
+</style>
+<div style="display:flex;flex-direction:row;gap:3rem;">
+    <table>
+        <thead>
+            <tr>
+                <th><a href="https://tfl.gov.uk/overground/stop/910GHAKNYNM/hackney-downs-rail-station">Hackney Downs</a></th>
+                <th><em id="weaver"></em></th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody id="910GHAKNYNM"></tbody>
+    </table>
+    <table>
+        <thead>
+            <tr>
+                <th><a href="https://tfl.gov.uk/overground/stop/910GHACKNYC/hackney-central-rail-station">Hackney Central</a></th>
+                <th><em id="mildmay"></em></th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody id="910GHACKNYC"></tbody>
+    </table>
+</div>
+<br>
+<a href="https://content.tfl.gov.uk/planned-track-closures.pdf">Planned closures</a>
+<br>
+<table>
+    <thead>
+        <tr>
+            <th></th>
+            <th></th>
+            <th>Westbound</th>
+            <th>Eastbound</th>
+            <th>East to West</th>
+        </tr>
+    </thead>
+    <tbody id="buses"></tbody>
+</table>
+<br>
+<br>
+<br>
+<br>
+
+<script>
+    const data = [
+        {
+            number: "38",
+            stopName: "Dalston Lane",
+            stopIdWest: "490010154Y",
+            stopIdEast: null,
+            eastToWest: "🏠 → Dalston → Angel → Soho → <b>Victoria</b> (55mins)",
+        },
+        {
+            number: "253",
+            stopName: "Dalston Lane",
+            stopIdWest: "490010151R",
+            stopIdEast: null,
+            eastToWest: "🏠 → Stamford Hill → Finsbury Park → Camden → <b>Euston</b> (50mins)",
+        },
+        {
+            number: "242",
+            stopName: "Dalston Lane",
+            stopIdWest: "490010154Y",
+            stopIdEast: "490003001E",
+            eastToWest: "Homerton Hospital → 🏠 → Shoreditch → <b>Aldgate</b> (30mins)",
+        },
+        {
+            number: "276",
+            stopName: "Dalston Lane",
+            stopIdWest: "490007619VA",
+            stopIdEast: "490003001E",
+            eastToWest: "Plaistow → Canning Town → Stratford → 🏠 → Stoke Newington",
+        },
+        {
+            number: "56",
+            stopName: "Pembury Road",
+            stopIdWest: "490010900S",
+            stopIdEast: "490010900N",
+            eastToWest: "<b>Lea Bridge<b> → 🏠 → Angel → <b>St. Pauls</b> (35mins)",
+        },
+        {
+            number: "55",
+            stopName: "Lower Clapton Road",
+            stopIdWest: "490009195S1",
+            stopIdEast: "490007220Z",
+            eastToWest: "<b>Walthamstow</b> → 🏠 → Bethnal Green → Old Street → <b>Soho</b> (45mins)",
+        },
+        {
+            number: "106",
+            stopName: "Lower Clapton Road",
+            stopIdWest: "490007220Z",
+            stopIdEast: "490009195S1",
+            eastToWest: "Whitechapel → 🏠 → Stoke Newington → <b>Finsbury Park</b> (30mins)",
+        },
+        {
+            number: "254",
+            stopName: "Lower Clapton Road",
+            stopIdWest: "490007220Z",
+            stopIdEast: "490009195S1",
+            eastToWest: "Whitechapel → 🏠 → Stamford Hill → Finsbury Park → <b>Arsenal</b> (30mins)",
+        },
+        {
+            number: "425",
+            stopName: "Lower Clapton Road",
+            stopIdWest: null,
+            stopIdEast: "490009195S",
+            eastToWest: "Ilford → Forest Gate → Stratford → 🏠",
+        },
+        {
+            number: "488",
+            stopName: "Lower Clapton Road",
+            stopIdWest: "490007220Z",
+            stopIdEast: "490009195S",
+            eastToWest: "Bow → Hackney Wick → Homertorn → 🏠 → Dalston",
+        },
+        {
+            number: "30",
+            stopName: "Graham Road",
+            stopIdWest: "490009644E",
+            stopIdEast: "490009644G",
+            eastToWest: "Hackney Wick → 🏠 → Dalston → Hibes and Ibes → Angel → Euston",
+        },
+    ]
+    const uniqueStopIds = new Set(data.flatMap(item => [item.stopIdWest, item.stopIdEast]).filter(Boolean))
+    const stopLink = (stopId, line, label) => stopId
+        ? `
+            <td>
+                <a href="https://tfl.gov.uk/bus/stop/${stopId}/?lineId=${line}">🍭</a>
+                &nbsp;
+                <sub id="${stopId}-${line}"><sub>
+            </td>
+        `
+        : "<td></td>"
+    const rowTemplate = item => `
+        <tr>
+            <td>${item.stopName}</td>
+            <td>
+                <a href="https://citymapper.com/london/bus/bus-${item.number}?lang=en">
+                    <b>${item.number}</b>
+                </a>
+            </td>
+            ${stopLink(item.stopIdWest, item.number, "W")}
+            ${stopLink(item.stopIdEast, item.number, "E")}
+            <td>${item.eastToWest}</td>
+        </tr>
+    `
+    document.getElementById("buses").innerHTML = data.map(rowTemplate).join("")
+
+    const yek = "09f3693a88f867891ed492c2c9e92c14";
+    getLiveTrainDepartures = async (stopId) => {
+        const url = `https://api.tfl.gov.uk/StopPoint/${stopId}/Arrivals?app_key=${yek.split("").reverse().join("")}`
+        const response = await fetch(url)
+        const arrivals = await response.json()
+        arrivals.sort((a, b) => new Date(a.expectedArrival) - new Date(b.expectedArrival))
+        for (const arrival of arrivals.slice(0, 5)){
+            console.log(arrival.lineId)
+            const minutes = Math.round(arrival.timeToStation / 60)
+            el = document.createElement("tr")
+            el.innerHTML = `
+            <td>${arrival.destinationName.replace(" Rail Station", "").replace( "(London)", "")}</td>
+            <td><sub>${minutes}mins</sub></td>
+            <td>${arrival.lineName}</td>
+            `
+            document.getElementById(stopId).appendChild(el)
+        }
+    }
+    getLiveBusDepartures = async (stopId) => {
+        const url = `https://api.tfl.gov.uk/StopPoint/${stopId}/Arrivals?app_key=${yek.split("").reverse().join("")}`
+        const response = await fetch(url)
+        const arrivals = await response.json()
+        const m = {}
+        for (const arrival of arrivals){
+            (m[arrival.lineId] || (m[arrival.lineId] = [])).push(arrival)
+        }
+        for (const [number, arrivals] of Object.entries(m)){
+            arrivals.sort((a, b) => new Date(a.expectedArrival) - new Date(b.expectedArrival))
+            for (const arrival of arrivals.slice(0, 2)){
+                const minutes = Math.round(arrival.timeToStation / 60)
+                const el = document.getElementById(`${stopId}-${arrival.lineId}`)
+                if (el) el.appendChild(document.createTextNode(`${minutes}mins `))
+            }
+        }
+    }
+    getStatus = async (line) => {
+        const url = `https://api.tfl.gov.uk/line/${line}/status?app_key=${yek.split("").reverse().join("")}`
+        const response = await fetch(url)
+        const statuses = []
+        for (const status of await response.json()){
+            for (const lineStatus of status.lineStatuses){
+                statuses.push(lineStatus.statusSeverityDescription)
+            }
+        }
+        const el = document.getElementById(line)
+        el.innerHTML = statuses.join(", ").toLowerCase()
+    }
+    getLiveTrainDepartures("910GHAKNYNM")  // Hackney Downs
+    getLiveTrainDepartures("910GHACKNYC")  // Hackney Central
+    for (const stopId of uniqueStopIds) getLiveBusDepartures(stopId)
+    getStatus("weaver")
+    getStatus("mildmay")
+</script>
