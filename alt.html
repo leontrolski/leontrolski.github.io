@@ -1,0 +1,72 @@
+<html>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <head>
+        <title>
+            leontrolski - Generalised plusequals
+        </title>
+        <style>
+
+            body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 63%;}
+            @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+            pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;background-color:white;padding:0.5rem;overflow-x:auto;}
+            a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
+            a:hover {border-bottom: 0;}
+            code {background: white;}
+            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em; white-space: nowrap;}
+            details {border-bottom:solid 5px gray;}
+
+        </style>
+
+    </head>
+    <body>
+        <a href="index.html">
+            <img src="pic.png" style="height:2em">
+            ⇦
+        </a>
+        <p><i>2026-04-24</i></p>
+<h1 id="generalised-plusequals">Generalised plusequals</h1>
+<p>I have a <a href="https://github.com/leontrolski/jubbly">quarter baked language</a> I&#39;ve been working on. It&#39;s mostly crap, but a syntax idea fell out that I think is pretty neat.</p>
+<p>The following are equivalent in many languages:</p>
+<pre><code>x = x + <span class="hljs-number">1</span>
+x += <span class="hljs-number">1</span>
+</code></pre><p>Reassigning is cool as it&#39;s lexically scoped so easy to reason about (mutation is bad as it isn&#39;t).</p>
+<p>The new idea is that instead of special symbols (in this case <code>+=</code>) we generalise with a keyword (<code>alt</code>) that affects all infix operators, so the following are equivalent:</p>
+<pre><code>x = x + <span class="hljs-number">1</span>
+alt x + <span class="hljs-number">1</span>
+</code></pre><p>Who cares? It&#39;s not even shorter right? </p>
+<p>The fun starts when we introduce a couple of new infix operators - namely <code>]=</code> and <code>.=</code> </p>
+<p>Let&#39;s compare them to the Python equivalents:</p>
+<pre><code>l = l<span class="hljs-string">[4]</span>=<span class="hljs-number">999</span>
+l = l<span class="hljs-string">[:4]</span> + <span class="hljs-string">[999]</span> + l<span class="hljs-string">[5:]</span>
+</code></pre><p>and:</p>
+<pre><code><span class="hljs-attr">x</span> = x.n.=<span class="hljs-number">2</span>
+<span class="hljs-attr">x</span> = dataclasses.replace(x, n=<span class="hljs-number">2</span>)
+</code></pre><p>Now let&#39;s set up a couple of examples of nested data:</p>
+<pre><code><span class="hljs-attr">cat</span> = Cat(age=<span class="hljs-number">3</span>)
+<span class="hljs-attr">l</span> = [<span class="hljs-number">1</span>, [<span class="hljs-number">2</span>, cat], <span class="hljs-number">4</span>]
+</code></pre><p>If we want to reassign to make an older cat, we can do:</p>
+<pre><code>alt cat<span class="hljs-selector-class">.age</span>.=<span class="hljs-number">8</span>
+</code></pre><p>The more interesting example is reassigning the deeply nested <code>l</code> to make the cat inside older, without mutating the original cat:</p>
+<pre><code>alt l[<span class="hljs-string">1</span>][<span class="hljs-symbol">1</span>].age.=9
+</code></pre><p>this will leave us with <code>l</code> equal to:</p>
+<pre><code>[<span class="hljs-number">1</span>, [<span class="hljs-number">2</span>, Cat(age=<span class="hljs-number">9</span>)], <span class="hljs-number">4</span>]
+</code></pre><p>What was the <code>alt</code> statement sugar for, such that we didn&#39;t mutate the original cat? Well, the rather ungainly:</p>
+<pre><code>_1 = l[<span class="hljs-number">1</span>]       # _1 = [<span class="hljs-number">2</span>, Cat(age=<span class="hljs-number">3</span>)]
+_2 = l[<span class="hljs-number">1</span>][<span class="hljs-number">1</span>]    # _2 = Cat(age=<span class="hljs-number">3</span>)
+_2 = _2.age.=<span class="hljs-number">9</span>  # _2 = Cat(age=<span class="hljs-number">9</span>)
+_1 = _1[<span class="hljs-number">1</span>]=_2   # _1 = [<span class="hljs-number">2</span>, Cat(age=<span class="hljs-number">9</span>)]
+l  = l[<span class="hljs-number">1</span>]=_1    # l  = [<span class="hljs-number">1</span>, [<span class="hljs-number">2</span>, Cat(age=<span class="hljs-number">9</span>)], <span class="hljs-number">4</span>]
+</code></pre><p>My new language has a nice(?) <a href="https://github.com/leontrolski/jubbly#postfixinfix">feature</a> - you can infix plain binary functions with tildes - this means you can do fun stuff like:</p>
+<pre><code>alt l~<span class="hljs-keyword">push</span>~<span class="hljs-number">5</span>
+</code></pre><p>to leave <code>l</code> equal to:</p>
+<pre><code>[<span class="hljs-number">1</span>, [<span class="hljs-number">2</span>, Cat(age=<span class="hljs-number">9</span>)], <span class="hljs-number">4</span>, <span class="hljs-number">5</span>]
+</code></pre><h1 id="thoughts">Thoughts</h1>
+<ul>
+<li>I don&#39;t like mutations, I do like being able to succinctly update deeply nested data. This syntax lets you achieve cuteness in a language with only immutable datastructures.</li>
+<li>What do they do in Haskell? Are there any other equivalent syntaxes lying around?</li>
+<li>The rough plan for my language was - pretend all the datastructures are immutable, but at compile time, if the structure of the program is such that using a mutable datastructure would be equivalent, use one for performance. (This is kind of the reverse of mutable value semantics in Swift(?), and would share some implementation details with the borrow checker in Rust).</li>
+<li>In some ways, this is the reverse of some <a href="alter.html">older thoughts</a>.</li>
+<li>In my langauge, I also added a <a href="https://github.com/leontrolski/jubbly#early-return">generalised version</a> of Rust's <code>?</code> operator.</li>
+</ul>
+    </body>
+</html>
