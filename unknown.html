@@ -41,12 +41,9 @@
     x.value + <span class="hljs-string">"some-string"</span>
 </code></pre>
 <p><code>Any</code> has snuck into your type system.</p>
-<p>Instead, define a quick <code>Unknown</code> type (kinda like <a href="https://docs.astral.sh/ty/reference/typing-faq/#why-does-ty-report-an-error-on-my-code">ty&#39;s</a>):</p>
-<pre><code class="lang-python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-type">Unknown</span>(<span class="hljs-type">Protocol</span>): ...</span>
-</code></pre>
-<p>And now you&#39;ll get an error:</p>
-<pre><code class="lang-python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">f</span><span class="hljs-params">(x: Container[Unknown])</span> -&gt; <span class="hljs-keyword">None</span>:</span>
-    x.value + <span class="hljs-string">"some-string"</span>  <span class="hljs-comment"># error: Unsupported left operand type for + ("Unknown")  [operator]</span>
+<p>Instead, use <code>object</code>, then you&#39;ll get an error:</p>
+<pre><code class="lang-python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">f</span><span class="hljs-params">(x: Container[object])</span> -&gt; <span class="hljs-keyword">None</span>:</span>
+    x.value + <span class="hljs-string">"some-string"</span>  <span class="hljs-comment"># error: Unsupported left operand type for + ("object")  [operator]</span>
 </code></pre>
 <p>If you don't know what type a value is, let the typechecker know you don't know. </p>
 <p>Maybe you never cared what type it was, maybe you need to <code>if not isinstance(x.value, SomeType): raise ...</code></p>
