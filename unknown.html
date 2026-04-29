@@ -47,5 +47,61 @@
 </code></pre>
 <p>If you don't know what type a value is, let the typechecker know you don't know. </p>
 <p>Maybe you never cared what type it was, maybe you need to <code>if not isinstance(x.value, SomeType): raise ...</code></p>
+<hr>
+<p>As of Python 3.13, you <a href="https://peps.python.org/pep-0696/">can have defaults</a> for your <code>TypeVar</code>s, <code>[T=object]</code> is probably a sensible default, as <code>[T]</code> can be equivalent to <code>[T=Any]</code> - with subtle differences depending on the typechecker:</p>
+
+<p><code>Python==3.14.0b3 mypy==1.20.2 ty==0.0.33</code></p>
+
+<pre><code class="lang-python"><span class="hljs-variable">@dataclass</span>
+<span class="hljs-variable">@typing</span>.final
+class Container[T]:
+    <span class="hljs-attribute">value</span>: T
+
+def f() -&gt; Container | <span class="hljs-attribute">str</span>: ...
+def g() -&gt; <span class="hljs-attribute">object</span>: ...
+
+c = f()
+if isinstance(c, Container):
+    reveal_type(c)  # <span class="hljs-attribute">mypy</span>: Container[Any] <span class="hljs-attribute">ty</span>: Container[Unknown]
+
+d = g()
+if isinstance(d, Container):
+    reveal_type(d)  # <span class="hljs-attribute">mypy</span>: Container[Any] <span class="hljs-attribute">ty</span>: Top[Container[Unknown]]
+</code></pre>
+<pre><code class="lang-python"><span class="hljs-variable">@dataclass</span>
+<span class="hljs-variable">@typing</span>.final
+class Container[T=object]:
+    <span class="hljs-attribute">value</span>: T
+
+def f() -&gt; Container | <span class="hljs-attribute">str</span>: ...
+def g() -&gt; <span class="hljs-attribute">object</span>: ...
+
+c = f()
+if isinstance(c, Container):
+    reveal_type(c)  # <span class="hljs-attribute">mypy</span>: Container[object] <span class="hljs-attribute">ty</span>: Container[object]
+
+d = g()
+if isinstance(d, Container):
+    reveal_type(d)  # <span class="hljs-attribute">mypy</span>: Container[Any]    <span class="hljs-attribute">ty</span>: Container[object]
+</code></pre>
+<pre><code class="lang-python"><span class="hljs-variable">@dataclass</span>
+<span class="hljs-variable">@typing</span>.final
+class Container[T=Any]:
+    <span class="hljs-attribute">value</span>: T
+
+def f() -&gt; Container | <span class="hljs-attribute">str</span>: ...
+def g() -&gt; <span class="hljs-attribute">object</span>: ...
+
+c = f()
+if isinstance(c, Container):
+    reveal_type(c)  # <span class="hljs-attribute">mypy</span>: Container[Any] <span class="hljs-attribute">ty</span>: Container[Any]
+
+d = g()
+if isinstance(d, Container):
+    reveal_type(d)  # <span class="hljs-attribute">mypy</span>: Container[Any] <span class="hljs-attribute">ty</span>: Top[Container[Any]]
+</code></pre>
+<p><em>Note on <a href="https://docs.astral.sh/ty/reference/typing-faq/#what-is-toplistunknown-and-why-does-it-appear"><code>Top</code></a>.</em></p>
+
+
     </body>
 </html>
