@@ -1,0 +1,109 @@
+<html>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <head>
+        <title>
+            leontrolski - Postgres skip index scans
+        </title>
+        <style>
+
+            body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 63%;}
+            @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+            pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;background-color:white;padding:0.5rem;overflow-x:auto;}
+            a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
+            a:hover {border-bottom: 0;}
+            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em; white-space: nowrap;}
+            details {border-bottom:solid 5px gray;}
+
+        </style>
+        <link href="https://unpkg.com/prism-themes@1.9.0/themes/prism-darcula.min.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js"></script>
+
+    </head>
+    <body>
+        <a href="index.html">
+            <img src="pic.png" style="height:2em">
+            ⇦
+        </a>
+        <p><i>2026-06-29</i></p>
+<h1 id="postgres-index-skip-scans">Postgres index skip scans</h1>
+<p><a href="https://www.cybertec-postgresql.com/en/postgresql-18-more-performance-with-index-skip-scans/">As of Postgres 18</a> this becomes irrelevant, but in the meantime we can practice our <code>RECURSIVE</code> chops. <em>This post is a rehash of the linked one that fits my brain better</em>.</p>
+<p>These kind of queries can often be slow when there are not that many users, but many orders:</p>
+<pre><code class="lang-sql"><span class="hljs-keyword">SELECT</span>
+    user_id,
+    <span class="hljs-keyword">max</span>(created_at) <span class="hljs-keyword">AS</span> max_created_at
+<span class="hljs-keyword">FROM</span> orders
+<span class="hljs-keyword">GROUP</span> <span class="hljs-keyword">BY</span> user_id
+<span class="hljs-keyword">ORDER</span> <span class="hljs-keyword">BY</span> max_created_at <span class="hljs-keyword">DESC</span>
+<span class="hljs-keyword">LIMIT</span> <span class="hljs-number">5</span>;
+</code></pre>
+<p>We can make it (about) 100 times faster.</p>
+<details>
+<summary>Testing setup for 100 users 1,000,000 orders:</summary>
+<pre><code class="lang-sql"><span class="hljs-keyword">CREATE</span> <span class="hljs-keyword">TABLE</span> orders (
+    user_id <span class="hljs-keyword">UUID</span>,
+    created_at TIMESTAMPTZ
+);
+<span class="hljs-keyword">INSERT</span> <span class="hljs-keyword">INTO</span> orders
+<span class="hljs-keyword">SELECT</span>
+    <span class="hljs-keyword">md5</span>((i % <span class="hljs-number">100</span>)::<span class="hljs-built_in">TEXT</span>)::<span class="hljs-keyword">UUID</span>,
+    to_timestamp(i)::TIMESTAMPTZ
+<span class="hljs-keyword">FROM</span> generate_series(<span class="hljs-number">0</span>, <span class="hljs-number">1000000</span> - <span class="hljs-number">1</span>) <span class="hljs-keyword">AS</span> i;
+
+<span class="hljs-keyword">CREATE</span> <span class="hljs-keyword">INDEX</span> <span class="hljs-keyword">ON</span> orders (user_id <span class="hljs-keyword">ASC</span>, created_at <span class="hljs-keyword">DESC</span>);
+VACUUM (<span class="hljs-keyword">ANALYZE</span>) orders;
+</code></pre>
+</details>
+<p>Let's refactor our original query into the following <code>RECURSIVE</code> one.</p>
+<pre><code class="lang-sql">WITH RECURSIVE r AS (
+    <span class="hljs-keyword">SELECT</span>
+        <span class="hljs-string">'00000000-0000-0000-0000-000000000000'</span>::<span class="hljs-keyword">UUID</span> <span class="hljs-keyword">AS</span> user_id,
+        <span class="hljs-literal">NULL</span>::TIMESTAMPTZ <span class="hljs-keyword">AS</span> max_created_at
+    <span class="hljs-keyword">UNION</span> ALL
+    <span class="hljs-keyword">SELECT</span> sub.*
+    <span class="hljs-keyword">FROM</span> r,
+    LATERAL (
+        <span class="hljs-keyword">SELECT</span> user_id, created_at
+        <span class="hljs-keyword">FROM</span> orders
+        <span class="hljs-keyword">WHERE</span> user_id &gt; r.user_id
+        <span class="hljs-keyword">ORDER</span> <span class="hljs-keyword">BY</span> user_id <span class="hljs-keyword">ASC</span>, created_at <span class="hljs-keyword">DESC</span>
+        <span class="hljs-keyword">LIMIT</span> <span class="hljs-number">1</span>
+    ) <span class="hljs-keyword">AS</span> sub
+)
+<span class="hljs-keyword">SELECT</span> * <span class="hljs-keyword">FROM</span> r
+<span class="hljs-keyword">WHERE</span> max_created_at <span class="hljs-keyword">IS</span> <span class="hljs-keyword">NOT</span> <span class="hljs-literal">NULL</span>
+<span class="hljs-keyword">ORDER</span> <span class="hljs-keyword">BY</span> max_created_at <span class="hljs-keyword">DESC</span>
+<span class="hljs-keyword">LIMIT</span> <span class="hljs-number">5</span>;
+</code></pre>
+<ul>
+    <li>Our base case is the smallest UUID and a null timestamp - most other examples online fetch the first record out of <code>orders</code>, but I think it's neater to use a static base case and filter it out afterwards.</li>
+    <li>We then accumulate one row at a time in a way that maps directly to the index.</li>
+    <li>In the context of <code>user_id > r.user_id</code>, <code>r</code> refers to the previous result (which has one row), not the accumulation of results.</li>
+</ul>
+<br>
+<p>Query go brrr:</p>
+<pre><code>Naive GROUP BY
+               user_id                |     max_created_at
+--------------------------------------+------------------------
+ ac627ab1-ccbd-b62e-c96e<span class="hljs-string">-702</span>f07f6425b | 1970<span class="hljs-string">-01</span><span class="hljs-string">-12</span> 13:46:39<span class="hljs-string">+00</span>
+ ed3d2c21<span class="hljs-string">-991</span>e<span class="hljs-string">-3</span>bef<span class="hljs-string">-5</span>e06<span class="hljs-string">-9713</span>af9fa6ca | 1970<span class="hljs-string">-01</span><span class="hljs-string">-12</span> 13:46:38<span class="hljs-string">+00</span>
+ e2ef524f-bf3d<span class="hljs-string">-9</span>fe6<span class="hljs-string">-11</span>d5-a8e90fefdc9c | 1970<span class="hljs-string">-01</span><span class="hljs-string">-12</span> 13:46:37<span class="hljs-string">+00</span>
+ 26657d5f-f902<span class="hljs-string">-0</span>d2a-befe<span class="hljs-string">-558796</span>b99584 | 1970<span class="hljs-string">-01</span><span class="hljs-string">-12</span> 13:46:36<span class="hljs-string">+00</span>
+ 812b4ba2<span class="hljs-string">-87</span>f5-ee0b-c9d4<span class="hljs-string">-3</span>bbf5bbe87fb | 1970<span class="hljs-string">-01</span><span class="hljs-string">-12</span> 13:46:35<span class="hljs-string">+00</span>
+
+<span class="hljs-keyword">Time:</span> 97.505 ms
+
+RECURSIVE version
+               user_id                |     max_created_at
+--------------------------------------+------------------------
+ ac627ab1-ccbd-b62e-c96e<span class="hljs-string">-702</span>f07f6425b | 1970<span class="hljs-string">-01</span><span class="hljs-string">-12</span> 13:46:39<span class="hljs-string">+00</span>
+ ed3d2c21<span class="hljs-string">-991</span>e<span class="hljs-string">-3</span>bef<span class="hljs-string">-5</span>e06<span class="hljs-string">-9713</span>af9fa6ca | 1970<span class="hljs-string">-01</span><span class="hljs-string">-12</span> 13:46:38<span class="hljs-string">+00</span>
+ e2ef524f-bf3d<span class="hljs-string">-9</span>fe6<span class="hljs-string">-11</span>d5-a8e90fefdc9c | 1970<span class="hljs-string">-01</span><span class="hljs-string">-12</span> 13:46:37<span class="hljs-string">+00</span>
+ 26657d5f-f902<span class="hljs-string">-0</span>d2a-befe<span class="hljs-string">-558796</span>b99584 | 1970<span class="hljs-string">-01</span><span class="hljs-string">-12</span> 13:46:36<span class="hljs-string">+00</span>
+ 812b4ba2<span class="hljs-string">-87</span>f5-ee0b-c9d4<span class="hljs-string">-3</span>bbf5bbe87fb | 1970<span class="hljs-string">-01</span><span class="hljs-string">-12</span> 13:46:35<span class="hljs-string">+00</span>
+
+<span class="hljs-keyword">Time:</span> 1.123 ms
+</code></pre>
+
+</body>
+</html>
