@@ -75,6 +75,23 @@ VACUUM (<span class="hljs-keyword">ANALYZE</span>) orders;
 <span class="hljs-keyword">ORDER</span> <span class="hljs-keyword">BY</span> max_created_at <span class="hljs-keyword">DESC</span>
 <span class="hljs-keyword">LIMIT</span> <span class="hljs-number">5</span>;
 </code></pre>
+<p>The above query is equivalent to this pseudo-SQL:</p>
+<pre><code class="lang-sql">r = <span class="hljs-keyword">SELECT</span> <span class="hljs-string">'00000000-0000-0000-0000-000000000000'</span>::<span class="hljs-keyword">UUID</span> <span class="hljs-keyword">AS</span> user_id, <span class="hljs-literal">NULL</span>::TIMESTAMPTZ <span class="hljs-keyword">AS</span> max_created_at
+<span class="hljs-keyword">WHILE</span> <span class="hljs-literal">TRUE</span>:
+    r_new = <span class="hljs-keyword">SELECT</span> user_id, created_at
+            <span class="hljs-keyword">FROM</span> orders
+            <span class="hljs-keyword">WHERE</span> user_id &gt; r.user_id
+            <span class="hljs-keyword">ORDER</span> <span class="hljs-keyword">BY</span> user_id <span class="hljs-keyword">ASC</span>, created_at <span class="hljs-keyword">DESC</span>
+            <span class="hljs-keyword">LIMIT</span> <span class="hljs-number">1</span>
+    <span class="hljs-keyword">IF</span> <span class="hljs-keyword">NOT</span> r_new:
+        BREAK
+    r = r <span class="hljs-keyword">UNION</span> ALL r_new
+
+<span class="hljs-keyword">SELECT</span> * <span class="hljs-keyword">FROM</span> r
+<span class="hljs-keyword">WHERE</span> max_created_at <span class="hljs-keyword">IS</span> <span class="hljs-keyword">NOT</span> <span class="hljs-literal">NULL</span>
+<span class="hljs-keyword">ORDER</span> <span class="hljs-keyword">BY</span> max_created_at <span class="hljs-keyword">DESC</span>
+<span class="hljs-keyword">LIMIT</span> <span class="hljs-number">5</span>
+</code></pre>
 <ul>
     <li>Our base case is the smallest UUID and a null timestamp - most other examples online fetch the first record out of <code>orders</code>, but I think it's neater to use a static base case and filter it out afterwards.</li>
     <li>We then accumulate one row at a time in a way that maps directly to the index.</li>
