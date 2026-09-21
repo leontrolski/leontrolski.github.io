@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Baby Keyboard & Touch Toy 🎈</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #AEE2FF;
+      font-family: Arial, sans-serif;
+      touch-action: none;
+    }
+
+    #canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      cursor: crosshair;
+    }
+
+    /* Simple, plain start screen overlay */
+    #start-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #e5e5e5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+    }
+
+    #start-overlay.hidden {
+      display: none;
+    }
+
+    /* Plain square 150px x 150px start button with solid black border */
+    #start-btn {
+      width: 150px;
+      height: 150px;
+      background-color: #ffffff;
+      color: #000000;
+      border: 5px solid #000000;
+      font-size: 26px;
+      font-weight: bold;
+      letter-spacing: 2px;
+      cursor: pointer;
+      border-radius: 0;
+      box-shadow: none;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #start-btn:active {
+      background-color: #cccccc;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+
+  <div id="start-overlay">
+    <button id="start-btn">START</button>
+  </div>
+
+  <script>
+    let audioCtx = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    // Sound synth for key pops/chimes
+    function playPopSound() {
+      if (!audioCtx) return;
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        const baseFreq = 300 + Math.random() * 400;
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(baseFreq * 2.2, audioCtx.currentTime + 0.1);
+
+        gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.12);
+      } catch (e) {}
+    }
+
+    // Sound synth for firework explosions
+    function playFireworkSound() {
+      if (!audioCtx) return;
+      try {
+        const freqs = [523.25, 659.25, 783.99, 1046.50, 1318.51];
+        freqs.forEach((freq, idx) => {
+          setTimeout(() => {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.25);
+          }, idx * 30);
+        });
+      } catch (e) {}
+    }
+
+    // Clear canvas sweep sound when Enter is pressed
+    function playClearSound() {
+      if (!audioCtx) return;
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(1000, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(110, audioCtx.currentTime + 0.35);
+
+        gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.35);
+      } catch (e) {}
+    }
+
+    const KEY_EMOJI_MAP = {
+      // Numbers row
+      '1': '🚗', '2': '🚲', '3': '🚂', '4': '🚁', '5': '⛵', '6': '🎨', '7': '🧸', '8': '⚽', '9': '🎁', '0': '🐱',
+      '-': '➖', '=': '➕', '_': '➖', '+': '➕',
+
+      // Row 1 (QWERTY)
+      'q': '🦆', 'w': '🐳', 'e': '🐘', 'r': '🚀', 't': '🚜', 'y': '🦄', 'u': '🚤', 'i': '🍦', 'o': '🦉', 'p': '🍕',
+      '[': '📦', ']': '🎁', '{': '📦', '}': '🎁',
+
+      // Row 2 (ASDFGHJKL)
+      'a': '🍎', 's': '👟', 'd': '🐶', 'f': '🐸', 'g': '🦒', 'h': '🏠', 'j': '🎷', 'k': '🔑', 'l': '🦁',
+      ';': '🥨', ':': '🥨', '\'': '🧁', '"': '🍩', '@': '🍥', '#': '🥞', '~': '🌊',
+
+      // Row 3 (ZXCVBNM)
+      '\\': '🥖', '|': '🥖', 'z': '🦓', 'x': '❌', 'c': '🐮', 'v': '🎻', 'b': '👶', 'n': '🍌', 'm': '🐵',
+      ',': '🍓', '<': '🍓', '.': '🍒', '>': '🍒', '/': '🌭', '?': '❓',
+
+      // Spacebar
+      ' ': '🌈'
+    };
+
+    const RANDOM_EMOJIS = ['🪑', '👪', '👋', '💖', '🎈', '🍪', '🐣', '🌸', '🔔', '👑', '🍓', '🧁', '⭐', '🎺', '🐝', '👩', '👨'];
+
+    const BG_PALETTES = [
+      '#FFB6C1', '#FFD1DC', '#FFF066', '#B1F0B7', '#AEE2FF',
+      '#E8C5FF', '#FFC2E2', '#FFE4E1', '#C7D2FE', '#B5F3E5',
+      '#FFD8A8', '#EEB1D5', '#D0EBFF', '#C0EB75'
+    ];
+
+    // GB Layout Rows for positioning
+    const ROW_NUM = "1234567890-=";
+    const ROW_1   = "qwertyuiop[]";
+    const ROW_2   = "asdfghjkl; '#";
+    const ROW_3   = "\\zxcvbnm,./";
+
+    // Calculates coordinates based on GB QWERTY physical positions
+    function getKeyCoordinates(keyChar) {
+      const k = keyChar.toLowerCase();
+      let row = -1, col = -1, totalCols = 12;
+
+      if (ROW_NUM.includes(k)) {
+        row = 0; col = ROW_NUM.indexOf(k); totalCols = 12;
+      } else if (ROW_1.includes(k)) {
+        row = 1; col = ROW_1.indexOf(k); totalCols = 12;
+      } else if (ROW_2.includes(k)) {
+        row = 2; col = ROW_2.indexOf(k); totalCols = 12;
+      } else if (ROW_3.includes(k)) {
+        row = 3; col = ROW_3.indexOf(k); totalCols = 11;
+      } else if (k === ' ') {
+        return { x: window.innerWidth * 0.5, y: window.innerHeight * 0.82 };
+      }
+
+      if (row !== -1) {
+        const topPadding = 0.20;
+        const rowHeight = 0.18;
+        const offsets = [0, 0.02, 0.05, 0.08];
+        const y = window.innerHeight * (topPadding + row * rowHeight);
+
+        const availableWidth = 0.80;
+        const colWidth = availableWidth / Math.max(totalCols - 1, 1);
+        const x = window.innerWidth * (0.10 + offsets[row] + col * colWidth);
+        return { x, y };
+      }
+
+      // Random position fallback
+      return {
+        x: window.innerWidth * (0.2 + Math.random() * 0.6),
+        y: window.innerHeight * (0.2 + Math.random() * 0.6)
+      };
+    }
+
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const startOverlay = document.getElementById('start-overlay');
+    const startBtn = document.getElementById('start-btn');
+
+    // Offscreen persistent buffer canvas so trails and emojis stay 100% opaque permanently
+    const persistentCanvas = document.createElement('canvas');
+    const pCtx = persistentCanvas.getContext('2d');
+
+    let currentStrokeColor = getRandomColor();
+    let currentStrokeWidth = Math.random() * 40 + 20; // 20px to 60px
+    let lastPointerPos = null;
+    let lastPointerTime = 0;
+    let activeFireworks = [];
+
+    function getRandomColor() {
+      const hue = Math.floor(Math.random() * 360);
+      return `hsl(${hue}, 100%, 50%)`;
+    }
+
+    function resizeCanvases() {
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = persistentCanvas.width || window.innerWidth;
+      tempCanvas.height = persistentCanvas.height || window.innerHeight;
+      const tCtx = tempCanvas.getContext('2d');
+      if (persistentCanvas.width > 0) {
+        tCtx.drawImage(persistentCanvas, 0, 0);
+      }
+
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      persistentCanvas.width = window.innerWidth;
+      persistentCanvas.height = window.innerHeight;
+
+      pCtx.drawImage(tempCanvas, 0, 0);
+    }
+
+    window.addEventListener('resize', resizeCanvases);
+    resizeCanvases();
+
+    function setRandomBgColor() {
+      const color = BG_PALETTES[Math.floor(Math.random() * BG_PALETTES.length)];
+      document.body.style.backgroundColor = color;
+    }
+
+    function clearPersistentCanvas() {
+      pCtx.clearRect(0, 0, persistentCanvas.width, persistentCanvas.height);
+      activeFireworks = [];
+    }
+
+    function startNewStroke() {
+      currentStrokeColor = getRandomColor();
+      currentStrokeWidth = Math.floor(Math.random() * 40 + 20); // 20px to 60px
+    }
+
+    function drawTrail(x, y) {
+      const now = Date.now();
+
+      // Start a new stroke with a fresh random color & width if paused > 250ms
+      if (!lastPointerPos || (now - lastPointerTime > 250)) {
+        startNewStroke();
+        lastPointerPos = { x, y };
+      }
+
+      pCtx.save();
+      pCtx.beginPath();
+      pCtx.lineCap = 'round';
+      pCtx.lineJoin = 'round';
+      pCtx.lineWidth = currentStrokeWidth;
+      pCtx.strokeStyle = currentStrokeColor;
+
+      // Feathered soft blur effect matching the stroke color
+      pCtx.shadowBlur = 14;
+      pCtx.shadowColor = currentStrokeColor;
+
+      pCtx.moveTo(lastPointerPos.x, lastPointerPos.y);
+      pCtx.lineTo(x, y);
+      pCtx.stroke();
+      pCtx.restore();
+
+      lastPointerPos = { x, y };
+      lastPointerTime = now;
+    }
+
+    function spawnPersistentEmoji(emoji, baseX, baseY) {
+      const offsetX = (Math.random() - 0.5) * 90;
+      const offsetY = (Math.random() - 0.5) * 90;
+      const x = Math.max(90, Math.min(window.innerWidth - 90, baseX + offsetX));
+      const y = Math.max(90, Math.min(window.innerHeight - 90, baseY + offsetY));
+
+      // 30% Larger emoji size (110px to 150px)
+      const size = Math.floor(110 + Math.random() * 40);
+      const rotation = (Math.random() - 0.5) * 0.4;
+
+      pCtx.save();
+      pCtx.translate(x, y);
+      pCtx.rotate(rotation);
+      pCtx.globalAlpha = 1.0;
+      pCtx.font = `${size}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
+      pCtx.textAlign = 'center';
+      pCtx.textBaseline = 'middle';
+      pCtx.fillText(emoji, 0, 0);
+      pCtx.restore();
+    }
+
+    class FireworkParticle {
+      constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 9 + 3;
+        this.vx = Math.cos(angle) * speed;
+        this.vy = Math.sin(angle) * speed;
+        this.hue = Math.random() * 360;
+        this.life = 1.0;
+        this.size = Math.random() * 8 + 6;
+      }
+
+      update() {
+        this.vx *= 0.95;
+        this.vy *= 0.95;
+        this.vy += 0.12; // gravity
+        this.x += this.vx;
+        this.y += this.vy;
+        this.life -= 0.025;
+      }
+
+      draw(ctx) {
+        if (this.life <= 0) return;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = `hsl(${this.hue}, 100%, 50%)`;
+        ctx.globalAlpha = Math.max(0, this.life);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    function createFirework(x, y) {
+      playFireworkSound();
+      for (let i = 0; i < 32; i++) {
+        activeFireworks.push(new FireworkParticle(x, y));
+      }
+    }
+
+    // COMPREHENSIVE KEY INTERCEPTION:
+    // Capture and prevent all key defaults (quote ', search, quick find, tab, space, etc.) EXCEPT Escape
+    ['keydown', 'keypress', 'keyup'].forEach(eventType => {
+      window.addEventListener(eventType, (e) => {
+        if (e.key !== 'Escape') {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }, { capture: true });
+    });
+
+    // Keydown handling for emojis, clear enter, and ESC
+    window.addEventListener('keydown', (e) => {
+      // Enter key clears canvas AND changes background color
+      if (e.key === 'Enter') {
+        playClearSound();
+        clearPersistentCanvas();
+        setRandomBgColor();
+        return;
+      }
+
+      // Escape key handles exiting overlay / fullscreen
+      if (e.key === 'Escape') {
+        if (document.fullscreenElement) {
+          document.exitFullscreen().catch(() => {});
+        }
+        startOverlay.classList.remove('hidden');
+        return;
+      }
+
+      if (!startOverlay.classList.contains('hidden')) return;
+
+      const key = e.key;
+      let emoji = KEY_EMOJI_MAP[key.toLowerCase()] || KEY_EMOJI_MAP[key];
+      if (!emoji) {
+        emoji = RANDOM_EMOJIS[Math.abs(key.charCodeAt(0) || 0) % RANDOM_EMOJIS.length];
+      }
+
+      initAudio();
+      playPopSound();
+
+      const pos = getKeyCoordinates(key);
+      spawnPersistentEmoji(emoji, pos.x, pos.y);
+    }, { capture: true });
+
+    window.addEventListener('pointermove', (e) => {
+      if (!startOverlay.classList.contains('hidden')) return;
+      drawTrail(e.clientX, e.clientY);
+    });
+
+    window.addEventListener('pointerdown', (e) => {
+      if (!startOverlay.classList.contains('hidden')) return;
+      initAudio();
+      startNewStroke();
+      createFirework(e.clientX, e.clientY);
+      lastPointerPos = { x: e.clientX, y: e.clientY };
+      lastPointerTime = Date.now();
+    });
+
+    window.addEventListener('pointerup', () => {
+      lastPointerPos = null;
+    });
+
+    startBtn.addEventListener('click', () => {
+      initAudio();
+      setRandomBgColor();
+
+      const docEl = document.documentElement;
+      if (docEl.requestFullscreen) {
+        docEl.requestFullscreen().catch(() => {});
+      } else if (docEl.webkitRequestFullscreen) {
+        docEl.webkitRequestFullscreen();
+      }
+
+      startOverlay.classList.add('hidden');
+    });
+
+    document.addEventListener('fullscreenchange', () => {
+      if (!document.fullscreenElement) {
+        startOverlay.classList.remove('hidden');
+      }
+    });
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Render persistent offscreen canvas layer (100% opaque paint trails & emojis)
+      ctx.drawImage(persistentCanvas, 0, 0);
+
+      // Render active firework explosion particles
+      for (let i = activeFireworks.length - 1; i >= 0; i--) {
+        const fw = activeFireworks[i];
+        fw.update();
+        fw.draw(ctx);
+        if (fw.life <= 0) {
+          activeFireworks.splice(i, 1);
+        }
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+  </script>
+</body>
+</html>
