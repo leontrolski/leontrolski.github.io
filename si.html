@@ -1,0 +1,71 @@
+<html>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <head>
+        <title>
+            leontrolski - SI Units
+        </title>
+        <style>
+            body {margin: 5% auto; background: #fff7f7; color: #444444; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.8; max-width: 63%;}
+            @media screen and (max-width: 800px) {body {font-size: 14px; line-height: 1.4; max-width: 90%;}}
+            pre {width: 100%; border-top: 3px solid gray; border-bottom: 3px solid gray;background-color:white;padding:0.5rem;overflow-x:auto;}
+            a {border-bottom: 1px solid #444444; color: #444444; text-decoration: none; text-shadow: 0 1px 0 #ffffff; }
+            a:hover {border-bottom: 0;}
+            .inline {background: #b3b2b226; padding-left: 0.3em; padding-right: 0.3em; white-space: nowrap;}
+            details {border-bottom:solid 5px gray;}
+            blockquote {font-style: italic;color:black;background-color:#f2f2f2;color:gray;padding:1em;margin: 0;}
+        </style>
+        <link href="https://unpkg.com/prism-themes@1.9.0/themes/prism-darcula.min.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js"></script>
+
+    </head>
+    <body>
+        <a href="index.html">
+            <img src="pic.png" style="height:2em">
+            ⇦
+        </a>
+        <p><i>2026-10-05</i></p>
+    </body>
+<h1>SI Units for Astronauts</h1>
+<p>The doors open into the cold, hazy atmosphere of <a href="https://en.wikipedia.org/wiki/Proxima_Centauri_b">Proxima Centauri b</a>. Plans are afoot for a new workshop, fully equipped with sets of super-high-precision callipers, but alas! the cabin boy forgot to pack the <a href="https://en.wikipedia.org/wiki/History_of_the_metre#International_prototype_metre">International prototype metre</a> he picked up on his trip to Paris.</p>
+<p>Thankfully, as of <a href="https://en.wikipedia.org/wiki/2019_redefinition_of_the_SI_base_units">2019</a>, we can work out all of our SI units from physical constants that we&#39;ve arbitrarily fixed!</p>
+<h1 id="why">Why</h1>
+<p>At various points in time, we&#39;ve had lumps of metal in Paris that were the official kilogram, metre etc. These kinds of definitions have some issues - notably that they can change (the kilo has <a href="https://phys.org/news/2019-05-adieu-le-grand-kilogram-redefined.html">got a bit lighter</a>) and they&#39;re not universal (as in we&#39;d have to drag one all the way to Proxima Centauri b). </p>
+<p>For the new definitions, we just fix the constants (eg. the speed of light in a vacuum) and derive the units from them.</p>
+<h1 id="note">Units</h1>
+<p>A reminder of our <a href="https://en.wikipedia.org/wiki/International_System_of_Units">units</a>:</p>
+<ul>
+<li>Time - seconds (<code>s</code>)</li>
+<li>Distance - metres (<code>m</code>)</li>
+<li>Current - amperes (<code>A</code>)</li>
+<li>Mass - kilograms (<code>kg</code>)</li>
+<li>Temperature - kelvin (<code>K</code>)</li>
+<li>Luminous intensity - candelas (<code>cd</code>)</li>
+</ul>
+<p>(We&#39;re going to <a href="https://en.wikipedia.org/wiki/Mole_unit#Criticism">ignore Moles</a> - &quot;a Mole&quot; is like &quot;a dozen&quot;).</p>
+<p>The &quot;experiments&quot; below aren&#39;t exactly what might be done in a metrology lab, but the principles should be the same. Email me any corrections.</p>
+<h1 id="time-depends-on-no-other-units-">Time (depends on no other units)</h1>
+<p>Vibrate some caesium. Like a tuning fork, it has a natural frequency. Count <code>9,192,631,770</code> back and forths, and <a href="https://en.wikipedia.org/wiki/Second#Atomic_definition">that&#39;s a second</a>.</p>
+<h1 id="distance-depends-on-time-">Distance (depends on time)</h1>
+<p>Measure the distance some light travels, in a vacuum, in <code>1 / 299,792,458</code> seconds, <a href="https://en.wikipedia.org/wiki/History_of_the_metre#Summary_of_definitions_since_1798">that&#39;s a metre</a>.</p>
+<p><em>The speed of light is fixed at  <code>299,792,458 m ⋅ s⁻¹</code></em></p>
+<h1 id="current-depends-on-time-">Current (depends on time)</h1>
+<p>Measure the current produced by <code>1 / (1.602176634 × 10⁻¹⁹)</code> electrons per second, <a href="https://en.wikipedia.org/wiki/Ampere#Present_definition">that&#39;s one ampere</a>.</p>
+<p><em>The charge of an electron (in coulombs) is fixed at <a href="https://en.wikipedia.org/wiki/Elementary_charge"><code>e = 1.602176634 × 10⁻¹⁹ A ⋅ s</code></a></em></p>
+<h1 id="_an-aside-on-volts_"><em>An aside on volts</em></h1>
+<blockquote>This section isn't particularly satisfying, email me if you have a nicer explanation.</blockquote>
+<p>To work out the remaining units, it would be really useful to be able to produce a known amount of electrical power.</p>
+<p>Power (<code>kg ⋅ m² ⋅ s⁻³</code>) is equal to current (<code>A</code>) times voltage (<code>kg ⋅ m² ⋅ s⁻³ ⋅ A⁻¹</code>), so we need to work out voltage.</p>
+<p>A <a href="https://en.wikipedia.org/wiki/Josephson_voltage_standard">Josephson junction</a> is another tuning-fork-like component. Sending microwaves into it at a known frequency produces voltage in discrete steps proportional to <code>h / e</code>.</p>
+<p><em>Note, a photon with frequency <code>f</code> has its energy (<code>kg ⋅ m² ⋅ s⁻²</code>) fixed at  <code>f ⋅ h</code> where <code>h</code> is <a href="https://en.wikipedia.org/wiki/Planck_constant"><code>6.62607015 × 10⁻³⁴</code></a></em></p>
+<h1 id="mass-depends-on-time-distance-">Mass (depends on time, distance)</h1>
+<p>Firstly let&#39;s drop something in a vacuum and see how fast it accelerates, this is the local gravitational field <code>g</code> (<code>m ⋅ s⁻²</code>).</p>
+<p>Using an electromagnet of known power (<code>kg ⋅ m² ⋅ s⁻³</code>), we can lift a mass <code>x</code> upwards at velocity <code>v</code>, this will require a power of <code>x ⋅ g ⋅ v</code>. If we divide the known power by <code>g ⋅ v</code>, we get kilograms.</p>
+<p>Note that we&#39;re assuming a perfect conversion of electrical to mechanical power. A <a href="https://en.wikipedia.org/wiki/Kibble_balance">Kibble balance</a> does the same kind of thing as above, but with some clever tricks to avoid this assumption.</p>
+<h1 id="temperature-depends-on-time-distance-mass-">Temperature (depends on time, distance, mass)</h1>
+<p>Heat <code>N</code> molecules of Helium (or some other ideal gas) with <code>3/2 ⋅ 1.380649 × 10⁻²³</code> joules (<code>kg ⋅ m² ⋅ s⁻²</code>) of energy (we&#39;ve already worked out how to build an electric heater with a known power output), that will yield a temperature difference of <code>1 / N</code> kelvin (assuming no other thermodynamic losses).</p>
+<p><em>The <a href="https://en.wikipedia.org/wiki/Boltzmann_constant">Boltzmann constant</a> is fixed at <code>1.380649 × 10⁻²³ J ⋅ K⁻¹ == kg ⋅ m² ⋅ s⁻² ⋅ K⁻¹</code>. The <code>3/2</code> is something to do with the degrees of freedom that the molecules can move in when they&#39;re heated.</em></p>
+<h1 id="luminous-intensity-depends-on-time-distance-mass-">Luminous intensity (depends on time, distance, mass)</h1>
+<p>Shine a 1 watt (<code>kg ⋅ m² ⋅ s⁻³</code>) beam of <code>540 × 10¹² Hz</code> light, it delivers a luminous flux of <a href="https://en.wikipedia.org/wiki/Luminous_efficacy#Photopic_vision"><code>683</code> lumens</a>.</p>
+<p>One candela is one lumen <em>per <a href="https://en.wikipedia.org/wiki/Steradian">steradian</a></em> (a 3D angle unit).</p>
+</html>
